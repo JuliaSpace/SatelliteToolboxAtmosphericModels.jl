@@ -85,8 +85,7 @@ The input variable `ap` contains the magnetic index. It can be a `Number` or an
 
 If `ap` is a number, it must contain the daily magnetic index.
 
-If `ap` is an `AbstractVector`, it must be a vector with 7 dimensions as described
-below:
+If `ap` is an `AbstractVector`, it must be a vector with 7 dimensions as described below:
 
 | Index | Description                                                                   |
 |-------|:------------------------------------------------------------------------------|
@@ -167,7 +166,7 @@ function nrlmsise00(
         @debug """
         NRLMSISE00 - Using default indices since h < 80 km
           Daily F10.7           : $(F10) sfu
-          89-day avareged F10.7 : $(F10ₐ) sfu
+          90-day avareged F10.7 : $(F10ₐ) sfu
           Ap                    : $(ap)
         """
     else
@@ -180,7 +179,7 @@ function nrlmsise00(
         @debug """
         NRLMSISE00 - Fetched Space Indices
           Daily F10.7           : $(F10) sfu
-          89-day avareged F10.7 : $(F10ₐ) sfu
+          90-day avareged F10.7 : $(F10ₐ) sfu
           Ap                    : $(ap)
         """
     end
