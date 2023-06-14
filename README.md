@@ -1,6 +1,11 @@
 SatelliteToolboxAtmosphericModels.jl
 ====================================
 
+[![CI](https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/actions/workflows/ci.yml)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)][docs-stable-url]
+[![](https://img.shields.io/badge/docs-dev-blue.svg)][docs-dev-url]
+[![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
+
 This package implements atmospheric models for the **SatelliteToolbox.jl** ecosystem.
 Currently, the following models are available:
 
@@ -16,3 +21,9 @@ julia> using Pkg
 julia> Pkg.install("SatelliteToolboxAtmosphericModels")
 ```
 
+## Documentation
+
+For more information, see the [documentation][docs-stable-url].
+
+[docs-dev-url]: https://juliaspace.github.io/SatelliteToolboxAtmosphericModels.jl/dev
+[docs-stable-url]: https://juliaspace.github.io/SatelliteToolboxAtmosphericModels.jl/stable
