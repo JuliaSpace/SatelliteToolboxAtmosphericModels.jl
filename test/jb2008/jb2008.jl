@@ -92,7 +92,7 @@
                     # Run the model.
                     jd  = date_to_jd(year, 1, 1, hour, min, sec) - 1 + doy
                     instant = julian2datetime(jd)
-                    result = AtmosphericModels.jb2008(jd, ϕ_gd, λ, h)
+                    result = AtmosphericModels.jb2008(instant, ϕ_gd, λ, h)
 
                     # Compare the results.
                     @test result.exospheric_temperature ≈ exospheric_temperature atol = 0.6 rtol = 0.0
