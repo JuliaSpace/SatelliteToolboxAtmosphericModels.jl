@@ -423,6 +423,36 @@ end
         @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
         @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
     end
+
+    # For altitudes lower than 80 km, we use default space indices.
+    expected = AtmosphericModels.nrlmsise00(
+        DateTime("2023-01-01T10:00:00"),
+        79e3,
+        -23 |> deg2rad,
+        -45 |> deg2rad,
+        150,
+        150,
+        4
+    )
+
+    result = AtmosphericModels.nrlmsise00(
+        DateTime("2023-01-01T10:00:00"),
+        79e3,
+        -23 |> deg2rad,
+        -45 |> deg2rad
+    )
+
+    @test result.total_density           ≈ expected.total_density
+    @test result.temperature             ≈ expected.temperature
+    @test result.exospheric_temperature  ≈ expected.exospheric_temperature
+    @test result.O_number_density        ≈ expected.O_number_density
+    @test result.N2_number_density       ≈ expected.N2_number_density
+    @test result.O2_number_density       ≈ expected.O2_number_density
+    @test result.He_number_density       ≈ expected.He_number_density
+    @test result.Ar_number_density       ≈ expected.Ar_number_density
+    @test result.H_number_density        ≈ expected.H_number_density
+    @test result.N_number_density        ≈ expected.N_number_density
+    @test result.aO_number_density       ≈ expected.aO_number_density
 end
 
 @testset "Show" begin
