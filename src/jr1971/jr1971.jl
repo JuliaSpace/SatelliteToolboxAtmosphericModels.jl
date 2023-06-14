@@ -25,6 +25,8 @@
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+export jr1971
+
 """
     jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, Kp::Number]) -> JR1971Output{Float64}
     jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, Kp::Number]) -> JR1971Output{Float64}
