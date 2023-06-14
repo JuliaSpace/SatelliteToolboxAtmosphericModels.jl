@@ -15,3 +15,8 @@ Currently, the following models are available:
 julia> using Pkg
 julia> Pkg.install("SatelliteToolboxAtmosphericModels")
 ```
+
+## References
+
+- **[1]** **Vallado, D. A** (2013). *Fundamentals of Astrodynamics and Applications*. 4th
+  ed. **Microcosm Press**, Hawthorn, CA, USA.
