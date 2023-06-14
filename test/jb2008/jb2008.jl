@@ -28,9 +28,9 @@
 #   Compare the results with the tests in files:
 #
 #       JB_AUTO_OUTPUT_01.DAT
-#       JB_AUTO_OUTPUT_03.DAT
+#       JB_AUTO_OUTPUT_02.DAT
 #
-#   which were created using JuliaSpace/JB2008_Test@1552551. The other two files are ignored
+#   which were created using JuliaSpace/JB2008_Test@ac41221. The other two files are ignored
 #   due to the lack of data in the space indices.
 #
 ############################################################################################
@@ -44,7 +44,7 @@
     # Files with the test results.
     test_list = [
         "JB2008_AUTO_OUTPUT_01.DAT",
-        "JB2008_AUTO_OUTPUT_03.DAT",
+        "JB2008_AUTO_OUTPUT_02.DAT",
     ]
 
     # Execute the tests.
