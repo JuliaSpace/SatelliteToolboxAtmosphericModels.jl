@@ -7,10 +7,10 @@
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-export NRLMSISE00_Structure, NRLMSISE00_Flags, NRLMSISE00_Output
+export Nrlmsise00Flags, Nrlmsise00Output
 
 """
-    struct NRLMSISE00_Flags
+    struct Nrlmsise00Flags
 
 Flags to configure NRLMSISE-00.
 
@@ -122,17 +122,17 @@ Output structure for NRLMSISE00 model.
 
 # Fields
 
-* `total_density::T`: Total mass density [kg / m³].
-* `temperature`: Temperature at the selected altitude [K].
-* `exospheric_temperature`: Exospheric temperature [K].
-* `N_number_density`: Nitrogen number density [1 / m³].
-* `N2_number_density`: N₂ number density [1 / m³].
-* `O_number_density`: Oxygen number density [1 / m³].
-* `aO_number_density`: Anomalous Oxygen number density [1 / m³].
-* `O2_number_density`: O₂ number density [1 / m³].
-* `H_number_density`: Hydrogen number density [1 / m³].
-* `He_number_density`: Helium number density [1 / m³].
-* `Ar_number_density`: Argon number density [1 / m³].
+- `total_density::T`: Total mass density [kg / m³].
+- `temperature`: Temperature at the selected altitude [K].
+- `exospheric_temperature`: Exospheric temperature [K].
+- `N_number_density`: Nitrogen number density [1 / m³].
+- `N2_number_density`: N₂ number density [1 / m³].
+- `O_number_density`: Oxygen number density [1 / m³].
+- `aO_number_density`: Anomalous Oxygen number density [1 / m³].
+- `O2_number_density`: O₂ number density [1 / m³].
+- `H_number_density`: Hydrogen number density [1 / m³].
+- `He_number_density`: Helium number density [1 / m³].
+- `Ar_number_density`: Argon number density [1 / m³].
 
 # Remarks
 

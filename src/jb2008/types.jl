@@ -7,6 +7,8 @@
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+export JB2008Output
+
 """
     struct JB2008Output{T<:Number}
 

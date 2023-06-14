@@ -7,6 +7,8 @@
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+export JR1971Output
+
 """
     struct JR1971Output{T<:Number}
 
