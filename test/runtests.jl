@@ -17,3 +17,7 @@ end
 @testset "Atmospheric Model NRLMSISE-00" verbose = true begin
     include("./nrlmsise00.jl")
 end
+
+@testset "Exponential Atmospheric Model" verbose = true begin
+    include("./exponential.jl")
+end
