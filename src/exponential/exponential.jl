@@ -15,8 +15,10 @@
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+export exponential
+
 """
-    exponential(h::T) where T<:Number
+    exponential(h::Number) -> Float64
 
 Compute the atmospheric density [kg / m³] at the altitude `h` [m] above the ellipsoid using
 the exponential atmospheric model:
@@ -29,7 +31,7 @@ the exponential atmospheric model:
 
 in which `ρ₀`, `h₀`, and `H` are parameters obtained from tables that depend only on `h`.
 """
-function exponential(h::T) where T<:Number
+function exponential(h::Number)
     # Check the bounds.
     h < 0 && throw(ArgumentError("The height must be positive."))
 
@@ -39,15 +41,12 @@ function exponential(h::T) where T<:Number
     # Get the values for the exponential model.
     aux = findfirst(>(0), _EXPONENTIAL_ATMOSPHERE_H₀ .- h)
     id  = isnothing(aux) ? 28 : aux - 1
-
-    @inbounds begin
-        h₀ = _EXPONENTIAL_ATMOSPHERE_H₀[id]
-        ρ₀ = _EXPONENTIAL_ATMOSPHERE_ρ₀[id]
-        H  = _EXPONENTIAL_ATMOSPHERE_H[id]
-    end
+    h₀  = _EXPONENTIAL_ATMOSPHERE_H₀[id]
+    ρ₀  = _EXPONENTIAL_ATMOSPHERE_ρ₀[id]
+    H   = _EXPONENTIAL_ATMOSPHERE_H[id]
 
     # Compute the density.
-    density = ρ₀ * exp(-(h - h₀)/H)
+    density = ρ₀ * exp(-(h - h₀) / H)
 
     return density
 end
