@@ -24,7 +24,7 @@ Currently, the following models are available:
 
 ```julia
 julia> using Pkg
-julia> Pkg.install("SatelliteToolboxAtmosphericModels")
+julia> Pkg.add("SatelliteToolboxAtmosphericModels")
 ```
 
 ## Documentation
