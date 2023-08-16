@@ -1,6 +1,11 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 0.1.1
+-------------
+
+- ![Enhancement][badge-enhancement] We updated the dependency compatibility bounds.
+
 Version 0.1.0
 -------------
 
