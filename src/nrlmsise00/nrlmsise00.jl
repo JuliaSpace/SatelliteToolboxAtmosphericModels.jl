@@ -73,6 +73,10 @@ day `jd` or `instant`. However, the indices must be already initialized using th
     see [`Nrlmsise00Flags`]@(ref). (**Default** = `Nrlmsise00Flags()`)
 - `include_anomalous_oxygen::Bool`: If `true`, the anomalous oxygen density will be included
     in the total density computation. (**Default** = `true`)
+- `P::Union{Nothing, Matrix}`: If the user passes a matrix with dimensions equal to or
+    greater than 9 × 9, it will be used when computing the Legendre associated functions,
+    reducing allocations and improving the performance. If it is `nothing`, the matrix is
+    allocated inside the function. (**Default** `nothing`)
 
 # Returns
 
@@ -134,7 +138,8 @@ function nrlmsise00(
     ϕ_gd::Number,
     λ::Number;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
-    include_anomalous_oxygen::Bool = true
+    include_anomalous_oxygen::Bool = true,
+    P::Union{Nothing, Matrix} = nothing
 )
     return nrlmsise00(
         datetime2julian(instant),
@@ -142,7 +147,8 @@ function nrlmsise00(
         ϕ_gd,
         λ;
         flags = flags,
-        include_anomalous_oxygen = include_anomalous_oxygen
+        include_anomalous_oxygen = include_anomalous_oxygen,
+        P = P
     )
 end
 
@@ -152,7 +158,8 @@ function nrlmsise00(
     ϕ_gd::Number,
     λ::Number;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
-    include_anomalous_oxygen::Bool = true
+    include_anomalous_oxygen::Bool = true,
+    P::Union{Nothing, Matrix} = nothing
 )
     # Fetch the space indices.
     #
@@ -194,7 +201,8 @@ function nrlmsise00(
         F10,
         ap;
         flags = flags,
-        include_anomalous_oxygen = include_anomalous_oxygen
+        include_anomalous_oxygen = include_anomalous_oxygen,
+        P = P
     )
 end
 
@@ -207,7 +215,8 @@ function nrlmsise00(
     F10::Number,
     ap::Union{Number, AbstractVector};
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
-    include_anomalous_oxygen::Bool = true
+    include_anomalous_oxygen::Bool = true,
+    P::Union{Nothing, Matrix} = nothing
 )
     return nrlmsise00(
         datetime2julian(instant),
@@ -218,7 +227,8 @@ function nrlmsise00(
         F10,
         ap;
         flags = flags,
-        include_anomalous_oxygen = include_anomalous_oxygen
+        include_anomalous_oxygen = include_anomalous_oxygen,
+        P = P
     )
 end
 
@@ -231,7 +241,8 @@ function nrlmsise00(
     F10::Number,
     ap::Union{Number, AbstractVector};
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
-    include_anomalous_oxygen::Bool = true
+    include_anomalous_oxygen::Bool = true,
+    P::Union{Nothing, Matrix} = nothing
 )
     # Create the NRLMSISE00 flags
     # ======================================================================================
@@ -274,7 +285,18 @@ function nrlmsise00(
     # Compute Legendre polynomials.
     #
     # TODO: Not all coefficients are used. Hence, we could gain performance here.
-    plg = legendre(Val(:unnormalized), π / 2 - ϕ_gd, 8, 8; ph_term = false) |> permutedims
+    if isnothing(P)
+        plg = legendre(Val(:unnormalized), π / 2 - ϕ_gd, 8, 8; ph_term = false)'
+    else
+        rows, cols = size(P)
+
+        if (rows < 9) || (cols < 9)
+            throw(ArgumentError("The matrix P must have at least 9 × 9 elements."))
+        end
+
+        legendre!(Val(:unnormalized), P, π / 2 - ϕ_gd, 8, 8; ph_term = false)
+        plg = P'
+    end
 
     # Latitude variation of gravity
     # ======================================================================================

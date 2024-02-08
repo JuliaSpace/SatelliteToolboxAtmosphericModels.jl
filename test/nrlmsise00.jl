@@ -455,6 +455,148 @@ end
     @test result.aO_number_density       ≈ expected.aO_number_density
 end
 
+@testset "Pre-allocating the Legendre Matrix" begin
+    # We will use the scenario 1 of the first test.
+
+    # Test outputs.
+    expected = [
+           0.0  0.000E+00  1.918E+19  5.145E+18 1.180E-03  297.7  1027  1.287E+14 2.294E+17  0.000E+00  0.000E+00  0.000E+00
+         100.0  4.244E+11  9.498E+12  2.240E+12 5.783E-10  165.9  1027  1.061E+08 9.883E+10  2.209E+07  3.670E+05  0.000E+00
+         200.0  2.636E+09  2.248E+09  1.590E+08 1.838E-13  829.3   909  5.491E+06 1.829E+06  2.365E+05  3.125E+07  1.802E-09
+         300.0  3.321E+08  6.393E+07  2.881E+06 1.212E-14  900.6   909  3.173E+06 1.156E+04  1.717E+05  6.708E+06  4.938E+00
+         400.0  5.088E+07  2.414E+06  6.838E+04 1.510E-15  907.7   909  1.979E+06 1.074E+02  1.518E+05  1.274E+06  1.237E+03
+         500.0  8.340E+06  1.020E+05  1.839E+03 2.410E-16  908.5   909  1.259E+06 1.170E+00  1.355E+05  2.608E+05  4.047E+03
+         600.0  1.442E+06  4.729E+03  5.500E+01 4.543E-17  908.6   909  8.119E+05 1.455E-02  1.214E+05  5.617E+04  4.167E+03
+         700.0  2.622E+05  2.394E+02  1.817E+00 1.097E-17  908.6   909  5.301E+05 2.050E-04  1.092E+05  1.264E+04  3.173E+03
+         800.0  4.999E+04  1.317E+01  6.608E-02 3.887E-18  908.6   909  3.503E+05 3.254E-06  9.843E+04  2.964E+03  2.246E+03
+         900.0  9.980E+03  7.852E-01  2.633E-03 1.984E-18  908.6   909  2.342E+05 5.794E-08  8.900E+04  7.237E+02  1.571E+03
+        1000.0  2.082E+03  5.055E-02  1.146E-04 1.244E-18  908.6   909  1.582E+05 1.151E-09  8.069E+04  1.836E+02  1.103E+03
+    ]
+
+    # Constant input parameters.
+    year    = 1986
+    month   = 6
+    day     = 19
+    hour    = 21
+    minute  = 30
+    second  = 00
+    ϕ_gd    = -16 * π / 180
+    λ       = 312 * π / 180
+    F10     = 121
+    F10ₐ    = 80
+    ap      = 7
+    instant = date_to_jd(year, month, day, hour, minute, second) |> julian2datetime
+    P       = zeros(9, 9)
+
+    for i in 1:size(expected, 1)
+        # Initialize `P` to check if it is used inside `nrlmsise00`.
+        P .= 0.0
+
+        # Run the NRLMSISE-00 model wih the input parameters.
+        out = AtmosphericModels.nrlmsise00(
+            instant,
+            expected[i, 1] * 1000,
+            ϕ_gd,
+            λ,
+            F10ₐ,
+            F10,
+            ap;
+            include_anomalous_oxygen = false,
+            P = P
+        )
+
+        @test out.total_density           ≈ (expected[i,  5] * 1e3) rtol = 1e-3
+        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
+
+        # Check that P was used.
+        @test abs(sum(P)) > 0
+
+        # Initialize `P` to check if it is used inside `nrlmsise00`.
+        P .= 0.0
+
+        # Test the version that calls `gtd7d` instead of `gtd7`.
+        out = AtmosphericModels.nrlmsise00(
+            instant,
+            expected[i, 1] * 1000,
+            ϕ_gd,
+            λ,
+            F10ₐ,
+            F10,
+            ap;
+            include_anomalous_oxygen = true,
+            P = P
+        )
+
+        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
+
+        expected_total_density = expected[i, 5] + 1.66e-24 * 16 * expected[i, 12]
+        @test out.total_density ≈ (expected_total_density * 1e3) rtol = 1e-3
+
+        # Check that P was used.
+        @test abs(sum(P)) > 0
+
+    end
+end
+
+@testset "Errors" begin
+    # Wrong Size in Matrix `P`
+    # ======================================================================================
+
+    P = zeros(9, 8)
+    @test_throws ArgumentError AtmosphericModels.nrlmsise00(
+        now() |> datetime2julian,
+        100e3,
+        0,
+        0,
+        100,
+        100,
+        20;
+        P = P
+    )
+
+    P = zeros(8, 9)
+    @test_throws ArgumentError AtmosphericModels.nrlmsise00(
+        now() |> datetime2julian,
+        100e3,
+        0,
+        0,
+        100,
+        100,
+        20;
+        P = P
+    )
+
+    P = zeros(8, 8)
+    @test_throws ArgumentError AtmosphericModels.nrlmsise00(
+        now() |> datetime2julian,
+        100e3,
+        0,
+        0,
+        100,
+        100,
+        20;
+        P = P
+    )
+end
+
 @testset "Show" begin
     result = AtmosphericModels.nrlmsise00(
         DateTime("2023-01-01T10:00:00"),
