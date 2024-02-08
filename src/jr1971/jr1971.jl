@@ -75,7 +75,7 @@ function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
     Δt = Dates.value(instant - day) / 1000
 
     # Get the index and the Kp value.
-    id = clamp(div(Δt, 10_800) + 1, 1, 8)
+    id = round(Int, clamp(div(Δt, 10_800) + 1, 1, 8))
     Kp = Kp_vect[id]
 
     @debug """
