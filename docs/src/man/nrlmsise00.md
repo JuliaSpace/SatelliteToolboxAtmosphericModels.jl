@@ -1,6 +1,13 @@
 NRLMSISE-00
 ===========
 
+```@meta
+CurrentModule = SatelliteToolboxAtmosphericModels
+DocTestSetup = quote
+    using SatelliteToolboxAtmosphericModels
+end
+```
+
 The NRLMSISE-00 empirical atmosphere model was developed by Mike Picone, Alan Hedin, and
 Doug Drob based on the MSISE90 model:
 
@@ -12,8 +19,8 @@ Doug Drob based on the MSISE90 model:
 In this package, we can compute this model using the following functions:
 
 ```julia
-function AtmosphericModels.nrlmsise00(instant::DateTime, h::Number[, ϕ_gd::Number, λ::Number, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...)
-function AtmosphericModels.nrlmsise00(jd::Number, h::Number[, ϕ_gd::Number, λ::Number, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...)
+function AtmosphericModels.nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...)
+function AtmosphericModels.nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...)
 ```
 
 where
@@ -34,6 +41,10 @@ The following keywords are available:
     see [`AtmosphericModels.Nrlmsise00Flags`](@ref). (**Default** = `Nrlmsise00Flags()`)
 - `include_anomalous_oxygen::Bool`: If `true`, the anomalous oxygen density will be included
     in the total density computation. (**Default** = `true`)
+- `P::Union{Nothing, Matrix}`: If the user passes a matrix with dimensions equal to or
+    greater than 9 × 9, it will be used when computing the Legendre associated functions,
+    reducing allocations and improving the performance. If it is `nothing`, the matrix is
+    allocated inside the function. (**Default** `nothing`)
 
 If we omit all space indices, the system tries to obtain them automatically for the selected
 day `jd` or `instant`. However, the indices must be already initialized using the function

@@ -46,8 +46,8 @@
 export nrlmsise00
 
 """
-    nrlmsise00(instant::DateTime, h::Number[, ϕ_gd::Number, λ::Number, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
-    nrlmsise00(jd::Number, h::Number[, ϕ_gd::Number, λ::Number, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
+    nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
+    nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
 
 Compute the atmospheric density using the NRLMSISE-00 model.
 
