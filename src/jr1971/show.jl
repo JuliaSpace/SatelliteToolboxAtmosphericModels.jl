@@ -1,11 +1,8 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## Description #############################################################################
 #
-# Description
-# ==========================================================================================
+# Function to show the results of the Jacchia-Roberts 1971 atmospheric model.
 #
-#   Function to show the results of the Jacchia-Roberts 1971 atmospheric model.
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+############################################################################################
 
 function show(io::IO, out::JR1971Output)
     # Check for color support in the `io`.

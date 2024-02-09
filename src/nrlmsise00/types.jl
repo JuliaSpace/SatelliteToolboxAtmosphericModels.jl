@@ -1,11 +1,8 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## Description #############################################################################
 #
-# Description
-# ==========================================================================================
+# Types related to the NRLMSISE-00 atmospheric model.
 #
-#   Types related to the NRLMSISE-00 atmospheric model.
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+############################################################################################
 
 export Nrlmsise00Flags, Nrlmsise00Output
 
@@ -72,8 +69,7 @@ end
 Structure with the configuration parameters for NRLMSISE-00 model.
 """
 mutable struct Nrlmsise00Structure{T<:Number}
-    # Inputs
-    # ======================================================================================
+    # == Inputs ============================================================================
 
     year::Int
     doy::Int
@@ -89,8 +85,7 @@ mutable struct Nrlmsise00Structure{T<:Number}
     use_ap_array::Bool
     flags::Nrlmsise00Flags
 
-    # Auxiliary variables to improve code performance
-    # ======================================================================================
+    # == Auxiliary Variables to Improve Code Performance ===================================
 
     r_lat::T
     g_lat::T

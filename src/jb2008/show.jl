@@ -1,11 +1,8 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## Description #############################################################################
 #
-# Description
-# ==========================================================================================
+# Function to show the results of the Jacchia-Bowman 2008 atmospheric model.
 #
-#   Function to show the results of the Jacchia-Bowman 2008 atmospheric model.
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+############################################################################################
 
 function show(io::IO, out::JB2008Output)
     # Check for color support in the `io`.

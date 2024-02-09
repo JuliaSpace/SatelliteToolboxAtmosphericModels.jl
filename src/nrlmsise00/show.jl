@@ -1,11 +1,8 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## Description #############################################################################
 #
-# Description
-# ==========================================================================================
+# Function to show the results of the NRLMSISE-00 atmospheric model.
 #
-#   Function to show the results of the NRLMSISE-00 atmospheric model.
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+############################################################################################
 
 function show(io::IO, out::Nrlmsise00Output)
     # Check for color support in the `io`.

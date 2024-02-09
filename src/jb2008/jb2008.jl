@@ -1,7 +1,4 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#
-# Description
-# ==========================================================================================
+## Description #############################################################################
 #
 #   The Jacchia-Bowman 2008 Atmospheric Model, a product of the Space Environment
 #   Technologies.
@@ -14,23 +11,20 @@
 #
 #       http://sol.spacenvironment.net/~JB2008/
 #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## References ##############################################################################
 #
-# References
-# ==========================================================================================
+# [1] Bowman, B. R., Tobiska, W. K., Marcos, F. A., Huang, C. Y., Lin, C. S., Burke, W. J
+#     (2008). A new empirical thermospheric density model JB2008 using new solar and
+#     geomagnetic indices. AIAA/AAS Astrodynamics Specialist Conference, Honolulu, Hawaii.
 #
-#   [1] Bowman, B. R., Tobiska, W. K., Marcos, F. A., Huang, C. Y., Lin, C. S., Burke, W. J
-#       (2008). A new empirical thermospheric density model JB2008 using new solar and
-#       geomagnetic indices. AIAA/AAS Astrodynamics Specialist Conference, Honolulu, Hawaii.
+# [2] Bowman, B. R., Tobiska, W. K., Marcos, F. A., Valladares, C (2007). The JB2006
+#     empirical thermospheric density model. Journal of Atmospheric and Solar-Terrestrial
+#     Physics, v. 70, p. 774-793.
 #
-#   [2] Bowman, B. R., Tobiska, W. K., Marcos, F. A., Valladares, C (2007). The JB2006
-#       empirical thermospheric density model. Journal of Atmospheric and Solar-Terrestrial
-#       Physics, v. 70, p. 774-793.
+# [3] Jacchia, L. G (1970). New static models of the thermosphere and exosphere with
+#     empirical temperature profiles. SAO Special Report #313.
 #
-#   [3] Jacchia, L. G (1970). New static models of the thermosphere and exosphere with
-#       empirical temperature profiles. SAO Special Report #313.
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+############################################################################################
 
 export jb2008
 
@@ -138,7 +132,7 @@ function jb2008(
     DstΔTc::Number
 )
     ########################################################################################
-    #                                      Constants
+    #                                      Constants                                       #
     ########################################################################################
 
     T₁    = 183.0       # ............................... Temperature at the lower bound [K]
@@ -178,7 +172,7 @@ function jb2008(
     R3 = 0.075
 
     ########################################################################################
-    #                                    Preliminaries
+    #                                    Preliminaries                                     #
     ########################################################################################
 
     # Convert the altitude from [m] to [km].
@@ -206,11 +200,10 @@ function jb2008(
     lst = mod((H + π) * 12 / π, 24)
 
     ########################################################################################
-    #                                      Algorithm
+    #                                      Algorithm                                       #
     ########################################################################################
 
-    # Eq. 2 [1], Eq. 14 [3]
-    # ======================================================================================
+    # == Eq. 2 [1], Eq. 14 [3] =============================================================
     #
     # Nighttime minimum of the global exospheric temperature distribution when the planetary
     # geomagnetic index Kp is zero.
@@ -223,19 +216,16 @@ function jb2008(
     Fsₐ = F10ₐ * Wt + S10ₐ * (1-Wt)
     Tc  = 392.4 + 3.227Fsₐ + 0.298ΔF10 + 2.259ΔS10 + 0.312ΔM10 + 0.178ΔY10
 
-    # Eq. 15 [3]
-    # ======================================================================================
+    # == Eq. 15 [3] ========================================================================
 
     η = abs(ϕ_gd - δs) / 2
     θ = abs(ϕ_gd + δs) / 2
 
-    # Eq. 16 [3]
-    # ======================================================================================
+    # == Eq. 16 [3] ========================================================================
 
     τ = H - 0.64577182 + 0.10471976sin(H + 0.75049158)
 
-    # Eq. 17 [3]
-    # ======================================================================================
+    # == Eq. 17 [3] ========================================================================
 
     m = 2.5
     n = 3.0
@@ -254,8 +244,7 @@ function jb2008(
     T_exo = Tl + DstΔTc
     T∞    = T_exo + ΔTc
 
-    # Eq. 9 [3]
-    # ======================================================================================
+    # == Eq. 9 [3] =========================================================================
     #
     # Temperature at the inflection point `z = 125 km`.
     a  =  444.3807
@@ -264,8 +253,7 @@ function jb2008(
     k  =   -0.0021357
     Tx = a + b * T∞ + c * exp(k * T∞)
 
-    # Eq. 5 [3]
-    # ======================================================================================
+    # == Eq. 5 [3] =========================================================================
     #
     # From 90 to 105 km, for a given temperature profile `T[k]`, the density ρ is computed
     # by integrating the barometric equation:
@@ -311,21 +299,18 @@ function jb2008(
     # The factor 1000 converts `Rstar` to the appropriate units.
     ρ = ρ₁ * (Mb₂ / Mb₁) * (Tl₁ / Tl₂) * exp(-1000 * int / Rstar)
 
-    # Eq. 2 [3]
-    # ======================================================================================
+    # == Eq. 2 [3] =========================================================================
 
     NM = A * ρ
     N  = NM / Mb₂
 
-    # Eq. 3 [3]
-    # ======================================================================================
+    # == Eq. 3 [3] =========================================================================
 
     log_nN₂ = log(q₀N₂ * NM / Mb₀)
     log_nAr = log(q₀Ar * NM / Mb₀)
     log_nHe = log(q₀He * NM / Mb₀)
 
-    # Eq. 4 [3]
-    # ======================================================================================
+    # == Eq. 4 [3] =========================================================================
 
     log_nO₂ = log(NM / Mb₀ * (1 + q₀O₂) - N)
     log_nO  = log(2 * (N - NM / Mb₀))
@@ -338,8 +323,7 @@ function jb2008(
         log_nH₂ = log_nHe - 25
 
     else
-        # Eq.6 [3]
-        # ==================================================================================
+        # == Eq.6 [3] ======================================================================
         #
         # From 100 km to 500 km, neglecting the thermal diffusion coefficient,
         # the eq. 6 in [3] can be written as:
@@ -415,8 +399,7 @@ function jb2008(
         log_nAr += -(1 + α_Ar) * log_TfoTi - goRT * MAr
         log_nHe += -(1 + α_He) * log_TfoTi - goRT * MHe
 
-        # Eq. 7 [3]
-        # ==================================================================================
+        # == Eq. 7 [3] =====================================================================
         #
         # The equation of [3] will be converted from `log₁₀` to `log`.  Furthermore, the
         # units will be converted to [1 / cm³] to [1 / m³].
@@ -431,8 +414,7 @@ function jb2008(
         log_nH = log_nH_500km + H_sign * (log(Tl₄ / Tl₃) + 1000 / Rstar * int₂ * MH)
     end
 
-    # Eq. 24 [3] - Seasonal-latitudinal variation
-    # ======================================================================================
+    # == Eq. 24 [3] - Seasonal-latitudinal variation =======================================
     #
     # TODO: The term related to the year in the source-code of JB 2008 is different from
     # [3]. This must be verified.
@@ -445,8 +427,7 @@ function jb2008(
     # Convert from `log10` to `log`.
     Δlogρ = log(10) * Δlog₁₀ρ
 
-    # Eq. 23 [3] - Semiannual variation
-    # ======================================================================================
+    # == Eq. 23 [3] - Semiannual variation =================================================
 
     if h < 2000
         # Compute the year given the selected Julian Day.
@@ -535,7 +516,7 @@ function jb2008(
 end
 
 ############################################################################################
-#                                    Private Functions
+#                                    Private Functions                                     #
 ############################################################################################
 
 #   _jb2008_gravity(z::Number) -> Float64
@@ -621,16 +602,14 @@ end
 #
 # The inflection point is considered to by `z = 125 km`.
 function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
-    # Constants
-    # ======================================================================================
+    # == Constants =========================================================================
 
     T₁  = 183      # .................................... Temperature at the lower bound [K]
     z₁  = 90       # ...................................... Altitude of the lower bound [km]
     zx  = 125      # ................................. Altitude of the inflection point [km]
     Δz₁ = z₁ - zx
 
-    # Check the parameters
-    # ======================================================================================
+    # == Check the Parameters ==============================================================
 
     (z  < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
     (T∞ < 0)  && throw(ArgumentError("The exospheric temperature must be positive."))
@@ -638,8 +617,7 @@ function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
     # Compute the temperature gradient at the inflection point.
     Gx = 1.9 * (Tx - T₁) / (zx - z₁)
 
-    # Compute the temperature at desire altitude
-    # ======================================================================================
+    # == Compute the Temperature at the Desire Altitude ====================================
 
     Δz = z - zx
 

@@ -1,47 +1,41 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## Description #############################################################################
 #
-# Description
-# ==========================================================================================
+# The NRLMSISE-00 empirical atmosphere model was developed by Mike Picone, Alan Hedin, and
+# Doug Drob based on the MSISE90 model.
 #
-#   The NRLMSISE-00 empirical atmosphere model was developed by Mike Picone, Alan Hedin, and
-#   Doug Drob based on the MSISE90 model.
-#
-#   The MSISE90 model describes the neutral temperature and densities in Earth's atmosphere
-#   from ground to thermospheric heights. Below 72.5 km the model is primarily based on the
-#   MAP Handbook (Labitzke et al., 1985) tabulation of zonal average temperature and
-#   pressure by Barnett and Corney, which was also used for the CIRA-86. Below 20 km these
-#   data were supplemented with averages from the National Meteorological Center (NMC). In
-#   addition, pitot tube, falling sphere, and grenade sounder rocket measurements from 1947
-#   to 1972 were taken into consideration. Above 72.5 km MSISE-90 is essentially a revised
-#   MSIS-86 model taking into account data derived from space shuttle flights and newer
-#   incoherent scatter results. For someone interested only in the thermosphere (above 120
-#   km), the author recommends the MSIS-86 model.  MSISE is also not the model of preference
-#   for specialized tropospheric work.  It is rather for studies that reach across several
-#   atmospheric boundaries.
+# The MSISE90 model describes the neutral temperature and densities in Earth's atmosphere
+# from ground to thermospheric heights. Below 72.5 km the model is primarily based on the
+# MAP Handbook (Labitzke et al., 1985) tabulation of zonal average temperature and pressure
+# by Barnett and Corney, which was also used for the CIRA-86. Below 20 km these data were
+# supplemented with averages from the National Meteorological Center (NMC). In addition,
+# pitot tube, falling sphere, and grenade sounder rocket measurements from 1947 to 1972 were
+# taken into consideration. Above 72.5 km MSISE-90 is essentially a revised MSIS-86 model
+# taking into account data derived from space shuttle flights and newer incoherent scatter
+# results. For someone interested only in the thermosphere (above 120 km), the author
+# recommends the MSIS-86 model.  MSISE is also not the model of preference for specialized
+# tropospheric work.  It is rather for studies that reach across several atmospheric
+# boundaries.
 #
 #                 (quoted from http://nssdc.gsfc.nasa.gov/space/model/atmos/nrlmsise00.html)
 #
-#   This Julia version of NRLMSISE-00 was converted from the C version implemented and
-#   maintained by Dominik Brodowski <devel@brodo.de> and available at
-#   http://www.brodo.de/english/pub/nrlmsise/index.html .
+# This Julia version of NRLMSISE-00 was converted from the C version implemented and
+# maintained by Dominik Brodowski <devel@brodo.de> and available at
+# http://www.brodo.de/english/pub/nrlmsise/index.html .
 #
-#   The source code is available at the following git:
+# The source code is available at the following git:
 #
-#       https://git.linta.de/?p=~brodo/nrlmsise-00.git;a=tree
+#     https://git.linta.de/?p=~brodo/nrlmsise-00.git;a=tree
 #
-#   The conversion also used information available at the FORTRAN source code available at
+# The conversion also used information available at the FORTRAN source code available at
 #
-#       https://ccmc.gsfc.nasa.gov/pub/modelweb/atmospheric/msis/nrlmsise00/
+#     https://ccmc.gsfc.nasa.gov/pub/modelweb/atmospheric/msis/nrlmsise00/
 #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## References ##############################################################################
 #
-# References
-# ==========================================================================================
+# [1] https://www.brodo.de/space/nrlmsise/index.html
+# [2] https://www.orekit.org/site-orekit-11.0/xref/org/orekit/models/earth/atmosphere/NRLMSISE00.html
 #
-#   [1] https://www.brodo.de/space/nrlmsise/index.html
-#   [2] https://www.orekit.org/site-orekit-11.0/xref/org/orekit/models/earth/atmosphere/NRLMSISE00.html
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+############################################################################################
 
 export nrlmsise00
 
@@ -244,8 +238,7 @@ function nrlmsise00(
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, Matrix} = nothing
 )
-    # Create the NRLMSISE00 flags
-    # ======================================================================================
+    # == Create the NRLMSISE00 Flags =======================================================
 
     use_ap_array = ap isa AbstractVector
 
@@ -257,8 +250,7 @@ function nrlmsise00(
         ap_vector = ap
     end
 
-    # Compute auxiliary variables
-    # ======================================================================================
+    # == Compute Auxiliary Variables =======================================================
 
     # Convert the Julian Day to Date.
     Y, M, D, hour, min, sec = jd_to_date(jd)
@@ -298,16 +290,14 @@ function nrlmsise00(
         plg = P'
     end
 
-    # Latitude variation of gravity
-    # ======================================================================================
+    # == Latitude Variation of Gravity =====================================================
     #
     # None for flags.time_independent = false.
     g_lat, r_lat = _gravity_and_effective_radius(
         (!flags.time_independent) ? Float64(_REFERENCE_LATITUDE) : Float64(ϕ_gd / _DEG_TO_RAD)
     )
 
-    # Create the NRLMSISE00 structure
-    # ======================================================================================
+    # == Create the NRLMSISE00 Structure ===================================================
 
     nrlmsise00d = Nrlmsise00Structure{Float64}(
         Y,
@@ -348,7 +338,7 @@ function nrlmsise00(
 end
 
 ############################################################################################
-#                                    Private Functions
+#                                    Private Functions                                     #
 ############################################################################################
 
 """
@@ -387,14 +377,12 @@ function _densm(
     tgn3::NTuple{2, T},
 ) where T<:Number
 
-    # Initialization of Variables
-    # ======================================================================================
+    # == Initialization of Variables =======================================================
 
     density = d₀
     (h > _ZN2[begin]) && return density
 
-    #                        Stratosphere / Mesosphere Temperature
-    # ======================================================================================
+    # == Stratosphere / Mesosphere Temperature =============================================
 
     z     = (h > _ZN2[end]) ? h : _ZN2[end]
     z1    = _ZN2[begin]
@@ -448,8 +436,7 @@ function _densm(
         end
     end
 
-    #                        Troposhepre / Stratosphere Temperature
-    # ======================================================================================
+    # == Troposhepre / Stratosphere Temperature ============================================
 
     z     = h
     z1    = T(_ZN3[begin])
@@ -647,8 +634,7 @@ structure `nrlmsise00`.
     function.
 """
 function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number
-    # Unpack NRLMSISE00 structure
-    # ======================================================================================
+    # == Unpack NRLMSISE00 Structure =======================================================
 
     ap           = nrlmsise00d.ap
     ap_array     = nrlmsise00d.ap_array
@@ -671,8 +657,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
     λ            = nrlmsise00d.λ
     ϕ_gd         = nrlmsise00d.ϕ_gd
 
-    # Initialization of variables
-    # ======================================================================================
+    # == Initialization of Variables =======================================================
 
     t₁  = T(0)
     t₂  = T(0)
@@ -696,41 +681,34 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
     cd14 = cos(1 * _DAY_TO_RAD * (doy - p[14]))
     cd39 = cos(2 * _DAY_TO_RAD * (doy - p[39]))
 
-    # F10.7 Effect
-    # ======================================================================================
+    # == F10.7 Effect ======================================================================
 
     t₁ = p[20] * df *(1 + p[60] * dfa) + p[21] * df^2 + p[22] * dfa + p[30] * dfa^2
     f1 = 1 + (p[48] * dfa + p[20] * df + p[21] * df^2) * flags.F10_Mean
     f2 = 1 + (p[50] * dfa + p[20] * df + p[21] * df^2) * flags.F10_Mean
 
-    # Time Independent
-    # ======================================================================================
+    # == Time Independent ==================================================================
 
     t₂ = p[2]  * plg[1, 3] + p[3] * plg[1, 5] + p[23] * plg[1, 7] + p[27] * plg[1, 2] +
          p[15] * plg[1, 3] * dfa * flags.F10_Mean
 
-    # Symmetrical Annual
-    # ======================================================================================
+    # == Symmetrical Annual ================================================================
 
     t₃ = p[19] * cd32
 
-    # Symmetrical Semiannual
-    # ======================================================================================
+    # == Symmetrical Semiannual ============================================================
 
     t₄ = (p[16] + p[17] * plg[1, 3]) * cd18
 
-    # Asymmetrical Annual
-    # ======================================================================================
+    # == Asymmetrical Annual ===============================================================
 
     t₅ = f1 * (p[10] * plg[1, 2] + p[11] * plg[1, 4]) * cd14
 
-    # Asymmetrical Semiannual
-    # ======================================================================================
+    # == Asymmetrical Semiannual ===========================================================
 
     t₆ = p[38] * plg[1, 2] * cd39
 
-    # Diurnal
-    # ======================================================================================
+    # == Diurnal ===========================================================================
 
     if flags.diurnal
         t71 = (p[12] * plg[2, 3]) * cd14 * flags.asym_annual
@@ -742,8 +720,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
         )
     end
 
-    # Semidiurnal
-    # ======================================================================================
+    # == Semidiurnal =======================================================================
 
     if flags.semidiurnal
         t81 = (p[24] * plg[3, 4] + p[36] * plg[3, 6]) * cd14 * flags.asym_annual
@@ -755,8 +732,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
         )
     end
 
-    # Terdiurnal
-    # ======================================================================================
+    # == Terdiurnal ========================================================================
 
     if flags.terdiurnal
         t91 = (p[94] * plg[4, 5] + p[47] * plg[4, 7]) * cd14 * flags.asym_annual
@@ -765,8 +741,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
         t₁₄ = f2 * ((p[40] * plg[4, 4] + t91) * s3tloc + (p[41] * plg[4, 4] + t92) * c3tloc)
     end
 
-    # Magnetic activity based on daily AP
-    # ======================================================================================
+    # == Magnetic Activity Based on Daily AP ===============================================
 
     if use_ap_array
         ap = ap_array
@@ -812,8 +787,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
 
     if flags.all_ut_long_effects && (λ > - 1000)
 
-        # Longitudinal
-        # ==================================================================================
+        # == Longitudinal ==================================================================
 
         if flags.longitudinal
             sin_g_long, cos_g_long = sincos(_DEG_TO_RAD * λ)
@@ -831,8 +805,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
             )
         end
 
-        # UT and Mixed UT, Longitude
-        # ==================================================================================
+        # == UT and Mixed UT, Longitude ====================================================
 
         if flags.ut_mixed_ut_long
 
@@ -848,8 +821,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
             t₁₂ =  k₁ * k₂ * k₃ * aux₁ + flags.longitudinal * k₄ * k₅ * aux₂
         end
 
-        # UT, Longitude Magnetic Activity
-        # ==================================================================================
+        # == UT, Longitude Magnetic Activity ===============================================
 
         if flags.mixed_ap_ut_long
             if use_ap_array
@@ -915,8 +887,7 @@ structure `nrlmsise00d`.
 """
 function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number
 
-    # Unpack NRLMSISE00 structure
-    # ======================================================================================
+    # == Unpack NRLMSISE00 Structure =======================================================
 
     apdf         = nrlmsise00d.apdf
     apt          = nrlmsise00d.apt
@@ -933,8 +904,7 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
     use_ap_array = nrlmsise00d.use_ap_array
     λ            = nrlmsise00d.λ
 
-    # Initialization of variables
-    # ======================================================================================
+    # == Initialization of Variables =======================================================
 
     t₁  = T(0)
     t₂  = T(0)
@@ -963,39 +933,32 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
     cd14 = cos(1 * _DAY_TO_RAD * (doy - p[14]))
     cd39 = cos(2 * _DAY_TO_RAD * (doy - p[39]))
 
-    # F10.7
-    # ======================================================================================
+    # == F10.7 =============================================================================
 
     t₁ = p[22] * dfa
 
-    # Time independent
-    # ======================================================================================
+    # == Time Independent ==================================================================
 
     t₂ = p[2]  * plg[1, 3] + p[3]  * plg[1, 5] + p[23] * plg[1, 7] + p[27] * plg[1, 2] +
          p[15] * plg[1, 4] + p[60] * plg[1, 6]
 
-    # Symmetrical Annual
-    # ======================================================================================
+    # == Symmetrical Annual ================================================================
 
     t₃ = (p[19] + p[48] * plg[1, 3] + p[30] * plg[1, 5]) * cd32
 
-    # Symmetrical Semiannual
-    # ======================================================================================
+    # == Symmetrical Semiannual ============================================================
 
     t₄ = (p[16] + p[17] * plg[1, 3] + p[31] * plg[1, 5]) * cd18
 
-    # Asymmetrical Annual
-    # ======================================================================================
+    # == Asymmetrical Annual ===============================================================
 
     t₅ = (p[10] * plg[1, 2] + p[11] * plg[1, 4] + p[21] * plg[1, 6]) * cd14
 
-    # Asymmetrical Semiannual
-    # ======================================================================================
+    # == Asymmetrical Semiannual ===========================================================
 
     t₆ = p[38] * plg[1, 2] * cd39
 
-    # Diurnal
-    # ======================================================================================
+    # == Diurnal ===========================================================================
 
     if flags.diurnal
         t71 = p[12] * plg[2, 3] * cd14 * flags.asym_annual
@@ -1004,8 +967,7 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
               (p[7] * plg[2, 2] + p[8] * plg[2, 4] + t72) * stloc
     end
 
-    # Semidiurnal
-    # ======================================================================================
+    # == Semidiurnal =======================================================================
 
     if flags.semidiurnal
         t81 = (p[24] * plg[3, 4] + p[36] * plg[3, 6]) * cd14 * flags.asym_annual
@@ -1014,15 +976,13 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
               (p[9] * plg[3, 3] + p[43] * plg[3, 5] + t82) * s2tloc
     end
 
-    # Terdiurnal
-    # ======================================================================================
+    # == Terdiurnal ========================================================================
 
     if flags.terdiurnal
         t₁₄ = p[40] * plg[4, 4] * s3tloc + p[41] * plg[4, 4] * c3tloc
     end
 
-    # Magnetic Activity
-    # ======================================================================================
+    # == Magnetic Activity =================================================================
 
     if flags.daily_ap
         if use_ap_array
@@ -1032,8 +992,7 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
         end
     end
 
-    # Longitudinal
-    # ======================================================================================
+    # == Longitudinal ======================================================================
 
     if !(!flags.all_ut_long_effects || !flags.longitudinal || (λ <= -1000.0))
         sin_g_long, cos_g_long = sincos(_DEG_TO_RAD * λ)
@@ -1082,8 +1041,7 @@ Compute the temperatures and densities using the information inside the structur
 """
 function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
-    # Constants
-    # ======================================================================================
+    # == Constants =========================================================================
 
     pdm_1  = _NRLMSISE00_PDM_1
     pdm_3  = _NRLMSISE00_PDM_3
@@ -1100,29 +1058,25 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     pma_10 = _NRLMSISE00_PMA_10
     pavgm  = _NRLMSISE00_PAVGM
 
-    # Unpack NRLMSISE00 structure
-    # ======================================================================================
+    # == Unpack NRLMSISE00 Structure =======================================================
 
     flags = nrlmsise00d.flags
     g_lat = nrlmsise00d.g_lat
     h     = nrlmsise00d.h
     r_lat = nrlmsise00d.r_lat
 
-    # Initialization of variables
-    # ======================================================================================
+    # == Initialization of Variables =======================================================
 
     meso_tn2  = ntuple(_ -> T(0), 4)
     meso_tn3  = ntuple(_ -> T(0), 5)
     meso_tgn2 = ntuple(_ -> T(0), 2)
     meso_tgn3 = ntuple(_ -> T(0), 2)
 
-    # Latitude variation of gravity
-    # ======================================================================================
+    # == Latitude Variation of Gravity =====================================================
 
     xmm = pdm_3[5]
 
-    # Thermosphere / Mesosphere (above _ZN2[1])
-    # ======================================================================================
+    # == Thermosphere / Mesosphere (above _ZN2[1]) =========================================
 
     if h < _ZN2[begin]
         nrlmsise00d.h = T(_ZN2[begin])
@@ -1155,8 +1109,7 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # Convert the unit to SI.
     dm28m = dm28 * T(1e6)
 
-    # Lower Mesosphere / Upper Stratosphere (between `_ZN3[1]` and `_ZN2[1]`)
-    # ======================================================================================
+    # == Lower Mesosphere / Upper Stratosphere (between `_ZN3[1]` and `_ZN2[1]`) ===========
 
     @reset meso_tgn2[1] = meso_tgn1_2
     @reset meso_tn2[1]  = meso_tn1_5
@@ -1169,8 +1122,7 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         1 + flags.all_tn2_var * flags.all_tn3_var * _glob7s(nrlmsise00d, pma_10)
     ) * meso_tn2[4]^2 / (pma_3[1] * pavgm[3])^2
 
-    # Lower Stratosphere and Troposphere (below `zn3[1]`)
-    # ======================================================================================
+    # == Lower Stratosphere and Troposphere (below `zn3[1]`) ===============================
 
     if h < _ZN3[begin]
         @reset meso_tgn3[1] = meso_tgn2[2]
@@ -1183,14 +1135,12 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         ) * meso_tn3[5] * meso_tn3[5] / (pma_7[1] * pavgm[7])^2
     end
 
-    # Linear Transition to Full Mixing Below `_ZN2[1]`
-    # ======================================================================================
+    # == Linear Transition to Full Mixing Below `_ZN2[1]` ==================================
 
     dmc  = (h > _ZMIX) ? 1 - (T(_ZN2[begin]) - h) / (T(_ZN2[begin]) - T(_ZMIX)) : T(0)
     dz28 = N2_number_density
 
-    # N₂ Density
-    # ======================================================================================
+    # == N₂ Density ========================================================================
 
     dmr = N2_number_density / dm28m - 1
 
@@ -1208,42 +1158,35 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     N2_number_density *= 1 + dmr * dmc
 
-    # He Density
-    # ======================================================================================
+    # == He Density ========================================================================
 
     dmr = He_number_density / (dz28 * pdm_1[2]) - 1
     He_number_density = N2_number_density * pdm_1[2] * (1 + dmr * dmc)
 
-    # O Density
-    # ======================================================================================
+    # == O Density =========================================================================
 
     O_number_density = T(0)
     aO_number_density = T(0)
 
-    # O₂ Density
-    # ======================================================================================
+    # == O₂ Density ========================================================================
 
     dmr = O2_number_density / (dz28 * pdm_4[2]) - 1
     O2_number_density = N2_number_density * pdm_4[2] * (1 + dmr * dmc)
 
-    # Ar Density
-    # ======================================================================================
+    # == Ar Density ========================================================================
 
     dmr = Ar_number_density / (dz28 * pdm_5[2]) - 1
     Ar_number_density = N2_number_density * pdm_5[2] * (1 + dmr * dmc)
 
-    # H Density
-    # ======================================================================================
+    # == H Density =========================================================================
 
     H_number_density = T(0)
 
-    # N Density
-    # ======================================================================================
+    # == N Density =========================================================================
 
     N_number_density = T(0)
 
-    # Total Mass Density
-    # ======================================================================================
+    # == Total Mass Density ================================================================
 
     total_density = 1.66e-24 * (
         4  * He_number_density +
@@ -1258,8 +1201,7 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # Convert the units to SI.
     total_density /= 1000
 
-    # Temperature at Selected Altitude
-    # ======================================================================================
+    # == Temperature at Selected Altitude ==================================================
 
     temperature = _densm(
         h,
@@ -1351,8 +1293,7 @@ than 72.5 km (thermospheric portion of NRLMSISE-00).
 """
 function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
-    # Constants
-    # ======================================================================================
+    # == Constants =========================================================================
 
     pdl_1   = _NRLMSISE00_PDL_1
     pdl_2   = _NRLMSISE00_PDL_2
@@ -1388,8 +1329,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # Net density computation altitude limits for the species.
     altl = (200.0, 300.0, 160.0, 250.0, 240.0, 450.0, 320.0, 450.0)
 
-    # Unpack NRLMSISE00 structure
-    # ======================================================================================
+    # == Unpack NRLMSISE00 structure =======================================================
 
     dfa   = nrlmsise00d.dfa
     dm28  = nrlmsise00d.dm28
@@ -1400,15 +1340,13 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     r_lat = nrlmsise00d.r_lat
     ϕ_gd  = nrlmsise00d.ϕ_gd
 
-    # Initialization of Variables
-    # ======================================================================================
+    # == Initialization of Variables =======================================================
 
     temperature = T(0)
     meso_tn1  = ntuple(_ -> T(0), 5)
     meso_tgn1 = ntuple(_ -> T(0), 2)
 
-    # Tinf variations not important below `za` or `zn1[1]`
-    # ======================================================================================
+    # == Tinf variations not important below `za` or `zn1[1]` ==============================
 
     tinf = (h > _ZN1[1]) ?
         ptm[1] * pt[1] * (1 + flags.all_tinf_var * _globe7!(nrlmsise00d, pt)) :
@@ -1416,8 +1354,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     exospheric_temperature = tinf
 
-    # Gradient variations not important below `zn1[5]`
-    # ======================================================================================
+    # == Gradient variations not important below `zn1[5]` ==================================
 
     g0 = (h > _ZN1[5]) ?
         ptm[4] * ps[1] * (1 + flags.all_s_var * _globe7!(nrlmsise00d, ps)) :
@@ -1447,16 +1384,14 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # N2 variation factor at Zlb.
     g28 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_N2)
 
-    # Variation of Turbopause Height
-    # ======================================================================================
+    # == Variation of Turbopause Height ====================================================
 
     zhf = pdl_2[25] * (
         1 + flags.asym_annual * pdl_1[25] * sin(_DEG_TO_RAD * ϕ_gd) * cos(_DAY_TO_RAD * (doy - pt[14]))
     )
     xmm = pdm_3[5]
 
-    # N₂ Density
-    # ======================================================================================
+    # == N₂ Density ========================================================================
 
     # Diffusive density at Zlb.
     db28 = pdm_3[1] * exp(g28) * pd_N2[1]
@@ -1519,8 +1454,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         N2_number_density = _dnet(N2_number_density, dm28, zhm28, xmm, T(28))
     end
 
-    # He Density
-    # ======================================================================================
+    # == He Density ========================================================================
 
     # Density variation factor at Zlb.
     g4 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_He)
@@ -1594,8 +1528,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         He_number_density *= _ccor(h, rl, hc04, zc04)
     end
 
-    # O Density
-    # ======================================================================================
+    # == O Density =========================================================================
 
     # Density variation factor at Zlb.
     g16 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_O)
@@ -1674,8 +1607,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         O_number_density *= _ccor(h, rc16, hcc16, zcc16)
     end
 
-    # O₂ Density
-    # ======================================================================================
+    # == O₂ Density ========================================================================
 
     # Density variation factor at Zlb.
     g32 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_O2)
@@ -1758,8 +1690,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         O2_number_density *= _ccor2(h, rc32, hcc32, zcc32, hcc232)
     end
 
-    # Ar Density
-    # ======================================================================================
+    # == Ar Density ========================================================================
 
     # Density variation factor at Zlb.
     g40 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_Ar)
@@ -1833,8 +1764,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         Ar_number_density *= _ccor(h, rl, hc40, zc40)
     end
 
-    # H Density
-    # ======================================================================================
+    # == H Density =========================================================================
 
     # Density variation factor at Zlb.
     g1 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_H)
@@ -1914,8 +1844,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         H_number_density *= _ccor(h, rc01, hcc01, zcc01)
     end
 
-    # N Density
-    # ======================================================================================
+    # == N Density =========================================================================
 
     # Density variation factor at Zlb.
     g14 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_N)
@@ -1995,8 +1924,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         N_number_density *= _ccor(h, rc14, hcc14, zcc14)
     end
 
-    # Anomalous O Density
-    # ======================================================================================
+    # == Anomalous O Density ===============================================================
 
     g16h  = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_hotO)
     db16h = pdm_8[1] * exp(g16h) * pd_hotO[1]
@@ -2023,8 +1951,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     aO_number_density *= exp(-zsht / zsho * (exp(-(h - zmho) / zsht) - 1))
 
-    # Total Mass Density
-    # ======================================================================================
+    # == Total Mass Density ================================================================
 
     total_density = 1.66e-24 * (
         4  * He_number_density +
@@ -2036,8 +1963,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         14 * N_number_density
     )
 
-    # Temperature at Selected Altitude
-    # ======================================================================================
+    # == Temperature at Selected Altitude ==================================================
 
     temperature, meso_tn1, meso_tgn1 = _densu(
         abs(h),
@@ -2054,8 +1980,7 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         meso_tgn1
     )
 
-    # Output
-    # ======================================================================================
+    # == Output ============================================================================
 
     # Convert the result to SI.
     total_density     *= T(1e3)

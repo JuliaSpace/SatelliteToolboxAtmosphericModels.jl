@@ -1,29 +1,23 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## Description #############################################################################
 #
-# Description
-# ==========================================================================================
+# The Jacchia-Roberts 1971 Atmospheric Model.
 #
-#   The Jacchia-Roberts 1971 Atmospheric Model.
+## References ##############################################################################
 #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# [1] Roberts, C. R (1971). An analytic model for upper atmosphere densities based upon
+#     Jacchia's 1970 models.
 #
-# References
-# ==========================================================================================
+# [2] Jacchia, L. G (1970). New static models of the thermosphere and exosphere with
+#     empirical temperature profiles. SAO Special Report #313.
 #
-#   [1] Roberts, C. R (1971). An analytic model for upper atmosphere densities based upon
-#       Jacchia's 1970 models.
+# [3] Vallado, D. A (2013). Fundamentals of Astrodynamics and Applications. 4th ed.
+#     Microcosm Press, Hawthorn, CA, USA.
 #
-#   [2] Jacchia, L. G (1970). New static models of the thermosphere and exosphere with
-#       empirical temperature profiles. SAO Special Report #313.
+# [4] Long, A. C., Cappellari Jr., J. O., Velez, C. E., Fuchs, A. J (editors) (1989).
+#     Goddard Trajectory Determination System (GTDS) Mathematical Theory (Revision 1).
+#     FDD/552-89/0001 and CSC/TR-89/6001.
 #
-#   [3] Vallado, D. A (2013). Fundamentals of Astrodynamics and Applications. 4th ed.
-#       Microcosm Press, Hawthorn, CA, USA.
-#
-#   [4] Long, A. C., Cappellari Jr., J. O., Velez, C. E., Fuchs, A. J (editors) (1989).
-#       Goddard Trajectory Determination System (GTDS) Mathematical Theory (Revision 1).
-#       FDD/552-89/0001 and CSC/TR-89/6001.
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+############################################################################################
 
 export jr1971
 
@@ -109,8 +103,7 @@ function jr1971(
     F10ₐ::Number,
     Kp::Number
 )
-    # Constants
-    # ======================================================================================
+    # == Constants =========================================================================
 
     Rstar = _JR1971_CONSTANTS.Rstar
     Av    = _JR1971_CONSTANTS.Av
@@ -134,13 +127,11 @@ function jr1971(
     ζ     = _JR1971_CONSTANTS.ζ
     δij   = _JR1971_CONSTANTS.δij
 
-    # Auxiliary variables
-    # ======================================================================================
+    # == Auxiliary variables ===============================================================
 
     Ra² = Ra * Ra # ........................................ Mean Earth radius squared [km²]
 
-    # Preliminaries
-    # ======================================================================================
+    # == Preliminaries =====================================================================
 
     # Convert the altitude from [m] to [km].
     h /= 1000
@@ -164,17 +155,14 @@ function jr1971(
     H = Ωp - Ωs
 
     ########################################################################################
-    #                                      Algorithm
+    #                                      Algorithm                                       #
     ########################################################################################
 
-    #                                Exospheric Temperature
-    # ======================================================================================
+    # == Exospheric Temperature ============================================================
 
-    # Diurnal variation
-    # ======================================================================================
+    # -- Diurnal Variation -----------------------------------------------------------------
 
     # Eq. 14 [2], Section B.1.1 [3]
-    # --------------------------------------------------------------------------------------
     #
     # Nighttime minimum of the global exospheric temperature distribution when the planetary
     # geomagnetic index Kp is zero.
@@ -183,43 +171,35 @@ function jr1971(
     Tc   = 379 + 3.24F10 + 1.3ΔF10
 
     # Eq. 15 [2], Section B.1.1 [3]
-    # --------------------------------------------------------------------------------------
 
     η = abs(ϕ_gd - δs) / 2
     θ = abs(ϕ_gd + δs) / 2
 
     # Eq. 16 [2], Section B.1.1 [3]
-    # --------------------------------------------------------------------------------------
 
     τ = H + deg2rad(-37 + 6sin(H + deg2rad(43)))
 
     # Eq. 17 [2], Section B.1.1 [3]
-    # --------------------------------------------------------------------------------------
 
     C  = cos(η)^2.2
     S  = sin(θ)^2.2
     Tl = Tc * (1 + 0.3 * (S + (C - S) * cos(τ / 2)^3))
 
-    # Variations with geomagnetic activity
-    # ======================================================================================
+    # == Variations with Geomagnetic Activity ==============================================
 
     # Eq. 18 or Eq. 20 [2], Section B.1.1 [3]
-    # --------------------------------------------------------------------------------------
 
     ΔT∞ = (h < 200) ? 14Kp + 0.02exp(Kp) : 28Kp + 0.03exp(Kp)
 
-    # Section B.1.1 [3]
-    # --------------------------------------------------------------------------------------
+    # -- Section B.1.1 [3] -----------------------------------------------------------------
     #
     # Compute the local exospheric temperature with the geomagnetic storm effect.
 
     T∞ = Tl + ΔT∞
 
-    #                         Temperature at the Desired Altitude
-    # ======================================================================================
+    # == Temperature at the Desired Altitude ===============================================
 
-    # Section B.1.1 [3]
-    # --------------------------------------------------------------------------------------
+    # -- Section B.1.1 [3] -----------------------------------------------------------------
     #
     # Compute the temperature at inflection point `zx`.
     #
@@ -235,16 +215,13 @@ function jr1971(
     # Compute the temperature at desired point.
     Tz = _jr1971_temperature(h, Tx, T∞)
 
-    #                 Corrections to the Density (Eqs. 4-96 to 4-101 [3])
-    # ======================================================================================
+    # == Corrections to the Density (Eqs. 4-96 to 4-101 [3]) ===============================
 
-    # Geomagnetic effect, Eq. B-7 [3]
-    # --------------------------------------------------------------------------------------
+    # -- Geomagnetic Effect, Eq. B-7 [3] ---------------------------------------------------
 
     Δlog₁₀ρ_g = h < 200 ? 0.012Kp + 1.2e-5exp(Kp) : 0.0
 
-    # Semi-annual variation, Section B.1.3 [3]
-    # --------------------------------------------------------------------------------------
+    # -- Semi-annual Variation, Section B.1.3 [3] ------------------------------------------
 
     # Number of days since January 1, 1958.
     Φ = (jd - 2436204.5) / 365.2422
@@ -255,22 +232,19 @@ function jr1971(
 
     Δlog₁₀ρ_sa = f_z * g_t
 
-    # Seasonal latitudinal variation, Section B.1.3 [3]
-    # --------------------------------------------------------------------------------------
+    # -- Seasonal Latitudinal Variation, Section B.1.3 [3] ---------------------------------
 
     sin_ϕ_gd = sin(ϕ_gd)
     abs_sin_ϕ_gd = abs(sin_ϕ_gd)
 
     Δlog₁₀ρ_lt = 0.014 * (h - 90) * exp(-0.0013 * (h - 90)^2) * sin(2π * Φ + 1.72) * sin_ϕ_gd * abs_sin_ϕ_gd
 
-    # Total correction, Eq. B-10 [4]
-    # --------------------------------------------------------------------------------------
+    # -- Total Correction, Eq. B-10 [4] ----------------------------------------------------
 
     Δlog₁₀ρ_c = Δlog₁₀ρ_g + Δlog₁₀ρ_lt + Δlog₁₀ρ_sa
     Δρ_c = 10^(Δlog₁₀ρ_c)
 
-    #                                       Density
-    # ======================================================================================
+    # == Density ===========================================================================
 
     if h == z₁
         # Compute the total density.
@@ -302,14 +276,12 @@ function jr1971(
         c₄ = Ca[5] / Ca[5]
         r₁, r₂, x, y = _jr1971_roots([c₀, c₁, c₂, c₃, c₄])
 
-        # f and k, [1. p. 371]
-        # ----------------------------------------------------------------------------------
+        # -- f and k, [1. p. 371] ----------------------------------------------------------
 
         f = 35^4 * Ra² / Ca[5]
         k = -g₀ / (Rstar * (Tx - T₁))
 
-        # U(ν), V(ν), and W(ν) functions, [1, p. 372]
-        # ----------------------------------------------------------------------------------
+        # -- U(ν), V(ν), and W(ν) Functions, [1, p. 372] -----------------------------------
 
         U(ν) = (ν + Ra)^2 * (ν^2 - 2x * ν + x^2 + y^2) * (r₁ - r₂)
         V(ν) = (ν^2 - 2x * ν + x^2 + y^2) * (ν - r₁) * (ν - r₂)
@@ -322,8 +294,7 @@ function jr1971(
 
         W(ν) = r₁ * r₂ * Ra * (Ra + ν) * (Ra + (x^2 + y^2) / ν)
 
-        # X, [1, p. 372]
-        # ----------------------------------------------------------------------------------
+        # -- X, [1, p. 372] ----------------------------------------------------------------
 
         X = -2r₁ * r₂ * Ra * (Ra² + 2x * Ra + x^2 + y^2)
 
@@ -332,11 +303,9 @@ function jr1971(
 
         if h <= z₂
 
-            # Altitudes between 90 km and 100 km
-            # ==============================================================================
+            # == Altitudes Between 90 km and 100 km ========================================
 
-            # S(z) polynomial, [1, p. 371]
-            # ------------------------------------------------------------------------------
+            # -- S(z) Polynomial, [1, p. 371] ----------------------------------------------
 
             B₀ = α[1] + β[1] * Tx / (Tx - T₁)
             B₁ = α[2] + β[2] * Tx / (Tx - T₁)
@@ -347,8 +316,7 @@ function jr1971(
 
             S(z) = @evalpoly(z, B₀, B₁, B₂, B₃, B₄, B₅)
 
-            # Auxiliary variables, [1. p. 372]
-            # ------------------------------------------------------------------------------
+            # -- Auxiliary Variables, [1. p. 372] ------------------------------------------
 
             p₂ =  S(r₁) / U(r₁)
             p₃ = -S(r₂) / U(r₂)
@@ -365,8 +333,7 @@ function jr1971(
             p₆ = B₄ + (2x + r₁ + r₂ - Ra ) * B₅ - p₅ - 2(x + Ra) * p₄ - (r₂ + Ra) * p₃ - (r₁ + Ra) * p₂
             p₁ = B₅ - 2p₄ - p₃ - p₂
 
-            # F₁ and F₂, [1, p. 372-373]
-            # ------------------------------------------------------------------------------
+            # -- F₁ and F₂, [1, p. 372-373] ------------------------------------------------
 
             log_F₁ = p₁ * log((h + Ra) / (z₁ + Ra)) +
                      p₂ * log((h - r₁) / (z₁ - r₁)) +
@@ -378,8 +345,7 @@ function jr1971(
             F₂ = (h - z₁) * (Aa[7] + p₅ / ((h + Ra) * (z₁ + Ra))) +
                  p₆ / y * atan(y * (h - z₁) / (y^2 + (h - x) * (z₁ - x)))
 
-            # Compute the density, eq. 13 [1]
-            # ------------------------------------------------------------------------------
+            # -- Compute the Density, eq. 13 [1] -------------------------------------------
 
             Mz = _jr1971_mean_molecular_mass(h)
             ρ  = ρ₁ * Δρ_c * Mz * T₁ / (M₁ * Tz) * exp(k * (log_F₁ + F₂))
@@ -398,8 +364,7 @@ function jr1971(
             )
         else
 
-            # Altitudes between 100 km and 125 km
-            # ==============================================================================
+            # == Altitudes Between 100 km and 125 km =======================================
 
             # First, we need to compute the temperature and density at 100 km.
             T₁₀₀ = _jr1971_temperature(z₂, Tx, T∞)
@@ -417,8 +382,7 @@ function jr1971(
             # Apply the density correction to the density at 100 km.
             ρ₁₀₀ *= Δρ_c
 
-            # Auxiliary variables, [1, p. 374]
-            # ------------------------------------------------------------------------------
+            # -- Auxiliary Variables, [1, p. 374] ------------------------------------------
 
             q₂ =  1 / U(r₁)
             q₃ = -1 / U(r₂)
@@ -427,8 +391,7 @@ function jr1971(
             q₆ = -q₅ - 2 * (x + Ra) * q₄ - (r₂ + Ra) * q₃ - (r₁ + Ra) * q₂
             q₁ = -2q₄ - q₃ - q₂
 
-            # F₃ and F₄, [1, p. 374]
-            # ------------------------------------------------------------------------------
+            # -- F₃ and F₄, [1, p. 374] ----------------------------------------------------
 
             log_F₃ = q₁ * log((h + Ra) / (z₂ + Ra)) +
                      q₂ * log((h - r₁) / (z₂ - r₁)) +
@@ -438,8 +401,7 @@ function jr1971(
             F₄ = q₅ * (h - z₂) / ((h + Ra) * (Ra + z₂)) +
                  q₆ / y * atan(y * (h - z₂) / (y^2 + (h - x) * (z₂ - x)))
 
-            # Compute the density of each specie [3]
-            # ------------------------------------------------------------------------------
+            # -- Compute the Density of Each Specie [3] ------------------------------------
 
             expk = k * f * (log_F₃ + F₄)
             ρN₂  = ρ₁₀₀ * Mi[1] / M₀ * μi[1] * (T₁₀₀ / Tz)^(1 + αi.N₂) * exp(Mi[1] * expk)
@@ -467,8 +429,7 @@ function jr1971(
 
     else
 
-        # Altitudes higher than 125 km
-        # ==================================================================================
+        # == Altitudes Higher than 125 km ==================================================
 
         # First, we need to compute the density at 125 km with the corrections.
 
@@ -486,13 +447,11 @@ function jr1971(
         #
         # TODO: Check if we need to fix this.
 
-        # Compute `l` according to eq. 4-136 [3]
-        # ----------------------------------------------------------------------
+        # -- Compute `l` According to eq. 4-136 [3] ----------------------------------------
 
         l = @evalpoly(T∞, la[1], la[2], la[3], la[4], la[5])
 
-        # Eq. 25' [1]
-        # ----------------------------------------------------------------------
+        # -- Eq. 25' [1] -------------------------------------------------------------------
 
         γ   = (g₀ * Ra² / (Rstar * l * T∞) * (T∞ - Tx) / (Tx - T₁) * (zx - z₁) / (Ra + zx))
         γN₂ = γ * Mi[1]
@@ -501,8 +460,7 @@ function jr1971(
         γAr = γ * Mi[4]
         γHe = γ * Mi[5]
 
-        # Eq. 25 [1]
-        # ----------------------------------------------------------------------------------
+        # -- Eq. 25 [1] --------------------------------------------------------------------
 
         ρN₂  = ρ₁₂₅_N₂ * (Tx / Tz)^(1 + αi.N₂ + γN₂) * ((T∞ - Tz) / (T∞ - Tx)) ^ γN₂
         ρO₂  = ρ₁₂₅_O₂ * (Tx / Tz)^(1 + αi.O₂ + γO₂) * ((T∞ - Tz) / (T∞ - Tx)) ^ γO₂
@@ -510,8 +468,7 @@ function jr1971(
         ρAr  = ρ₁₂₅_Ar * (Tx / Tz)^(1 + αi.Ar + γAr) * ((T∞ - Tz) / (T∞ - Tx)) ^ γAr
         ρHe  = ρ₁₂₅_He * (Tx / Tz)^(1 + αi.He + γHe) * ((T∞ - Tz) / (T∞ - Tx)) ^ γHe
 
-        # Correction of seasonal variations of helium by latitude, Eq. 4-101 [3]
-        # ----------------------------------------------------------------------------------
+        # -- Correction of Seasonal Variations of Helium by Latitude, Eq. 4-101 [3] --------
 
         Δlog₁₀ρ_He = 0.65 / deg2rad(23.439291) * abs(δs) * (
             sin(π / 4 - ϕ_gd * δs / (2abs(δs)))^3 - 0.35355
@@ -519,8 +476,7 @@ function jr1971(
 
         ρHe *= 10^(Δlog₁₀ρ_He)
 
-        # For altitude higher than 500 km, we must account for H
-        # ----------------------------------------------------------------------------------
+        # -- For Altitude Higher than 500 km, We Must Account for H ------------------------
 
         ρH = 0.0
 
@@ -554,7 +510,7 @@ function jr1971(
 end
 
 ############################################################################################
-#                                    Private Functions
+#                                    Private Functions                                     #
 ############################################################################################
 
 #   _jr1971_mean_molecular_mass(z::Number) -> Float64
@@ -608,14 +564,12 @@ function _jr1971_temperature(z::Number, Tx::Number, T∞::Number)
     z₁ = _JR1971_CONSTANTS.z₁
     zx = _JR1971_CONSTANTS.zx
 
-    # Check the parameters
-    # ======================================================================================
+    # == Check the Parameters ==============================================================
 
     (z  < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
     (T∞ < 0 ) && throw(ArgumentError("The exospheric temperature must be positive."))
 
-    # Compute the temperature at desire altitude
-    # ======================================================================================
+    # == Compute the Temperature at Desire Altitude ========================================
 
     if z <= zx
         Ca = _JR1971_CONSTANTS.Ca
