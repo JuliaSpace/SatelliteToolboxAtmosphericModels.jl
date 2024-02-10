@@ -12,7 +12,7 @@ Version 0.1.2
   to have a type parameter to indicate whether the AP is a vector or number. This approach
   slightly increased the compile time, but reduced one allocation.
 - ![Enhancement][badge-enhancement] The user can now call NRLMSISE-00 model without any
-  allocations, which increase the performance by roughly 20%.
+  allocations, which increases the performance by roughly 20%.
 
 Version 0.1.1
 -------------
