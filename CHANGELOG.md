@@ -1,6 +1,19 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 0.1.2
+-------------
+
+- ![Bugfix][badge-bugfix] In certain conditions, the JR1971 model would generate an array
+  index that was not an integer. This bug is now fixed.
+- ![Feature][badge-feature] NRLMSISE-00 can receive a matrix to call the in-place function
+  that computes the Legendre associated functions, reducing the allocations.
+- ![Enhancement][badge-enhancement] The internal structure of NRLMSISE-00 model was changed
+  to have a type parameter to indicate whether the AP is a vector or number. This approach
+  slightly increased the compile time, but reduced one allocation.
+- ![Enhancement][badge-enhancement] The user can now call NRLMSISE-00 model without any
+  allocations, which increase the performance by roughly 20%.
+
 Version 0.1.1
 -------------
 
