@@ -233,23 +233,11 @@ function nrlmsise00(
     λ::Number,
     F10ₐ::Number,
     F10::Number,
-    ap::Union{Number, AbstractVector};
+    ap::T_AP;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, Matrix} = nothing
-)
-    # == Create the NRLMSISE00 Flags =======================================================
-
-    use_ap_array = ap isa AbstractVector
-
-    if !use_ap_array
-        ap_number = ap
-        ap_vector = Float64[]
-    else
-        ap_number = 0.0
-        ap_vector = ap
-    end
-
+) where T_AP<:Union{Number, AbstractVector}
     # == Compute Auxiliary Variables =======================================================
 
     # Convert the Julian Day to Date.
@@ -299,7 +287,7 @@ function nrlmsise00(
 
     # == Create the NRLMSISE00 Structure ===================================================
 
-    nrlmsise00d = Nrlmsise00Structure{Float64}(
+    nrlmsise00d = Nrlmsise00Structure{Float64, T_AP}(
         Y,
         doy,
         Δds,
@@ -309,9 +297,7 @@ function nrlmsise00(
         lst,
         F10ₐ,
         F10,
-        ap_number,
-        ap_vector,
-        use_ap_array,
+        ap,
         flags,
         r_lat,
         g_lat,
@@ -636,26 +622,24 @@ structure `nrlmsise00`.
 function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number
     # == Unpack NRLMSISE00 Structure =======================================================
 
-    ap           = nrlmsise00d.ap
-    ap_array     = nrlmsise00d.ap_array
-    apdf         = nrlmsise00d.apdf
-    apt          = nrlmsise00d.apt
-    c2tloc       = nrlmsise00d.c2tloc
-    c3tloc       = nrlmsise00d.c3tloc
-    ctloc        = nrlmsise00d.ctloc
-    df           = nrlmsise00d.df
-    dfa          = nrlmsise00d.dfa
-    doy          = nrlmsise00d.doy
-    flags        = nrlmsise00d.flags
-    lst          = nrlmsise00d.lst
-    plg          = nrlmsise00d.plg
-    s2tloc       = nrlmsise00d.s2tloc
-    s3tloc       = nrlmsise00d.s3tloc
-    sec          = nrlmsise00d.sec
-    stloc        = nrlmsise00d.stloc
-    use_ap_array = nrlmsise00d.use_ap_array
-    λ            = nrlmsise00d.λ
-    ϕ_gd         = nrlmsise00d.ϕ_gd
+    ap     = nrlmsise00d.ap
+    apdf   = nrlmsise00d.apdf
+    apt    = nrlmsise00d.apt
+    c2tloc = nrlmsise00d.c2tloc
+    c3tloc = nrlmsise00d.c3tloc
+    ctloc  = nrlmsise00d.ctloc
+    df     = nrlmsise00d.df
+    dfa    = nrlmsise00d.dfa
+    doy    = nrlmsise00d.doy
+    flags  = nrlmsise00d.flags
+    lst    = nrlmsise00d.lst
+    plg    = nrlmsise00d.plg
+    s2tloc = nrlmsise00d.s2tloc
+    s3tloc = nrlmsise00d.s3tloc
+    sec    = nrlmsise00d.sec
+    stloc  = nrlmsise00d.stloc
+    λ      = nrlmsise00d.λ
+    ϕ_gd   = nrlmsise00d.ϕ_gd
 
     # == Initialization of Variables =======================================================
 
@@ -743,9 +727,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
 
     # == Magnetic Activity Based on Daily AP ===============================================
 
-    if use_ap_array
-        ap = ap_array
-
+    if ap isa AbstractVector
         if p[52] != 0
             exp1 = min(exp(-10800 * abs(p[52]) / (1 + p[139] * (45 - abs(ϕ_gd)))), 0.99999)
 
@@ -824,7 +806,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
         # == UT, Longitude Magnetic Activity ===============================================
 
         if flags.mixed_ap_ut_long
-            if use_ap_array
+            if ap isa AbstractVector
                 if p[52] != 0
 
                     k₁ = p[53]  * plg[2, 3] + p[99]  * plg[2, 5] + p[68]  * plg[2, 7]
@@ -889,20 +871,20 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
 
     # == Unpack NRLMSISE00 Structure =======================================================
 
-    apdf         = nrlmsise00d.apdf
-    apt          = nrlmsise00d.apt
-    c2tloc       = nrlmsise00d.c2tloc
-    c3tloc       = nrlmsise00d.c3tloc
-    ctloc        = nrlmsise00d.ctloc
-    dfa          = nrlmsise00d.dfa
-    doy          = nrlmsise00d.doy
-    flags        = nrlmsise00d.flags
-    plg          = nrlmsise00d.plg
-    s2tloc       = nrlmsise00d.s2tloc
-    s3tloc       = nrlmsise00d.s3tloc
-    stloc        = nrlmsise00d.stloc
-    use_ap_array = nrlmsise00d.use_ap_array
-    λ            = nrlmsise00d.λ
+    ap     = nrlmsise00d.ap
+    apdf   = nrlmsise00d.apdf
+    apt    = nrlmsise00d.apt
+    c2tloc = nrlmsise00d.c2tloc
+    c3tloc = nrlmsise00d.c3tloc
+    ctloc  = nrlmsise00d.ctloc
+    dfa    = nrlmsise00d.dfa
+    doy    = nrlmsise00d.doy
+    flags  = nrlmsise00d.flags
+    plg    = nrlmsise00d.plg
+    s2tloc = nrlmsise00d.s2tloc
+    s3tloc = nrlmsise00d.s3tloc
+    stloc  = nrlmsise00d.stloc
+    λ      = nrlmsise00d.λ
 
     # == Initialization of Variables =======================================================
 
@@ -985,8 +967,8 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
     # == Magnetic Activity =================================================================
 
     if flags.daily_ap
-        if use_ap_array
             t₉ = p[51] * apt + p[97] * plg[1, 3] * apt * flags.time_independent
+        if ap isa AbstractVector
         else
             t₉ = apdf * (p[33] + p[46] * plg[1, 3] * flags.time_independent)
         end

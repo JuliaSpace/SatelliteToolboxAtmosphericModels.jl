@@ -68,7 +68,7 @@ end
 
 Structure with the configuration parameters for NRLMSISE-00 model.
 """
-mutable struct Nrlmsise00Structure{T<:Number}
+mutable struct Nrlmsise00Structure{T<:Number, T_AP<:Union{Number, AbstractVector}}
     # == Inputs ============================================================================
 
     year::Int
@@ -80,9 +80,7 @@ mutable struct Nrlmsise00Structure{T<:Number}
     lst::T
     F10ₐ::T
     F10::T
-    ap::T
-    ap_array::Vector{T}
-    use_ap_array::Bool
+    ap::T_AP
     flags::Nrlmsise00Flags
 
     # == Auxiliary Variables to Improve Code Performance ===================================
