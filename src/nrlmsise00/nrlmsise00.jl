@@ -323,7 +323,9 @@ function nrlmsise00(
     )
 
     # Call the NRLMSISE-00 model.
-    nrlmsise00_out = include_anomalous_oxygen ? _gtd7d!(nrlmsise00d) : _gtd7!(nrlmsise00d)
+    ~, nrlmsise00_out = include_anomalous_oxygen ?
+        _gtd7d(nrlmsise00d) :
+        _gtd7(nrlmsise00d)
 
     return nrlmsise00_out
 end
@@ -615,7 +617,7 @@ function _densu(
 end
 
 """
-    _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number -> T
+    _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number -> Nrlmsise00Structure{T}, T
 
 Compute the function `G(L)` with upper thermosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00`.
@@ -623,8 +625,13 @@ structure `nrlmsise00`.
 !!! note
     The variables `apt` and `apdf` inside `nrlmsise00d` can be modified inside this
     function.
+
+# Returns
+
+- `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
+- `T`: Result of `G(L)`.
 """
-function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number
+function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number
     # == Unpack NRLMSISE00 Structure =======================================================
 
     ap     = nrlmsise00d.ap
@@ -843,8 +850,8 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
     end
 
     # Update the NRLMSISE-00 structure.
-    nrlmsise00d.apt  = apt
-    nrlmsise00d.apdf = apdf
+    @reset nrlmsise00d.apt  = apt
+    @reset nrlmsise00d.apdf = apdf
 
     # Parameters not used: 82, 89, 99, 139-149.
     tinf = p[31] +
@@ -863,7 +870,7 @@ function _globe7!(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) whe
            flags.mixed_ap_ut_long    * t₁₃ +
            flags.terdiurnal          * t₁₄
 
-    return tinf
+    return nrlmsise00d, tinf
 end
 
 """
@@ -1017,16 +1024,17 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
 end
 
 """
-    _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Output{T}
+    _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
 
 Compute the temperatures and densities using the information inside the structure
 `nrlmsise00d` without including the anomalous oxygen in the total density.
 
 # Returns
 
+- `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
 - `Nrlmsise00Output{T}`: Structure with the output information.
 """
-function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
+function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # == Constants =========================================================================
 
@@ -1066,11 +1074,11 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == Thermosphere / Mesosphere (above _ZN2[1]) =========================================
 
     if h < _ZN2[begin]
-        nrlmsise00d.h = T(_ZN2[begin])
+        @reset nrlmsise00d.h = T(_ZN2[begin])
     end
 
-    out_thermo = _gts7!(nrlmsise00d)
-    nrlmsise00d.h = h
+    nrlmsise00d, out_thermo = _gts7(nrlmsise00d)
+    @reset nrlmsise00d.h = h
 
     # Unpack the values again because `gts7` may have modified `nrlmsise00d`.
     meso_tn1_5  = nrlmsise00d.meso_tn1_5
@@ -1078,7 +1086,7 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     dm28        = nrlmsise00d.dm28
 
     # If we are above `_ZN2[1]`, then we do not need to compute anything else.
-    h >= _ZN2[begin] && return out_thermo
+    h >= _ZN2[begin] && return nrlmsise00d, out_thermo
 
     # Unpack the output values from the thermospheric portion.
     total_density          = out_thermo.total_density
@@ -1217,22 +1225,23 @@ function _gtd7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         Ar_number_density
     )
 
-    return nrlmsise00_out
+    return nrlmsise00d, nrlmsise00_out
 end
 
 """
-    _gtd7d!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Output{T}
+    _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
 
 Compute the temperatures and densities using the information inside the structure
 `nrlmsise00d` including the anomalous oxygen in the total density.
 
 # Returns
 
+- `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
 - `Nrlmsise00Output{T}`: Structure with the output information.
 """
-function _gtd7d!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
+function _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # Call `_gt7d!` to compute the NRLMSISE-00 outputs.
-    out = _gtd7!(nrlmsise00d)
+    nrlmsise00d, out = _gtd7(nrlmsise00d)
 
     # Update the computation of the total mass density.
     total_density = 1.66e-24 * (
@@ -1264,11 +1273,11 @@ function _gtd7d!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         out.Ar_number_density
     )
 
-    return nrlmsise00_out
+    return nrlmsise00d, nrlmsise00_out
 end
 
 """
-    _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Output{T}
+    _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
 
 Compute the temperatures and densities using the information inside the structure
 `nrlmsise00d` and including the anomalous oxygen in the total density for altitudes higher
@@ -1276,9 +1285,10 @@ than 72.5 km (thermospheric portion of NRLMSISE-00).
 
 # Returns
 
+- `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
 - `Nrlmsise00Output{T}`: Structure with the output information.
 """
-function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
+function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # == Constants =========================================================================
 
@@ -1335,19 +1345,26 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # == Tinf variations not important below `za` or `zn1[1]` ==============================
 
-    tinf = (h > _ZN1[1]) ?
-        ptm[1] * pt[1] * (1 + flags.all_tinf_var * _globe7!(nrlmsise00d, pt)) :
-        ptm[1] * pt[1]
+    if h > _ZN1[1]
+        nrlmsise00d, G_L = _globe7(nrlmsise00d, pt)
+        tinf = ptm[1] * pt[1] * (1 + flags.all_tinf_var * G_L)
+    else
+        tinf = ptm[1] * pt[1]
+    end
 
     exospheric_temperature = tinf
 
     # == Gradient variations not important below `zn1[5]` ==================================
 
-    g0 = (h > _ZN1[5]) ?
-        ptm[4] * ps[1] * (1 + flags.all_s_var * _globe7!(nrlmsise00d, ps)) :
-        ptm[4] * ps[1]
+    if h > _ZN1[5]
+        nrlmsise00d, G_L = _globe7(nrlmsise00d, ps)
+        g0 = ptm[4] * ps[1] * (1 + flags.all_s_var * G_L)
+    else
+        g0 = ptm[4] * ps[1]
+    end
 
-    tlb = ptm[2] * (1 + flags.all_tlb_var * _globe7!(nrlmsise00d, pd_TLB)) * pd_TLB[1]
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_TLB)
+    tlb = ptm[2] * (1 + flags.all_tlb_var * G_L) * pd_TLB[1]
     s   = g0 / (tinf - tlb)
 
     # Lower thermosphere temperature variations not significant for density above 300 km.
@@ -1369,7 +1386,8 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     end
 
     # N2 variation factor at Zlb.
-    g28 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_N2)
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_N2)
+    g28 = flags.all_nlb_var * G_L
 
     # == Variation of Turbopause Height ====================================================
 
@@ -1444,7 +1462,8 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == He Density ========================================================================
 
     # Density variation factor at Zlb.
-    g4 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_He)
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_He)
+    g4 = flags.all_nlb_var * G_L
 
     # Diffusive density at Zlb.
     db04 = pdm_1[1] * exp(g4) * pd_He[1]
@@ -1518,7 +1537,8 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == O Density =========================================================================
 
     # Density variation factor at Zlb.
-    g16 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_O)
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_O)
+    g16 = flags.all_nlb_var * G_L
 
     #  Diffusive density at Zlb.
     db16 = pdm_2[1] * exp(g16) * pd_O[1]
@@ -1597,7 +1617,8 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == O₂ Density ========================================================================
 
     # Density variation factor at Zlb.
-    g32 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_O2)
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_O2)
+    g32 = flags.all_nlb_var * G_L
 
     # Diffusive density at Zlb.
     db32 = pdm_4[1] * exp(g32) * pd_O2[1]
@@ -1680,7 +1701,8 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == Ar Density ========================================================================
 
     # Density variation factor at Zlb.
-    g40 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_Ar)
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_Ar)
+    g40 = flags.all_nlb_var * G_L
 
     # Diffusive density at Zlb.
     db40 = pdm_5[1] * exp(g40) * pd_Ar[1]
@@ -1754,7 +1776,8 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == H Density =========================================================================
 
     # Density variation factor at Zlb.
-    g1 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_H)
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_H)
+    g1 = flags.all_nlb_var * G_L
 
     # Diffusive density at Zlb.
     db01 = pdm_6[1] * exp(g1) * pd_H[1]
@@ -1834,7 +1857,8 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == N Density =========================================================================
 
     # Density variation factor at Zlb.
-    g14 = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_N)
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_N)
+    g14 = flags.all_nlb_var * G_L
 
     # Diffusive density at Zlb.
     db14 = pdm_7[1] * exp(g14) * pd_N[1]
@@ -1913,7 +1937,8 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # == Anomalous O Density ===============================================================
 
-    g16h  = flags.all_nlb_var * _globe7!(nrlmsise00d, pd_hotO)
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_hotO)
+    g16h  = flags.all_nlb_var * G_L
     db16h = pdm_8[1] * exp(g16h) * pd_hotO[1]
     tho   = pdm_8[10] * pdl_1[7]
 
@@ -1981,9 +2006,9 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     Ar_number_density *= T(1e6)
 
     # Repack variables that were modified.
-    nrlmsise00d.meso_tn1_5  = meso_tn1[5]
-    nrlmsise00d.meso_tgn1_2 = meso_tgn1[2]
-    nrlmsise00d.dm28        = dm28
+    @reset nrlmsise00d.meso_tn1_5  = meso_tn1[5]
+    @reset nrlmsise00d.meso_tgn1_2 = meso_tgn1[2]
+    @reset nrlmsise00d.dm28        = dm28
 
     # Create output structure and return.
     nrlmsise00_out = Nrlmsise00Output{T}(
@@ -2000,5 +2025,5 @@ function _gts7!(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         Ar_number_density
     )
 
-    return nrlmsise00_out
+    return nrlmsise00d, nrlmsise00_out
 end

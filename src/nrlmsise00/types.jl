@@ -64,11 +64,13 @@ Base.@kwdef struct Nrlmsise00Flags
 end
 
 """
-    mutable struct Nrlmsise00Structure{T<:Number}
+    struct Nrlmsise00Structure{T<:Number, T_AP<:Union{Number, AbstractVector}}
 
-Structure with the configuration parameters for NRLMSISE-00 model.
+Structure with the configuration parameters for NRLMSISE-00 model. `T` is the
+floating-number type and `T_AP` is the type of the AP information, which can be a `Number`
+or `AbstractVector`.
 """
-mutable struct Nrlmsise00Structure{T<:Number, T_AP<:Union{Number, AbstractVector}}
+struct Nrlmsise00Structure{T<:Number, T_AP<:Union{Number, AbstractVector}}
     # == Inputs ============================================================================
 
     year::Int
