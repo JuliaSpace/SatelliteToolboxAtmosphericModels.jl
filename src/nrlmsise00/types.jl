@@ -89,7 +89,7 @@ mutable struct Nrlmsise00Structure{T<:Number, T_AP<:Union{Number, AbstractVector
     g_lat::T
     df::T
     dfa::T
-    plg::Matrix{T}
+    plg::Adjoint{T, Matrix{T}}
     ctloc::T
     stloc::T
     c2tloc::T

@@ -42,7 +42,7 @@ The following keywords are available:
 - `include_anomalous_oxygen::Bool`: If `true`, the anomalous oxygen density will be included
     in the total density computation. (**Default** = `true`)
 - `P::Union{Nothing, Matrix}`: If the user passes a matrix with dimensions equal to or
-    greater than 9 × 9, it will be used when computing the Legendre associated functions,
+    greater than 8 × 4, it will be used when computing the Legendre associated functions,
     reducing allocations and improving the performance. If it is `nothing`, the matrix is
     allocated inside the function. (**Default** `nothing`)
 

@@ -474,7 +474,7 @@ end
     F10ₐ    = 80
     ap      = 7
     instant = date_to_jd(year, month, day, hour, minute, second) |> julian2datetime
-    P       = zeros(9, 9)
+    P       = zeros(8, 4)
 
     for i in 1:size(expected, 1)
         # Initialize `P` to check if it is used inside `nrlmsise00`.
@@ -547,7 +547,7 @@ end
 @testset "Errors" begin
     # == Wrong Size in Matrix `P` ==========================================================
 
-    P = zeros(9, 8)
+    P = zeros(8, 3)
     @test_throws ArgumentError AtmosphericModels.nrlmsise00(
         now() |> datetime2julian,
         100e3,
@@ -559,7 +559,7 @@ end
         P = P
     )
 
-    P = zeros(8, 9)
+    P = zeros(7, 4)
     @test_throws ArgumentError AtmosphericModels.nrlmsise00(
         now() |> datetime2julian,
         100e3,
@@ -571,7 +571,7 @@ end
         P = P
     )
 
-    P = zeros(8, 8)
+    P = zeros(7, 3)
     @test_throws ArgumentError AtmosphericModels.nrlmsise00(
         now() |> datetime2julian,
         100e3,
