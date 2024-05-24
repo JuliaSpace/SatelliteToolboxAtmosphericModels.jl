@@ -7,8 +7,8 @@
 function show(io::IO, out::JR1971Output)
     # Check for color support in the `io`.
     color = get(io, :color, false)
-    b = color ? string(_B) : ""
-    d = color ? string(_D) : ""
+    b = color ? _B : ""
+    d = color ? _D : ""
 
     print(io, "$(b)JR1971 output$(d) (ρ = ", @sprintf("%g", out.total_density), " kg / m³)")
     return nothing
@@ -17,8 +17,8 @@ end
 function show(io::IO, mime::MIME"text/plain", out::JR1971Output)
     # Check for color support in the `io`.
     color = get(io, :color, false)
-    b = color ? string(_B) : ""
-    d = color ? string(_D) : ""
+    b = color ? _B : ""
+    d = color ? _D : ""
 
     str_total_density   = @sprintf("%15g", out.total_density)
     str_temperature     = @sprintf("%15.2f", out.temperature)
