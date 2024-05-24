@@ -1,15 +1,15 @@
 ## Description #############################################################################
 #
-#   The Jacchia-Bowman 2008 Atmospheric Model, a product of the Space Environment
-#   Technologies.
+# The Jacchia-Bowman 2008 Atmospheric Model, a product of the Space Environment
+# Technologies.
 #
-#   The source code is available at the following git:
+# The source code is available at the following git:
 #
-#       http://sol.spacenvironment.net/jb2008/code.html
+#     http://sol.spacenvironment.net/jb2008/code.html
 #
-#   For more information about the model, see:
+# For more information about the model, see:
 #
-#       http://sol.spacenvironment.net/~JB2008/
+#     http://sol.spacenvironment.net/~JB2008/
 #
 ## References ##############################################################################
 #
