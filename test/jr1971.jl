@@ -115,8 +115,8 @@
     ] * 1000
 
     for i in 1:length(h)
-        ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i], F10, F10ₐ, Kp)
-        @test ret.total_density ≈ results[i] rtol = 5e-4
+        ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
+        @test ret.total_density ≈ results[i - 1 + begin] rtol = 5e-4
     end
 
     # == Scenario 02 =======================================================================
@@ -137,8 +137,8 @@
     ] * 1000
 
     for i in 1:length(h)
-        ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i], F10, F10ₐ, Kp)
-        @test ret.total_density ≈ results[i] rtol = 5e-4
+        ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
+        @test ret.total_density ≈ results[i - 1 + begin] rtol = 5e-4
     end
 
     # == Scenario 03 =======================================================================
@@ -159,8 +159,8 @@
     ] * 1000
 
     for i in 1:length(h)
-        ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i], F10, F10ₐ, Kp)
-        @test ret.total_density ≈ results[i] rtol = 5e-4
+        ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
+        @test ret.total_density ≈ results[i - 1 + begin] rtol = 5e-4
     end
 end
 
@@ -195,17 +195,17 @@ end
     expected = AtmosphericModels.jr1971.(instant, ϕ_gd, λ, h, F10, F10ₐ, Kp)
 
     for k in 1:length(h)
-        result = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[k])
+        result = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[k - 1 + begin])
 
-        @test result.total_density          ≈ expected[k].total_density
-        @test result.temperature            ≈ expected[k].temperature
-        @test result.exospheric_temperature ≈ expected[k].exospheric_temperature
-        @test result.N2_number_density      ≈ expected[k].N2_number_density
-        @test result.O2_number_density      ≈ expected[k].O2_number_density
-        @test result.O_number_density       ≈ expected[k].O_number_density
-        @test result.Ar_number_density      ≈ expected[k].Ar_number_density
-        @test result.He_number_density      ≈ expected[k].He_number_density
-        @test result.H_number_density       ≈ expected[k].H_number_density
+        @test result.total_density          ≈ expected[k - 1 + begin].total_density
+        @test result.temperature            ≈ expected[k - 1 + begin].temperature
+        @test result.exospheric_temperature ≈ expected[k - 1 + begin].exospheric_temperature
+        @test result.N2_number_density      ≈ expected[k - 1 + begin].N2_number_density
+        @test result.O2_number_density      ≈ expected[k - 1 + begin].O2_number_density
+        @test result.O_number_density       ≈ expected[k - 1 + begin].O_number_density
+        @test result.Ar_number_density      ≈ expected[k - 1 + begin].Ar_number_density
+        @test result.He_number_density      ≈ expected[k - 1 + begin].He_number_density
+        @test result.H_number_density       ≈ expected[k - 1 + begin].H_number_density
     end
 end
 

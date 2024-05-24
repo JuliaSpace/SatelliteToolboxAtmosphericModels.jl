@@ -143,7 +143,7 @@
     ap      = 7
     instant = date_to_jd(year, month, day, hour, minute, second) |> julian2datetime
 
-    for i in 1:size(expected, 1)
+    for i in axes(expected, 1)
         # Run the NRLMSISE-00 model wih the input parameters.
         out = AtmosphericModels.nrlmsise00(
             instant,
@@ -240,7 +240,7 @@
     #   https://ccmc.gsfc.nasa.gov/pub/modelweb/atmospheric/msis/msise90/
     #
 
-    for i in 1:size(expected, 1)
+    for i in axes(expected, 1)
         F10  = expected[i, 13]
         F10ₐ = expected[i, 14]
         ap_a = expected[i, 15:21]
@@ -389,7 +389,7 @@ end
         1000.0  1.762E+04  1.480E+00  2.504E-03 2.653E-18 1036.9  1037  3.168E+05  1.135E-07  4.005E+04  6.346E+02  5.377E+03  159.5  153.6   13.8   12.0    7.0   15.0    9.0   15.9   28.6
     ]
 
-    for i in 1:size(expected, 1)
+    for i in axes(expected, 1)
         # Run the NRLMSISE-00 model wih the input parameters.
         out = AtmosphericModels.nrlmsise00(
             DateTime("2023-01-01T10:00:00"),
@@ -476,7 +476,7 @@ end
     instant = date_to_jd(year, month, day, hour, minute, second) |> julian2datetime
     P       = zeros(8, 4)
 
-    for i in 1:size(expected, 1)
+    for i in axes(expected, 1)
         # Initialize `P` to check if it is used inside `nrlmsise00`.
         P .= 0.0
 
