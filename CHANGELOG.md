@@ -1,6 +1,12 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 0.1.3
+-------------
+
+- ![Enhancement][badge-enhancement] Minor source-code updates.
+- ![Enhancement][badge-enhancement] Documentation updates.
+
 Version 0.1.2
 -------------
 
