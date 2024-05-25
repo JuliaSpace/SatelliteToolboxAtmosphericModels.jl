@@ -20,12 +20,16 @@ SpaceIndices = "5a540a4e-639f-452a-b107-23ea09ed4d36"
 [compat]
 Accessors = "0.1"
 Crayons = "4"
+DelimitedFiles = "1.6"
+LinearAlgebra = "1.6"
 PolynomialRoots = "1"
+Printf = "1.6"
 Reexport = "1"
 SatelliteToolboxBase = "0.2, 0.3"
 SatelliteToolboxCelestialBodies = "0.1"
 SatelliteToolboxLegendre = "1"
 SpaceIndices = "1"
+Test = "1.6"
 julia = "1.6"
 
 [extras]
