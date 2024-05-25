@@ -25,7 +25,7 @@ function _spline_∫(
     x::NTuple{N, T},
     y::NTuple{N, T},
     ∂²y::NTuple{N, T},
-    xf::Number
+    xf::T
 ) where {N, T<:Number}
 
     int = T(0)
