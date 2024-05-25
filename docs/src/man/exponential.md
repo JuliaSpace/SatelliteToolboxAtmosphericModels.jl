@@ -1,11 +1,14 @@
-Exponential Atmospheric Model
-=============================
+# Exponential Atmospheric Model
 
 ```@meta
 CurrentModule = SatelliteToolboxAtmosphericModels
 DocTestSetup = quote
     using SatelliteToolboxAtmosphericModels
 end
+```
+
+```@setup exp
+using SatelliteToolboxAtmosphericModels
 ```
 
 This model assumes we can compute the atmospheric density by:
@@ -21,21 +24,21 @@ obtained after evaluation of some accurate models.
 In this package, we can compute the model using the following function:
 
 ```julia
-function AtmosphericModels.exponential(h::T) where T<:Number
+AtmosphericModels.exponential(h::T) where T<:Number -> Float64
 ```
 
 where `h` is the desired height [m].
 
 !!! warning
+
     Notice that this model does not consider important effects such as the Sun activity, the
     geomagnetic activity, the local time at the desired location, and others. Hence,
     although this can be used for fast evaluations, the accuracy is not good.
 
 ## Examples
 
-```jldoctest
-julia> AtmosphericModels.exponential(700e3)
-3.614e-14
+```@repl exp
+AtmosphericModels.exponential(700e3)
 ```
 
 ## References

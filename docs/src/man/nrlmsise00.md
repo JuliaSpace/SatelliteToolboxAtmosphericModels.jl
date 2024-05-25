@@ -1,11 +1,11 @@
-NRLMSISE-00
-===========
+# NRLMSISE-00
 
 ```@meta
 CurrentModule = SatelliteToolboxAtmosphericModels
-DocTestSetup = quote
-    using SatelliteToolboxAtmosphericModels
-end
+```
+
+```@setup nrlmsise00
+using SatelliteToolboxAtmosphericModels
 ```
 
 The NRLMSISE-00 empirical atmosphere model was developed by Mike Picone, Alan Hedin, and
@@ -19,8 +19,8 @@ Doug Drob based on the MSISE90 model:
 In this package, we can compute this model using the following functions:
 
 ```julia
-function AtmosphericModels.nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...)
-function AtmosphericModels.nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...)
+AtmosphericModels.nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
+AtmosphericModels.nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
 ```
 
 where
@@ -38,13 +38,16 @@ where
 The following keywords are available:
 
 - `flags::Nrlmsise00Flags`: A list of flags to configure the model. For more information,
-    see [`AtmosphericModels.Nrlmsise00Flags`](@ref). (**Default** = `Nrlmsise00Flags()`)
+    see [`AtmosphericModels.Nrlmsise00Flags`](@ref).
+    (**Default** = `Nrlmsise00Flags()`)
 - `include_anomalous_oxygen::Bool`: If `true`, the anomalous oxygen density will be included
-    in the total density computation. (**Default** = `true`)
+    in the total density computation.
+    (**Default** = `true`)
 - `P::Union{Nothing, Matrix}`: If the user passes a matrix with dimensions equal to or
     greater than 8 × 4, it will be used when computing the Legendre associated functions,
     reducing allocations and improving the performance. If it is `nothing`, the matrix is
-    allocated inside the function. (**Default** `nothing`)
+    allocated inside the function.
+    (**Default** `nothing`)
 
 If we omit all space indices, the system tries to obtain them automatically for the selected
 day `jd` or `instant`. However, the indices must be already initialized using the function
@@ -86,63 +89,32 @@ If `ap` is an `AbstractVector`, it must be a vector with 7 dimensions as describ
 
 ## Examples
 
-```jldoctest
-julia> AtmosphericModels.nrlmsise00(DateTime("2018-06-19T18:35:00"), 700e3, deg2rad(-22), deg2rad(-45), 73.5, 79, 5.13)
-NRLMSISE-00 Atmospheric Model Result:
-          Total density :    7.93093e-15  kg / m³
-            Temperature :         837.41  K
-       Exospheric Temp. :         837.41  K
-      N  number density :    5.59783e+09  1 / m³
-      N₂ number density :    5.74331e+07  1 / m³
-      O  number density :    1.27057e+11  1 / m³
-  Anomalous O num. den. :    2.41856e+09  1 / m³
-      O₂ number density :         340465  1 / m³
-      Ar number density :        23.1846  1 / m³
-      He number density :     6.2485e+11  1 / m³
-      H  number density :    1.26678e+11  1 / m³
+```@repl nrlmsise00
+AtmosphericModels.nrlmsise00(
+    DateTime("2018-06-19T18:35:00"),
+    700e3,
+    deg2rad(-22),
+    deg2rad(-45),
+    73.5,
+    79,
+    5.13
+)
 ```
 
-```julia-repl
-julia> SpaceIndices.init()
+```@repl nrlmsise00
+SpaceIndices.init()
 
-julia> AtmosphericModels.nrlmsise00(DateTime("2018-06-19T18:35:00"), 700e3, deg2rad(-22), deg2rad(-45))
-NRLMSISE-00 Atmospheric Model Result:
-          Total density :    7.58619e-15  kg / m³
-            Temperature :         830.21  K
-       Exospheric Temp. :         830.21  K
-      N  number density :    5.10902e+09  1 / m³
-      N₂ number density :    4.94603e+07  1 / m³
-      O  number density :    1.16741e+11  1 / m³
-  Anomalous O num. den. :    2.41614e+09  1 / m³
-      O₂ number density :         287502  1 / m³
-      Ar number density :        18.6967  1 / m³
-      He number density :    6.15464e+11  1 / m³
-      H  number density :    1.28711e+11  1 / m³
+AtmosphericModels.nrlmsise00(DateTime("2018-06-19T18:35:00"), 700e3, deg2rad(-22), deg2rad(-45))
 ```
 
 If we use the automatic space index fetching mechanism, it is possible to obtain the fetched
 values by turning on the debugging logs according to the [Julia
 documentation](https://docs.julialang.org/en/v1/stdlib/Logging/):
 
-```julia-repl
-julia> with_logger(ConsoleLogger(stderr, Logging.Debug)) do
-           AtmosphericModels.nrlmsise00(DateTime("2018-06-19T18:35:00"), 700e3, deg2rad(-22), deg2rad(-45))
-       end
-┌ Debug: NRLMSISE00 - Fetched Space Indices
-│   Daily F10.7           : 76.1 sfu
-│   89-day avareged F10.7 : 73.18444444444442 sfu
-│   Ap                    : 5.125
-└ @ SatelliteToolboxAtmosphericModels.AtmosphericModels ~/tmp/SatelliteToolboxAtmosphericModels.jl/src/nrlmsise00/nrlmsise00.jl:180
-NRLMSISE-00 Atmospheric Model Result:
-          Total density :    7.58619e-15  kg / m³
-            Temperature :         830.21  K
-       Exospheric Temp. :         830.21  K
-      N  number density :    5.10902e+09  1 / m³
-      N₂ number density :    4.94603e+07  1 / m³
-      O  number density :    1.16741e+11  1 / m³
-  Anomalous O num. den. :    2.41614e+09  1 / m³
-      O₂ number density :         287502  1 / m³
-      Ar number density :        18.6967  1 / m³
-      He number density :    6.15464e+11  1 / m³
-      H  number density :    1.28711e+11  1 / m³
+```@repl nrlmsise00
+using Logging
+
+with_logger(ConsoleLogger(stderr, Logging.Debug)) do
+    AtmosphericModels.nrlmsise00(DateTime("2018-06-19T18:35:00"), 700e3, deg2rad(-22), deg2rad(-45))
+end
 ```

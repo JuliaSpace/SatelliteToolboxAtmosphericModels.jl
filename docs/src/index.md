@@ -1,5 +1,4 @@
-SatelliteToolboxAtmosphericModels.jl
-====================================
+# SatelliteToolboxAtmosphericModels.jl
 
 This package implements atmospheric models for the **SatelliteToolbox.jl** ecosystem.
 Currently, the following models are available:
