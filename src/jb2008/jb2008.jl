@@ -117,20 +117,23 @@ function jb2008(
 end
 
 function jb2008(
-    jd::Number,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number,
-    F10::Number,
-    F10ₐ::Number,
-    S10::Number,
-    S10ₐ::Number,
-    M10::Number,
-    M10ₐ::Number,
-    Y10::Number,
-    Y10ₐ::Number,
-    DstΔTc::Number
-)
+    jd::JT,
+    ϕ_gd::PT,
+    λ::LT,
+    h::HT,
+    F10::FT,
+    F10ₐ::FT2,
+    S10::ST,
+    S10ₐ::ST2,
+    M10::MT,
+    M10ₐ::MT2,
+    Y10::YT,
+    Y10ₐ::YT2,
+    DstΔTc::DT
+) where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, ST<:Number, ST2<:Number, MT<:Number, MT2<:Number, YT<:Number, YT2<:Number, DT<:Number}
+    
+    RT = promote_type(JT, PT, LT, HT, FT, FT2, ST, ST2, MT, MT2, YT, YT2, DT)
+
     ########################################################################################
     #                                      Constants                                       #
     ########################################################################################
@@ -502,7 +505,7 @@ function jb2008(
     ρ   = sum_mn / A
 
     # Create and return the output structure.
-    return JB2008Output{Float64}(
+    return JB2008Output{RT}(
         ρ,
         Tz,
         T_exo,

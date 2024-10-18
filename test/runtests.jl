@@ -4,6 +4,9 @@ using DelimitedFiles
 using SatelliteToolboxAtmosphericModels
 using SatelliteToolboxBase
 
+using DifferentiationInterface
+import FiniteDiff, ForwardDiff
+
 @testset "Atmospheric Model Jacchia-Roberts 1971" verbose = true begin
     include("./jr1971.jl")
 end
@@ -20,4 +23,8 @@ end
 
 @testset "Exponential Atmospheric Model" verbose = true begin
     include("./exponential.jl")
+end
+
+@testset "Differentiation Tests" verbose = true begin
+    include("./differentiablity.jl")
 end

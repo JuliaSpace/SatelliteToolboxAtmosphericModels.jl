@@ -95,14 +95,17 @@ function jr1971(
 end
 
 function jr1971(
-    jd::Number,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number,
-    F10::Number,
-    F10ₐ::Number,
-    Kp::Number
-)
+    jd::JT,
+    ϕ_gd::PT,
+    λ::LT,
+    h::HT,
+    F10::FT,
+    F10ₐ::FT2,
+    Kp::KT
+)   where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, KT<:Number}
+
+    RT = promote_type(JT, PT, LT, HT, FT, FT2, KT)
+
     # == Constants =========================================================================
 
     Rstar = _JR1971_CONSTANTS.Rstar
@@ -414,7 +417,7 @@ function jr1971(
             ρ = ρN₂ + ρO₂ + ρO + ρAr + ρHe
 
             # Convert to SI and return.
-            return JR1971Output(
+            return JR1971Output{RT}(
                 1000ρ,
                 Tz,
                 T∞,
@@ -495,7 +498,7 @@ function jr1971(
         ρ = ρN₂ + ρO₂ + ρO + ρAr + ρHe + ρH
 
         # Convert to SI and return.
-        return JR1971Output(
+        return JR1971Output{RT}(
             1000ρ,
             Tz,
             T∞,
