@@ -46,11 +46,11 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 
 - `JR1971Output{Float64}`: Structure containing the results obtained from the model.
 """
-function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number)
-    return jr1971(datetime2julian(instant), ϕ_gd, λ, h)
+function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; verbose::Bool=true)
+    return jr1971(datetime2julian(instant), ϕ_gd, λ, h; verbose=verbose)
 end
 
-function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
+function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Bool=true)
     # Get the data in the desired Julian Day.
     F10  = space_index(Val(:F10obs), jd)
     F10ₐ = sum((space_index.(Val(:F10obs), k) for k in (jd - 40):(jd + 40))) / 81
@@ -72,7 +72,7 @@ function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
     id = round(Int, clamp(div(Δt, 10_800) + 1, 1, 8))
     Kp = Kp_vect[id]
 
-    @debug """
+    verbose && @debug """
     JR1971 - Fetched Space Indices
       Daily F10.7           : $(F10) sfu
       81-day averaged F10.7 : $(F10ₐ) sfu
@@ -277,7 +277,7 @@ function jr1971(
         c₂ = Ca[3] / Ca[5]
         c₃ = Ca[4] / Ca[5]
         c₄ = Ca[5] / Ca[5]
-        r₁, r₂, x, y = _jr1971_roots([c₀, c₁, c₂, c₃, c₄])
+        r₁, r₂, x, y = _jr1971_roots(SVector{5}(c₀, c₁, c₂, c₃, c₄))
 
         # -- f and k, [1. p. 371] ----------------------------------------------------------
 

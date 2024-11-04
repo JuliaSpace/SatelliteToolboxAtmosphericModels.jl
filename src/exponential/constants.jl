@@ -14,7 +14,7 @@
 
 Base altitude for the exponential atmospheric model [km].
 """
-const _EXPONENTIAL_ATMOSPHERE_H₀ = [
+const _EXPONENTIAL_ATMOSPHERE_H₀ = SVector{28}(
     0,
     25,
     30,
@@ -43,14 +43,14 @@ const _EXPONENTIAL_ATMOSPHERE_H₀ = [
     800,
     900,
     1000
-]
+)
 
 """
     const _EXPONENTIAL_ATMOSPHERE_ρ₀
 
 Nominal density for the exponential atmospheric model [kg / m³].
 """
-const _EXPONENTIAL_ATMOSPHERE_ρ₀ = [
+const _EXPONENTIAL_ATMOSPHERE_ρ₀ = SVector{28}(
     1.225,
     3.899e-2,
     1.774e-2,
@@ -79,14 +79,14 @@ const _EXPONENTIAL_ATMOSPHERE_ρ₀ = [
     1.170e-14,
     5.245e-15,
     3.019e-15
-]
+)
 
 """
     const _EXPONENTIAL_ATMOSPHERE_H
 
 Scale height for the exponential atmospheric model [km].
 """
-const _EXPONENTIAL_ATMOSPHERE_H = [
+const _EXPONENTIAL_ATMOSPHERE_H = SVector{28}(
     7.249,
     6.349,
     6.682,
@@ -115,4 +115,4 @@ const _EXPONENTIAL_ATMOSPHERE_H = [
     124.64,
     181.05,
     268.00
-]
+)

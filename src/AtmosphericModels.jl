@@ -15,6 +15,7 @@ using SpaceIndices
 using SatelliteToolboxBase
 using SatelliteToolboxCelestialBodies
 using SatelliteToolboxLegendre
+using StaticArraysCore
 
 import Base: show
 

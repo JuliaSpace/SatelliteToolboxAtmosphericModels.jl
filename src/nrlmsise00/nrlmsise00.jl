@@ -133,7 +133,8 @@ function nrlmsise00(
     λ::Number;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing
+    P::Union{Nothing, Matrix} = nothing,
+    verbose::Bool = true,
 )
     return nrlmsise00(
         datetime2julian(instant),
@@ -142,7 +143,8 @@ function nrlmsise00(
         λ;
         flags = flags,
         include_anomalous_oxygen = include_anomalous_oxygen,
-        P = P
+        P = P,
+        verbose = verbose,
     )
 end
 
@@ -153,7 +155,8 @@ function nrlmsise00(
     λ::LT;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing
+    P::Union{Nothing, Matrix} = nothing,
+    verbose::Bool = true
 ) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number}
 
     RT = promote_type(JT, HT, PT, LT)
@@ -167,7 +170,7 @@ function nrlmsise00(
         F10  = 150.0
         ap   = 4.0
 
-        @debug """
+        verbose && @debug """
         NRLMSISE00 - Using default indices since h < 80 km
           Daily F10.7           : $(F10) sfu
           90-day avareged F10.7 : $(F10ₐ) sfu
@@ -180,7 +183,7 @@ function nrlmsise00(
         F10  = space_index(Val(:F10adj), jd - 1)
         ap   = sum(space_index(Val(:Ap), jd)) / 8
 
-        @debug """
+        verbose && @debug """
         NRLMSISE00 - Fetched Space Indices
           Daily F10.7           : $(F10) sfu
           90-day avareged F10.7 : $(F10ₐ) sfu
