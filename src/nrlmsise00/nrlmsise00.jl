@@ -134,8 +134,8 @@ function nrlmsise00(
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, Matrix} = nothing,
-    verbose::Bool = true,
-)
+    verbose::Val{verbosity} = Val(true),
+) where {verbosity}
     return nrlmsise00(
         datetime2julian(instant),
         h,
@@ -144,7 +144,7 @@ function nrlmsise00(
         flags = flags,
         include_anomalous_oxygen = include_anomalous_oxygen,
         P = P,
-        verbose = verbose,
+        verbose = Val(verbosity),
     )
 end
 
@@ -156,10 +156,8 @@ function nrlmsise00(
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, Matrix} = nothing,
-    verbose::Bool = true
-) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number}
-
-    RT = promote_type(JT, HT, PT, LT)
+    verbose::Val{verbosity} = Val(true),
+) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, verbosity}
 
     # Fetch the space indices.
     #
@@ -170,7 +168,7 @@ function nrlmsise00(
         F10  = 150.0
         ap   = 4.0
 
-        verbose && @debug """
+        verbosity && @debug """
         NRLMSISE00 - Using default indices since h < 80 km
           Daily F10.7           : $(F10) sfu
           90-day avareged F10.7 : $(F10ₐ) sfu
@@ -179,11 +177,11 @@ function nrlmsise00(
     else
         # TODO: The online version of NRLMSISE-00 seems to use 89 days, whereas the
         # NRLMSISE-00 source code mentions 81 days.
-        F10ₐ = sum((space_index.(Val(:F10adj), k) for k in (jd - 45):(jd + 44))) / 90
+        F10ₐ = sum((space_index.(Val(:F10adj), jd + k) for k in -45:44)) / 90
         F10  = space_index(Val(:F10adj), jd - 1)
         ap   = sum(space_index(Val(:Ap), jd)) / 8
 
-        verbose && @debug """
+        verbosity && @debug """
         NRLMSISE00 - Fetched Space Indices
           Daily F10.7           : $(F10) sfu
           90-day avareged F10.7 : $(F10ₐ) sfu

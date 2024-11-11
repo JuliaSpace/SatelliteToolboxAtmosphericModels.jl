@@ -25,7 +25,6 @@
 #     empirical temperature profiles. SAO Special Report #313.
 #
 ############################################################################################
-
 export jb2008
 
 """
@@ -65,14 +64,14 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 
 - `JB2008Output{Float64}`: Structure containing the results obtained from the model.
 """
-function jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; verbose::Bool=true)
-    return jb2008(datetime2julian(instant), ϕ_gd, λ, h; verbose=verbose)
+function jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true)) where {verbosity}
+    return jb2008(datetime2julian(instant), ϕ_gd, λ, h; verbose=Val(verbosity))
 end
 
-function jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Bool=true)
+function jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true)) where {verbosity}
     # Get the data in the desired Julian Day considering the tabular time of the model.
     F10    = space_index(Val(:F10obs), jd - 1)
-    F10ₐ   = sum((space_index.(Val(:F10obs), k) for k in (jd - 1 - 40):(jd - 1 + 40))) / 81
+    F10ₐ   = sum(space_index.(Val(:F10obs), jd + k) for k in -41:39) / 81
     S10    = space_index(Val(:S10), jd - 1)
     S10ₐ   = space_index(Val(:S81a), jd - 1)
     M10    = space_index(Val(:M10), jd - 2)
@@ -81,7 +80,7 @@ function jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Bool=
     Y10ₐ   = space_index(Val(:Y81a), jd - 5)
     DstΔTc = space_index(Val(:DTC), jd)
 
-    verbose && @debug """
+    verbosity && @debug """
     JB2008 - Fetched Space Indices
       Daily F10.7           : $(F10) sfu
       81-day averaged F10.7 : $(F10ₐ) sfu
@@ -94,7 +93,7 @@ function jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Bool=
       Exo. temp. variation  : $(DstΔTc)
     """
 
-    return jb2008(jd, ϕ_gd, λ, h, F10, F10ₐ, S10, S10ₐ, M10, M10ₐ, Y10, Y10ₐ, DstΔTc; verbose=verbose)
+    return jb2008(jd, ϕ_gd, λ, h, F10, F10ₐ, S10, S10ₐ, M10, M10ₐ, Y10, Y10ₐ, DstΔTc; verbose=Val(verbosity))
 end
 
 function jb2008(
@@ -111,10 +110,10 @@ function jb2008(
     Y10::Number,
     Y10ₐ::Number,
     DstΔTc::Number;
-    verbose::Bool=true,
-)
+    verbose::Val{verbosity}=Val(true)
+) where {verbosity}
     jd = datetime2julian(instant)
-    return jb2008(jd, ϕ_gd, λ, h, F10, F10ₐ, S10, S10ₐ, M10, M10ₐ, Y10, Y10ₐ, DstΔTc; verbose=verbose)
+    return jb2008(jd, ϕ_gd, λ, h, F10, F10ₐ, S10, S10ₐ, M10, M10ₐ, Y10, Y10ₐ, DstΔTc; verbose=Val(verbosity))
 end
 
 function jb2008(
@@ -131,8 +130,8 @@ function jb2008(
     Y10::YT,
     Y10ₐ::YT2,
     DstΔTc::DT;
-    verbose::Bool=true
-) where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, ST<:Number, ST2<:Number, MT<:Number, MT2<:Number, YT<:Number, YT2<:Number, DT<:Number}
+    verbose::Val{verbosity}=Val(true)
+) where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, ST<:Number, ST2<:Number, MT<:Number, MT2<:Number, YT<:Number, YT2<:Number, DT<:Number, verbosity}
     
     RT = promote_type(JT, PT, LT, HT, FT, FT2, ST, ST2, MT, MT2, YT, YT2, DT)
 
@@ -291,11 +290,11 @@ function jb2008(
 
     z₂ = min(h, 105.0)
 
-    int, z₂ = _jb2008_∫(z₁, z₂, R1, Tx, T∞, _jb2008_δf1)
+    int, z₂ = _jb2008_∫(z₁, z₂, R1, Tx, T∞, _jb2008_δf1; verbose=Val(verbosity))
 
-    Mb₁ = _jb2008_mean_molecular_mass(z₁; verbose=verbose)
+    Mb₁ = _jb2008_mean_molecular_mass(z₁; verbose=Val(verbosity))
     Tl₁ = _jb2008_temperature(z₁, Tx, T∞)
-    Mb₂ = _jb2008_mean_molecular_mass(z₂; verbose=verbose)
+    Mb₂ = _jb2008_mean_molecular_mass(z₂; verbose=Val(verbosity))
     Tl₂ = _jb2008_temperature(z₂, Tx, T∞)
 
     # `Mbj` and `Tlj` contains, respectively, the mean molecular mass and local temperature
@@ -355,7 +354,7 @@ function jb2008(
 
         z₃ = min(h, 500.0)
 
-        int₁, z₃ = _jb2008_∫(z₂, z₃, R1, Tx, T∞, _jb2008_δf2)
+        int₁, z₃ = _jb2008_∫(z₂, z₃, R1, Tx, T∞, _jb2008_δf2; verbose=Val(verbosity))
 
         Tl₃ = _jb2008_temperature(z₃, Tx, T∞)
 
@@ -374,7 +373,7 @@ function jb2008(
 
         z₄ = max(h, 500.0)
 
-        int₂, z₄ = _jb2008_∫(z₃, z₄, (h <= 500) ? R2 : R3, Tx, T∞, _jb2008_δf2)
+        int₂, z₄ = _jb2008_∫(z₃, z₄, (h <= 500) ? R2 : R3, Tx, T∞, _jb2008_δf2; verbose=Val(verbosity))
 
         Tl₄ = _jb2008_temperature(z₄, Tx, T∞)
 
@@ -435,11 +434,7 @@ function jb2008(
     # == Eq. 23 [3] - Semiannual variation =================================================
 
     if h < 2000
-        # Compute the year given the selected Julian Day.
-        year, month, day, = jd_to_date(jd)
-
-        # Compute the day of the year.
-        doy = jd - date_to_jd(year, 1, 1, 0, 0, 0) + 1
+        doy = _get_doy(jd)
 
         # Use the new semiannual model from [1].
         Fz, Gz, Δsalog₁₀ρ = _jb2008_semiannual(doy, h, F10ₐ, S10ₐ, M10ₐ)
@@ -581,8 +576,8 @@ end
 #
 # Compute the mean molecular mass at altitude `z` [km] using the empirical profile in eq. 1
 # [3].
-function _jb2008_mean_molecular_mass(z::Number; verbose::Bool=true)
-    verbose && !(90 <= z < 105.1) &&
+function _jb2008_mean_molecular_mass(z::Number; verbose::Val{verbosity}=Val(true)) where {verbosity}
+    verbosity && !(90 <= z < 105.1) &&
         @warn "The empirical model for the mean molecular mass is valid only for 90 <= z <= 105 km."
 
     M = @evalpoly(
@@ -644,8 +639,8 @@ end
 #   _jb2008_δf1(z::Number, Tx::Number, T∞::Number) -> Float64
 #
 # Auxiliary function to compute the integrand in `_jb2008_∫`.
-function _jb2008_δf1(z::Number, Tx::Number, T∞::Number; verbose::Bool=true)
-    Mb = _jb2008_mean_molecular_mass(z; verbose=verbose)
+function _jb2008_δf1(z::Number, Tx::Number, T∞::Number; verbose::Val{verbosity}=Val(true)) where {verbosity}
+    Mb = _jb2008_mean_molecular_mass(z; verbose=Val(verbosity))
     Tl = _jb2008_temperature(z, Tx, T∞)
     g  = _jb2008_gravity(z)
 
@@ -655,7 +650,7 @@ end
 #   _jb2008_δf2(z, Tx, T∞)
 #
 # Auxiliary function to compute the integrand in `_jb2008_∫`.
-function _jb2008_δf2(z::Number, Tx::Number, T∞::Number)
+function _jb2008_δf2(z::Number, Tx::Number, T∞::Number; verbose::Val{verbosity}=Val(true)) where {verbosity}
     Tl = _jb2008_temperature(z, Tx, T∞)
     g  = _jb2008_gravity(z)
 
@@ -680,47 +675,46 @@ function _jb2008_∫(
     R::Number,
     Tx::Number,
     T∞::Number,
-    δf::Function
-)
+    δf::Function;
+    verbose::Val{verbosity}=Val(true)
+) where {verbosity}
     # Compute the number of integration steps.
     #
     # This is computed so that `z₂ = z₁*(zr)^n`. Hence, `zr` is the factor that defines the
     # size of each integration interval.
     al = log(z₁ / z₀)
-    n  = floor(Int64, al / R) + 1
+    n  = floor(al / R) + 1
     zr = exp(al / n)
 
     # Initialize the integration auxiliary variables.
     zi₁ = z₀
     zj  = 0.0
-    Mbj = 0.0
-    Tlj = 0.0
 
     # Variable to store the integral from `z₀` to `z₁`.
     int = 0.0
 
     # For each integration step, use the Newton-Cotes 4th degree formula to integrate
     # (Boole's rule).
-    @inbounds for i in 1:n
+    @inbounds for i in 1:convert(Int, n)
         zi₀   = zi₁             # ............... The beginning of the i-th integration step
         zi₁   = zr * zi₁        # ..................... The end of the i-th integration step
         Δz    = (zi₁ - zi₀) / 4 # ....................... Step for the i-th integration step
 
         # Compute the Newton-Cotes 4th degree sum.
         zj     = zi₀
-        int_i  = 14 // 45 * δf(zj, Tx, T∞)
+        int_i  = 14 // 45 * δf(zj, Tx, T∞; verbose=Val(verbosity))
 
         zj    += Δz
-        int_i += 64 // 45 * δf(zj, Tx, T∞)
+        int_i += 64 // 45 * δf(zj, Tx, T∞; verbose=Val(verbosity))
 
         zj    += Δz
-        int_i += 24 // 45 * δf(zj, Tx, T∞)
+        int_i += 24 // 45 * δf(zj, Tx, T∞; verbose=Val(verbosity))
 
         zj    += Δz
-        int_i += 64 // 45 * δf(zj, Tx, T∞)
+        int_i += 64 // 45 * δf(zj, Tx, T∞; verbose=Val(verbosity))
 
         zj    += Δz
-        int_i += 14 // 45 * δf(zj, Tx, T∞)
+        int_i += 14 // 45 * δf(zj, Tx, T∞; verbose=Val(verbosity))
 
         # Accumulate the sum.
         int   += int_i * Δz
@@ -1011,4 +1005,16 @@ function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
     end
 
     return ΔTc
+end
+
+function _get_doy(jd::Number)
+
+    # Compute the year given the selected Julian Day.
+    year, _, _, = jd_to_date(jd)
+
+    # Compute the day of the year.
+    doy = jd - date_to_jd(year, 1, 1, 0, 0, 0) + 1
+
+    return doy
+
 end
