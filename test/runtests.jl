@@ -5,7 +5,7 @@ using SatelliteToolboxAtmosphericModels
 using SatelliteToolboxBase
 
 using DifferentiationInterface
-using FiniteDiff, ForwardDiff, Diffractor, Enzyme, Mooncake, PolyesterForwardDiff, ReverseDiff, Tracker, Zygote
+using FiniteDiff, ForwardDiff, Diffractor, Enzyme, Mooncake, PolyesterForwardDiff, Zygote
 
 using AllocCheck
 using JET

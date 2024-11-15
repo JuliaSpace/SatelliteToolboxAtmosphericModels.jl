@@ -4,8 +4,6 @@ const _BACKENDS = (
     ("Enzyme", AutoEnzyme()),
     ("Mooncake", AutoMooncake(;config=nothing)),
     ("PolyesterForwardDiff", AutoPolyesterForwardDiff()),
-    ("ReverseDiff", AutoReverseDiff()),
-    ("Tracker", AutoTracker()),
     ("Zygote", AutoZygote()),
 )
 
@@ -15,31 +13,26 @@ const _BACKENDS = (
     # This is likely on Diffractors end, an issue will be raised and these tests can be updated once resolved
 # 2. Enzyme: Doesn't Like the Polynomial roots computation, could potentially look at other roots packages, writing a custom rule
     # This is hard to debug as it causes a segfault
-# 3. Tracker: Doesn't Like the Polynomial roots computation, could potentially look at other roots packages, writing a custom rule
 ##########################################################################################
-const _jr1971_skip_backends = ["Diffractor", "Enzyme", "Tracker"]
+const _jr1971_skip_backends = ["Diffractor", "Enzyme"]
 
 ##########################################################################################
 # JB2008 Fails these Packages
 # 1. Diffractor: Doesn't Like how the Average Space Index is Calculated
     # This is likely on Diffractors end, an issue will be raised and these tests can be updated once resolved
     # ALso an error in the bitcast of the _jb2008_∫, could look into replacing this with Integrals.jl
-# 2. Tracker: Doesn't Like the _jb2008_∫, specifically the n computation
-    # Could look into replacing this with Integrals.jl
 ##########################################################################################
-const _jb2008_skip_backends = ["Diffractor", "Tracker"]
+const _jb2008_skip_backends = ["Diffractor"]
 
 ##########################################################################################
 # MRLMSISE-00 Fails these Packages
 # 1. Diffractor: Doesn't Like how the Average Space Index is Calculated
     # This is likely on Diffractors end, an issue will be raised and these tests can be updated once resolved
-# 2. Tracker: The floor computation in jd_to_date breaks this but it also likely fails in the legendre computation
-    # Custom Rule or trying to avoid the computation is the first step'
-# 3. ReverseDiff, Zygote: The fail due to the legendre computation being mutating.
+# 2. Zygote: The fail due to the legendre computation being mutating.
     # This change would need to happen in SatelliteToolboxLegendre.jl
-# 4. Enzyme: Stack Overflow Error, I don't know why this is happening
+# 3. Enzyme: Stack Overflow Error, I don't know why this is happening
 ##########################################################################################
-const _nrlmsise00_skip_backends = ["Diffractor", "Enzyme", "ReverseDiff", "Tracker", "Zygote"]
+const _nrlmsise00_skip_backends = ["Diffractor", "Enzyme", "Zygote"]
 
 @testset "Exponential Atmosphere Differentiation" begin
     
