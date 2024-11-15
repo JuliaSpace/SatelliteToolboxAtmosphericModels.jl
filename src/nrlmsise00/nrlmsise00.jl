@@ -147,14 +147,17 @@ function nrlmsise00(
 end
 
 function nrlmsise00(
-    jd::Number,
-    h::Number,
-    ϕ_gd::Number,
-    λ::Number;
+    jd::JT,
+    h::HT,
+    ϕ_gd::PT,
+    λ::LT;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, Matrix} = nothing
-)
+) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number}
+
+    RT = promote_type(JT, HT, PT, LT)
+
     # Fetch the space indices.
     #
     # NOTE: If the altitude is lower than 80km, set to default according to the instructions
@@ -227,17 +230,20 @@ function nrlmsise00(
 end
 
 function nrlmsise00(
-    jd::Number,
-    h::Number,
-    ϕ_gd::Number,
-    λ::Number,
-    F10ₐ::Number,
-    F10::Number,
+    jd::JT,
+    h::HT,
+    ϕ_gd::PT,
+    λ::LT,
+    F10ₐ::FT,
+    F10::FT2,
     ap::T_AP;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, Matrix} = nothing
-) where T_AP<:Union{Number, AbstractVector}
+) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, FT<:Number, FT2<:Number, T_AP<:Union{Number, AbstractVector}}
+
+    RT = promote_type(JT, HT, PT, LT, FT, FT2)
+
     # == Compute Auxiliary Variables =======================================================
 
     # Convert the Julian Day to Date.
@@ -287,12 +293,12 @@ function nrlmsise00(
     #
     # None for flags.time_independent = false.
     g_lat, r_lat = _gravity_and_effective_radius(
-        (!flags.time_independent) ? Float64(_REFERENCE_LATITUDE) : Float64(ϕ_gd / _DEG_TO_RAD)
+        (!flags.time_independent) ? RT(_REFERENCE_LATITUDE) : RT(ϕ_gd / _DEG_TO_RAD)
     )
 
     # == Create the NRLMSISE00 Structure ===================================================
 
-    nrlmsise00d = Nrlmsise00Structure{Float64, T_AP}(
+    nrlmsise00d = Nrlmsise00Structure{RT, T_AP}(
         Y,
         doy,
         Δds,
@@ -359,16 +365,18 @@ Compute the temperature and density profiles for the lower atmosphere.
 - `T`: Density [1 / cm³] is `xm` is not 0, or the temperature [K] otherwise.
 """
 function _densm(
-    h::T,
-    d₀::T,
-    xm::T,
-    g_lat::T,
-    r_lat::T,
-    tn2::NTuple{4, T},
-    tgn2::NTuple{2, T},
-    tn3::NTuple{5, T},
-    tgn3::NTuple{2, T},
-) where T<:Number
+    h::HT,
+    d₀::DT,
+    xm::XT,
+    g_lat::GT,
+    r_lat::RLT,
+    tn2::NTuple{4, TNT},
+    tgn2::NTuple{2, TGT},
+    tn3::NTuple{5, TNT2},
+    tgn3::NTuple{2, TGT2},
+) where {HT<:Number, DT<:Number, XT<:Number, GT<:Number, RLT<:Number, TNT<:Number, TGT<:Number, TNT2<:Number, TGT2<:Number}
+
+    RT = promote_type(HT, DT, XT, GT, RLT, TNT, TGT, TNT2, TGT2)
 
     # == Initialization of Variables =======================================================
 
@@ -386,8 +394,8 @@ function _densm(
     zgdif = _ζ(r_lat, z2, z1)
 
     # Set up spline nodes.
-    xs2 = ntuple(_ -> T(0), Val(4))
-    ys2 = ntuple(_ -> T(0), Val(4))
+    xs2 = ntuple(_ -> RT(0), Val(4))
+    ys2 = ntuple(_ -> RT(0), Val(4))
 
     @inbounds for k in 1:4
         @reset xs2[k] = _ζ(r_lat, _ZN2[k], z1) / zgdif
@@ -412,10 +420,10 @@ function _densm(
         g_h = g_lat / (1 + z1 / r_lat)^2
 
         # Calculate stratosphere / mesosphere density.
-        γ = xm * g_h * zgdif / T(_RGAS)
+        γ = xm * g_h * zgdif / RT(_RGAS)
 
         # Integrate temperature profile.
-        expl = min(γ * _spline_∫(xs2, ys2, ∂²y, x), T(50));
+        expl = min(γ * _spline_∫(xs2, ys2, ∂²y, x), RT(50));
 
         # Density at altitude.
         density *= (t1 / tz) * exp(-expl)
@@ -432,16 +440,16 @@ function _densm(
     # == Troposhepre / Stratosphere Temperature ============================================
 
     z     = h
-    z1    = T(_ZN3[begin])
-    z2    = T(_ZN3[end])
+    z1    = RT(_ZN3[begin])
+    z2    = RT(_ZN3[end])
     t1    = tn3[begin]
     t2    = tn3[end]
     zg    = _ζ(r_lat, z, z1)
     zgdif = _ζ(r_lat, z2, z1)
 
     # Set up spline nodes.
-    xs3 = ntuple(_ -> T(0), Val(5))
-    ys3 = ntuple(_ -> T(0), Val(5))
+    xs3 = ntuple(_ -> RT(0), Val(5))
+    ys3 = ntuple(_ -> RT(0), Val(5))
 
     @inbounds for k in 1:5
         @reset xs3[k] = _ζ(r_lat, _ZN3[k], z1) / zgdif
@@ -464,10 +472,10 @@ function _densm(
         g_h = g_lat / (1 + z1 / r_lat)^2
 
         # Calculate tropospheric / stratosphere density.
-        γ = xm * g_h * zgdif / T(_RGAS);
+        γ = xm * g_h * zgdif / RT(_RGAS);
 
         # Integrate temperature profile.
-        expl = min(γ * _spline_∫(xs3, ys3, ∂²y, x) , T(50))
+        expl = min(γ * _spline_∫(xs3, ys3, ∂²y, x) , RT(50))
 
         # Density at altitude.
         density *= (t1 / tz) * exp(-expl)
@@ -509,27 +517,29 @@ polynomial.
 - `NTuple{2, T}`: Updated `tgn1`.
 """
 function _densu(
-    h::T,
-    dlb::T,
-    tinf::T,
-    tlb::T,
-    xm::T,
-    α::T,
-    zlb::T,
-    s2::T,
-    g_lat::T,
-    r_lat::T,
-    tn1::NTuple{5, T},
-    tgn1::NTuple{2, T}
-) where T<:Number
+    h::HT,
+    dlb::DT,
+    tinf::TinfT,
+    tlb::TT,
+    xm::XT,
+    α::AT,
+    zlb::ZT,
+    s2::ST,
+    g_lat::GLT,
+    r_lat::RLT,
+    tn1::NTuple{5, TNT},
+    tgn1::NTuple{2, TGT}
+) where {HT<:Number, DT<:Number, TinfT<:Number, TT<:Number, XT<:Number, AT<:Number, ZT<:Number, ST<:Number, GLT<:Number, RLT<:Number, TNT<:Number, TGT<:Number}
 
-    x     = T(0)
-    z1    = T(0)
-    t1    = T(0)
-    zgdif = T(0)
-    xs    = ntuple(_ -> T(0), Val(5))
-    ys    = ntuple(_ -> T(0), Val(5))
-    ∂²y   = ntuple(_ -> T(0), Val(5))
+    RT = promote_type(HT, DT, TinfT, TT, XT, AT, ZT, ST, GLT, RLT, TNT, TGT)
+
+    x     = RT(0)
+    z1    = RT(0)
+    t1    = RT(0)
+    zgdif = RT(0)
+    xs    = ntuple(_ -> RT(0), Val(5))
+    ys    = ntuple(_ -> RT(0), Val(5))
+    ∂²y   = ntuple(_ -> RT(0), Val(5))
 
     # Joining altitudes of Bates and spline.
     z = max(h, _ZN1[begin])
@@ -585,11 +595,11 @@ function _densu(
     g_h = g_lat / (1 + zlb / r_lat)^2
 
     # Calculate density above _ZN1[1].
-    γ = xm * g_h / (s2 * T(_RGAS) * tinf)
+    γ = xm * g_h / (s2 * RT(_RGAS) * tinf)
     expl = exp(-s2 * γ * zg2)
 
     if (expl > 50) || (tt <= 0)
-        expl = T(50)
+        expl = RT(50)
     end
 
     # Density at altitude.
@@ -601,13 +611,13 @@ function _densu(
     g_h = g_lat / (1 + z1 / r_lat)^2
 
     # Compute density below _ZN1[1].
-    γ = xm * g_h * zgdif / T(_RGAS)
+    γ = xm * g_h * zgdif / RT(_RGAS)
 
     # Integrate spline temperatures.
     expl = γ * _spline_∫(xs, ys, ∂²y, x)
 
     if (expl > 50) || (tz <= 0)
-        expl = T(50)
+        expl = RT(50)
     end
 
     # Density at altitude.
@@ -631,7 +641,7 @@ structure `nrlmsise00`.
 - `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
 - `T`: Result of `G(L)`.
 """
-function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number
+function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) where {T<:Number, V<:Number}
     # == Unpack NRLMSISE00 Structure =======================================================
 
     ap     = nrlmsise00d.ap
@@ -850,8 +860,8 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) wher
     end
 
     # Update the NRLMSISE-00 structure.
-    @reset nrlmsise00d.apt  = apt
-    @reset nrlmsise00d.apdf = apdf
+    @reset nrlmsise00d.apt  = T(apt)
+    @reset nrlmsise00d.apdf = T(apdf)
 
     # Parameters not used: 82, 89, 99, 139-149.
     tinf = p[31] +
@@ -879,7 +889,7 @@ end
 Compute the function `G(L)` with lower atmosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00d`.
 """
-function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number
+function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) where {T<:Number, V<:Number}
 
     # == Unpack NRLMSISE00 Structure =======================================================
 

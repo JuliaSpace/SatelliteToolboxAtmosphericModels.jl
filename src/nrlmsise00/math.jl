@@ -173,10 +173,10 @@ function _spline(
 end
 
 """
-    _ζ(r_lat::T, zz::T, zl::T) where T<:Number -> float(T)
+    _ζ(r_lat::Number, zz::Number, zl::Number) -> Number
 
 Compute the zeta function.
 """
-function _ζ(r_lat::T, zz::T, zl::T) where T<:Number
+function _ζ(r_lat::Number, zz::Number, zl::Number)
     return (zz - zl) * (r_lat + zl) / (r_lat + zz)
 end

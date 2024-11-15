@@ -16,10 +16,13 @@ Compute the chemistry / dissociation correction for MSIS models.
 - `h₁::Number`: Transition scale length.
 - `zh::Number`: Altitude of `1/2 r`.
 """
-function _ccor(h::T, r::T, h₁::T, zh::T) where T<:Number
+function _ccor(h::HT, r::T, h₁::HT2, zh::ZT) where {HT<:Number, T<:Number, HT2<:Number, ZT<:Number}
+
+    RT = promote_type(HT, T, HT2, ZT)
+
     e = (h - zh) / h₁
 
-    (e > +70) && return exp(T(0))
+    (e > +70) && return exp(RT(0))
     (e < -70) && return exp(r)
 
     return exp(r / (1 + exp(e)))
@@ -38,7 +41,7 @@ Compute the O and O₂ chemistry / dissociation correction for MSIS models.
 - `zh::Number`: Altitude of `1/2 r`.
 - `h₂::Number`: Transition scale length 2.
 """
-function _ccor2(h::T, r::T, h₁::T, zh::T, h₂::T) where T<:Number
+function _ccor2(h::HT, r::T, h₁::HT2, zh::ZT, h₂::HT3) where {HT<:Number, T<:Number, HT2<:Number, ZT<:Number, HT3<:Number}
     e1 = (h - zh) / h₁
     e2 = (h - zh) / h₂
 
@@ -61,12 +64,15 @@ Compute the turbopause correction for MSIS models, returning the combined densit
 - `xmm::T`: Full mixed molecular weight.
 - `xm::T`: Species molecular weight.
 """
-function _dnet(dd::T, dm::T, zhm::T, xmm::T, xm::T) where T<:Number
+function _dnet(dd::DT, dm::DT2, zhm::ZT, xmm::XT, xm::XT2) where {DT<:Number, DT2<:Number, ZT<:Number, XT<:Number, XT2<:Number}
+
+    RT = promote_type(DT, DT2, ZT, XT, XT2)
+
     a  = zhm / (xmm - xm)
 
     if !((dm > 0) && (dd > 0))
         if (dd == 0) && (dm == 0)
-            dd = T(1)
+            dd = RT(1)
         end
 
         (dm == 0) && return dd
@@ -112,12 +118,15 @@ Compute the scale height.
 - `g_lat::T`: Reference gravity at desired latitude [cm / s²].
 - `r_lat::T`: Reference radius at desired latitude [km].
 """
-function _scale_height(h::T, xm::T, temp::T, g_lat::T, r_lat::T) where T<:Number
+function _scale_height(h::HT, xm::XT, temp::TT, g_lat::GT, r_lat::RLT) where {HT<:Number, XT<:Number, TT<:Number, GT<:Number, RLT<:Number}
+
+    RT = promote_type(HT, XT, TT, GT, RLT)
+
     # Compute the gravity at the selected altitude.
     gh = g_lat / (1 + h / r_lat)^2
 
     # Compute the scale height
-    sh = T(_RGAS) * temp / (gh * xm)
+    sh = RT(_RGAS) * temp / (gh * xm)
 
     return sh
 end
