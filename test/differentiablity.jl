@@ -1,9 +1,14 @@
+## Description #############################################################################
+#
+# Tests related to the automatic differentiation of the atmospheric models.
+#
+############################################################################################
+
 const _BACKENDS = (
     ("ForwardDiff", AutoForwardDiff()),
 )
 
 @testset "Exponential Atmosphere Differentiation" begin
-    
     hs = collect(90:50:1000) .* 1000.0
     for h in hs
         f_fd, df_fd = value_and_derivative(
@@ -11,7 +16,6 @@ const _BACKENDS = (
             AutoFiniteDiff(),
             h
         )
-
 
         for backend in _BACKENDS
             @eval @testset $("Exponential Atmosphere h=$h m " * string(backend[1])) begin
@@ -29,8 +33,7 @@ const _BACKENDS = (
 end
 
 
-@testset "Jacchia-Roberts 1971 Atmosphere Differentiation" begin 
-
+@testset "Jacchia-Roberts 1971 Atmosphere Differentiation" begin
     SpaceIndices.init()
 
     hs = collect(90:50:1000) .* 1000
@@ -75,15 +78,13 @@ end
 
                 @test $f_fd2 == f_ad2
                 @test $df_fd2 ≈ df_ad2 rtol=2e-1
-                
             end
         end
     end
 end
 
 
-@testset "NRLMSISE-00 Atmosphere Differentiation" begin 
-
+@testset "NRLMSISE-00 Atmosphere Differentiation" begin
     SpaceIndices.init()
 
     hs = collect(90:50:1000) .* 1000
@@ -128,14 +129,12 @@ end
 
                 @test $f_fd2 == f_ad2
                 @test $df_fd2 ≈ df_ad2 rtol=2e-1
-                
             end
         end
     end
 end
 
-@testset "Jacchia-Bowman 2008 Atmosphere Differentiation" begin 
-
+@testset "Jacchia-Bowman 2008 Atmosphere Differentiation" begin
     SpaceIndices.init()
 
     hs = collect(90:50:1000) .* 1000
@@ -174,7 +173,6 @@ end
 
                 @test $f_fd2 == f_ad2
                 @test $df_fd2 ≈ df_ad2 rtol=2e-1
-                
             end
         end
     end
