@@ -1,8 +1,8 @@
-module SatelliteToolboxAtmosphericModelsChainRulesExt
+module SatelliteToolboxAtmosphericModelsZygoteExt
 
 using SatelliteToolboxAtmosphericModels
 
-using ChainRulesCore
+using Zygote.ChainRulesCore
 
 function ChainRulesCore.rrule(::typeof(AtmosphericModels._get_doy), jd::Number)
 
@@ -13,14 +13,6 @@ function ChainRulesCore.rrule(::typeof(AtmosphericModels._get_doy), jd::Number)
     end
 
     return y, _get_doy_pullback
-
-end
-
-function ChainRulesCore.frule((_, Δ), ::typeof(AtmosphericModels._get_doy), jd::Number)
-
-    y = AtmosphericModels._get_doy(jd)
-
-    return y, Δ
 
 end
 

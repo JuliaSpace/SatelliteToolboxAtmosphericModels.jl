@@ -1,3 +1,12 @@
+## Description #############################################################################
+#
+# Tests related to performance and memory allocations.
+#
+############################################################################################
+@testset "Aqua.jl" begin
+    Aqua.test_all(SatelliteToolboxAtmosphericModels; ambiguities=(recursive = false))
+end
+
 @testset "JET Testing" begin
     rep = JET.test_package(SatelliteToolboxAtmosphericModels; toplevel_logger=nothing, target_modules=(@__MODULE__,))
 end

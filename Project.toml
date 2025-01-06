@@ -19,27 +19,24 @@ SpaceIndices = "5a540a4e-639f-452a-b107-23ea09ed4d36"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
 [weakdeps]
-ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-Diffractor = "9f5e2b26-1114-432f-b630-d3fe2085c51c"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [extensions]
-SatelliteToolboxAtmosphericModelsChainRulesExt = ["ChainRulesCore"]
+SatelliteToolboxAtmosphericModelsZygoteExt = ["Zygote"]
 
 [compat]
 Accessors = "0.1"
 AllocCheck = "0.2"
-ChainRulesCore = "1.25"
+Aqua = "0.8"
 Crayons = "4"
 DelimitedFiles = "1.9"
 DifferentiationInterface = "0.6"
-Diffractor = "0.2"
 Enzyme = "0.13"
 FiniteDiff = "2.26"
 ForwardDiff = "0.10"
-JET = "0.9.12"
+JET = "0.9"
 LinearAlgebra = "1.10"
-Mooncake = "0.4.39"
+Mooncake = "0.4"
 PolyesterForwardDiff = "0.1"
 PolynomialRoots = "1"
 Printf = "1.10"
@@ -51,16 +48,13 @@ SpaceIndices = "1.2"
 StaticArraysCore = "1.4"
 Test = "1.10"
 Zygote = "0.6"
-julia = "1.10"
+julia = "1.10, 1.11"
 
 [extras]
 AllocCheck = "9b6a8646-10ed-4001-bbdc-1d2f46dfbb1a"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
-FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
-DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
-Diffractor = "9f5e2b26-1114-432f-b630-d3fe2085c51c"
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -68,7 +62,6 @@ JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
 PolyesterForwardDiff = "98d1487c-24ca-40b6-b7ab-df2af84e126b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [targets]
-test = ["Test", "AllocCheck", "DelimitedFiles", "DifferentiationInterface", "FiniteDiff", "ForwardDiff", "DifferentiationInterface", "Diffractor", "Enzyme", "FiniteDiff", "ForwardDiff", "JET", "Mooncake", "PolyesterForwardDiff", "Zygote"]
+test = ["Test", "AllocCheck", "Aqua", "DelimitedFiles", "DifferentiationInterface", "Enzyme", "FiniteDiff", "ForwardDiff", "JET", "Mooncake", "PolyesterForwardDiff", "Zygote"]

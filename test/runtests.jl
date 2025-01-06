@@ -5,10 +5,11 @@ using SatelliteToolboxAtmosphericModels
 using SatelliteToolboxBase
 
 using DifferentiationInterface
-using FiniteDiff, ForwardDiff, Diffractor, Enzyme, Mooncake, PolyesterForwardDiff, Zygote
+using FiniteDiff, ForwardDiff, Enzyme, Mooncake, PolyesterForwardDiff, Zygote
 
 using AllocCheck
 using JET
+using Aqua
 
 @testset "Atmospheric Model Jacchia-Roberts 1971" verbose = true begin
     include("./jr1971.jl")
