@@ -1,6 +1,16 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 1.0.0
+-------------
+
+- ![Enhancement][badge-enhancement] The functions now support automatic differentiation.
+  (PR [#3][gh-pr-3])
+- ![Info][badge-info] We dropped support for Julia 1.6. This version only supports the
+  current Julia version and v1.10 (LTS).
+- ![Info][badge-info] This version does not have breaking changes. We bump the version to
+  1.0.0 because we now consider the API stable.
+
 Version 0.1.3
 -------------
 
@@ -38,3 +48,4 @@ Version 0.1.0
 [badge-bugfix]: https://img.shields.io/badge/Bugfix-purple.svg
 [badge-info]: https://img.shields.io/badge/Info-gray.svg
 
+[gh-pr-3]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/3

@@ -153,6 +153,10 @@ function nrlmsise00(
     h::HT,
     ϕ_gd::PT,
     λ::LT;
+    jd::JT,
+    h::HT,
+    ϕ_gd::PT,
+    λ::LT;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, Matrix} = nothing,
