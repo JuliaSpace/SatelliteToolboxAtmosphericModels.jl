@@ -19,10 +19,11 @@ SpaceIndices = "5a540a4e-639f-452a-b107-23ea09ed4d36"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
 [weakdeps]
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [extensions]
-SatelliteToolboxAtmosphericModelsZygoteExt = ["Zygote"]
+SatelliteToolboxAtmosphericModelsZygoteExt = ["Zygote", "ForwardDiff"]
 
 [compat]
 Accessors = "0.1"
@@ -57,7 +58,6 @@ DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
 PolyesterForwardDiff = "98d1487c-24ca-40b6-b7ab-df2af84e126b"

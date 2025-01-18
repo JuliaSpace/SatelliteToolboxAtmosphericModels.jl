@@ -34,5 +34,5 @@ end
 end
 
 @testset "Performance Tests" verbose = true begin
-    include("./allocations.jl")
+    include("./performance.jl")
 end

@@ -8,11 +8,13 @@ const _BACKENDS = (
 
 ##########################################################################################
 # MRLMSISE-00 Fails these Packages
-# 1. Zygote: The fail due to the legendre computation being mutating.
-    # This change would need to happen in SatelliteToolboxLegendre.jl
-# 2. Enzyme: Stack Overflow Error, I don't know why this is happening
+# 1. Enzyme: The Enzyme compiler seems to have issue with either the nested structure
+# of some of the NRLMSISE-00 structures or with the type Union of the Ap space index. Either
+# way it seems like it will take a bigger rework to get this working. I've tried a number of 
+# attempts but end up with a large LLVM stack trace that I can't seem to resolve.
 ##########################################################################################
-const _nrlmsise00_skip_backends = ["Enzyme", "Zygote"]
+#TODO: Revisit and get this working
+const _nrlmsise00_skip_backends = ["Enzyme"]
 
 @testset "Exponential Atmosphere Differentiation" begin
     
@@ -150,7 +152,6 @@ end
     end
 end
 
-
 @testset "NRLMSISE-00 Atmosphere Differentiation" begin 
 
     SpaceIndices.init()
@@ -187,20 +188,33 @@ end
                     input2
                 )
 
-                f_ad, df_ad = value_and_gradient(
-                    (x) -> AtmosphericModels.nrlmsise00(x...).total_density,
-                    backend[2],
-                    input
-                )
+                try 
+                    f_ad, df_ad = value_and_gradient(
+                        (x) -> AtmosphericModels.nrlmsise00(x...).total_density,
+                        backend[2],
+                        input
+                    )
+                catch err
+                    open("error.txt", "w") do io
+                        println(io, err.msg)
+                    end
+                end
+
 
                 @test f_fd == f_ad
                 @test df_fd ≈ df_ad rtol=2e-1
 
-                f_ad2, df_ad2 = value_and_gradient(
-                    (x) -> AtmosphericModels.nrlmsise00(x...; verbose=Val(false)).total_density,
-                    backend[2],
-                    input2
-                )
+                try
+                    f_ad2, df_ad2 = value_and_gradient(
+                        (x) -> AtmosphericModels.nrlmsise00(x...; verbose=Val(false)).total_density,
+                        backend[2],
+                        input2
+                    )
+                catch err
+                    open("error.txt", "w") do io
+                        println(io, err.msg)
+                    end
+                end
 
                 @test f_fd2 == f_ad2
                 @test df_fd2 ≈ df_ad2 rtol=2e-1
