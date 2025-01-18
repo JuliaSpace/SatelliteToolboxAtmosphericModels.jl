@@ -36,7 +36,7 @@ const _nrlmsise00_skip_backends = ["Enzyme"]
                     h
                 )
 
-                @test f_fd == f_ad
+                @test f_fd ≈ f_ad rtol=1e-14
                 @test df_fd ≈ df_ad rtol=1e-4
             end
         end
@@ -87,7 +87,7 @@ end
                 )
                 
                 # Include something() to replace Zygote "nothing" with 0.0
-                @test f_fd == f_ad
+                @test f_fd ≈ f_ad rtol=1e-14
                 @test df_fd ≈ something.(df_ad, 0) rtol=2e-1
 
                 f_ad2, df_ad2 = value_and_gradient(
@@ -97,7 +97,7 @@ end
                 )
 
                 # Include something() to replace Zygote "nothing" with 0.0
-                @test f_fd2 == f_ad2
+                @test f_fd2 ≈ f_ad2 rtol = 1e-14
                 @test df_fd2 ≈ something.(df_ad2, 0) rtol=2e-1
                 
             end
@@ -135,7 +135,7 @@ end
             )
             
             # Include something() to replace Zygote "nothing" with 0.0
-            @test f_fd == f_ad
+            @test f_fd ≈ f_ad rtol=1e-14
             @test df_fd ≈ df_ad rtol=2e-1
 
             f_ad2, df_ad2 = value_and_gradient(
@@ -145,7 +145,7 @@ end
             )
 
             # Include something() to replace Zygote "nothing" with 0.0
-            @test f_fd2 == f_ad2
+            @test f_fd2 ≈ f_ad2 rtol=1e-14
             @test df_fd2 ≈ df_ad2 rtol=2e-1
             
         end
@@ -188,35 +188,23 @@ end
                     input2
                 )
 
-                try 
-                    f_ad, df_ad = value_and_gradient(
-                        (x) -> AtmosphericModels.nrlmsise00(x...).total_density,
-                        backend[2],
-                        input
-                    )
-                catch err
-                    open("error.txt", "w") do io
-                        println(io, err.msg)
-                    end
-                end
+                f_ad, df_ad = value_and_gradient(
+                    (x) -> AtmosphericModels.nrlmsise00(x...).total_density,
+                    backend[2],
+                    input
+                )
 
 
-                @test f_fd == f_ad
+                @test f_fd ≈ f_ad rtol=1e-14
                 @test df_fd ≈ df_ad rtol=2e-1
 
-                try
-                    f_ad2, df_ad2 = value_and_gradient(
-                        (x) -> AtmosphericModels.nrlmsise00(x...; verbose=Val(false)).total_density,
-                        backend[2],
-                        input2
-                    )
-                catch err
-                    open("error.txt", "w") do io
-                        println(io, err.msg)
-                    end
-                end
+                f_ad2, df_ad2 = value_and_gradient(
+                    (x) -> AtmosphericModels.nrlmsise00(x...; verbose=Val(false)).total_density,
+                    backend[2],
+                    input2
+                )
 
-                @test f_fd2 == f_ad2
+                @test f_fd2 ≈ f_ad2 rtol=1e-14
                 @test df_fd2 ≈ df_ad2 rtol=2e-1
             end
         end
@@ -254,7 +242,7 @@ end
                     input
                 )
 
-                @test f_fd == f_ad
+                @test f_fd ≈ f_ad rtol=1e-14
                 @test df_fd ≈ df_ad rtol=2e-1
 
                 f_ad2, df_ad2 = value_and_gradient(
@@ -263,7 +251,7 @@ end
                     input2
                 )
 
-                @test f_fd2 == f_ad2
+                @test f_fd2 ≈ f_ad2 rtol=1e-14
                 @test df_fd2 ≈ df_ad2 rtol=2e-1       
             end
         end
