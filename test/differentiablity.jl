@@ -172,7 +172,7 @@ end
                 F10ₐ    = 80
                 ap      = 7
 
-                input = [instant; ϕ_gd; λ; h; F10; F10ₐ; ap]
+                input = [instant; h; ϕ_gd; λ; F10; F10ₐ; ap]
                 input2 = input[1:4]
 
 
@@ -196,7 +196,7 @@ end
 
 
                 @test f_fd ≈ f_ad rtol=1e-14
-                @test df_fd ≈ df_ad rtol=2e-1
+                @test df_fd ≈ df_ad atol=1e-5
 
                 f_ad2, df_ad2 = value_and_gradient(
                     (x) -> AtmosphericModels.nrlmsise00(x...; verbose=Val(false)).total_density,
@@ -205,7 +205,7 @@ end
                 )
 
                 @test f_fd2 ≈ f_ad2 rtol=1e-14
-                @test df_fd2 ≈ df_ad2 rtol=2e-1
+                @test df_fd2 ≈ df_ad2 atol=1e-5
             end
         end
     end

@@ -557,8 +557,8 @@ function _densu(
         # Compute the temperature below ZA temperature gradient at ZA from Bates profile.
         dta = (tinf - ta) * s2 * ((r_lat + zlb) / (r_lat + _ZN1[begin]))^2
 
-        @reset tgn1[begin] = dta
-        @reset tn1[begin]  = ta
+        @reset tgn1[begin] = RT(dta)
+        @reset tn1[begin]  = RT(ta)
         z  = (h > _ZN1[end]) ? h : _ZN1[end]
         z1 = _ZN1[begin]
         z2 = _ZN1[end]
@@ -1381,19 +1381,19 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # Lower thermosphere temperature variations not significant for density above 300 km.
 
     if h < 300
-        @reset meso_tn1[2]  = ptm[7] * ptl_1[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_1))
-        @reset meso_tn1[3]  = ptm[3] * ptl_2[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_2))
-        @reset meso_tn1[4]  = ptm[8] * ptl_3[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_3))
-        @reset meso_tn1[5]  = ptm[5] * ptl_4[1] / (1 - flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, ptl_4))
-        @reset meso_tgn1[2] = ptm[9] * pma_9[1] * (
+        @reset meso_tn1[2]  = T(ptm[7] * ptl_1[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_1)))
+        @reset meso_tn1[3]  = T(ptm[3] * ptl_2[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_2)))
+        @reset meso_tn1[4]  = T(ptm[8] * ptl_3[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_3)))
+        @reset meso_tn1[5]  = T(ptm[5] * ptl_4[1] / (1 - flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, ptl_4)))
+        @reset meso_tgn1[2] = T(ptm[9] * pma_9[1] * (
             1 + flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, pma_9)
-        ) * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2
+        ) * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2)
     else
-        @reset meso_tn1[2]  = ptm[7] * ptl_1[1]
-        @reset meso_tn1[3]  = ptm[3] * ptl_2[1]
-        @reset meso_tn1[4]  = ptm[8] * ptl_3[1]
-        @reset meso_tn1[5]  = ptm[5] * ptl_4[1]
-        @reset meso_tgn1[2] = ptm[9] * pma_9[1] * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2
+        @reset meso_tn1[2]  = T(ptm[7] * ptl_1[1])
+        @reset meso_tn1[3]  = T(ptm[3] * ptl_2[1])
+        @reset meso_tn1[4]  = T(ptm[8] * ptl_3[1])
+        @reset meso_tn1[5]  = T(ptm[5] * ptl_4[1])
+        @reset meso_tgn1[2] = T(ptm[9] * pma_9[1] * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2)
     end
 
     # N2 variation factor at Zlb.
@@ -2017,9 +2017,9 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     Ar_number_density *= T(1e6)
 
     # Repack variables that were modified.
-    @reset nrlmsise00d.meso_tn1_5  = meso_tn1[5]
-    @reset nrlmsise00d.meso_tgn1_2 = meso_tgn1[2]
-    @reset nrlmsise00d.dm28        = dm28
+    @reset nrlmsise00d.meso_tn1_5  = T(meso_tn1[5])
+    @reset nrlmsise00d.meso_tgn1_2 = T(meso_tgn1[2])
+    @reset nrlmsise00d.dm28        = T(dm28)
 
     # Create output structure and return.
     nrlmsise00_out = Nrlmsise00Output{T}(
