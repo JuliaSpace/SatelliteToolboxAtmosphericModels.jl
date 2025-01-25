@@ -301,7 +301,7 @@ function nrlmsise00(
 
     nrlmsise00d = Nrlmsise00Structure{RT, T_AP}(
         Y,
-        doy,
+        floor(doy),
         Δds,
         h / 1000,
         ϕ_gd / _DEG_TO_RAD,
