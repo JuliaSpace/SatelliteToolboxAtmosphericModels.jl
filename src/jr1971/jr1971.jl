@@ -46,11 +46,11 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 
 - `JR1971Output{Float64}`: Structure containing the results obtained from the model.
 """
-function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true), roots_container::Union{Nothing, Vector, MVector}=nothing) where {verbosity}
+function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true), roots_container::Union{Nothing, AbstractVector}=nothing) where {verbosity}
     return jr1971(datetime2julian(instant), ϕ_gd, λ, h; verbose=verbose, roots_container=roots_container)
 end
 
-function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true), roots_container::Union{Nothing, Vector, MVector}=nothing) where {verbosity}
+function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true), roots_container::Union{Nothing, AbstractVector}=nothing) where {verbosity}
     # Get the data in the desired Julian Day.
     F10  = space_index(Val(:F10obs), jd)
     F10ₐ = sum(space_index.(Val(:F10obs), jd + k) for k in -40:40) / 81
@@ -91,7 +91,7 @@ function jr1971(
     F10ₐ::Number,
     Kp::Number;
     verbose::Val{verbosity}=Val(true),
-    roots_container::Union{Nothing, Vector, MVector}=nothing,
+    roots_container::Union{Nothing, AbstractVector}=nothing,
 ) where {verbosity}
     return jr1971(datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp, verbose=Val(verbosity), roots_container=roots_container)
 end
@@ -105,7 +105,7 @@ function jr1971(
     F10ₐ::FT2,
     Kp::KT;
     verbose::Val{verbosity}=Val(true),
-    roots_container::Union{Nothing, Vector, MVector}=nothing,
+    roots_container::Union{Nothing, AbstractVector}=nothing,
 )   where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, KT<:Number, verbosity}
 
     RT = promote_type(JT, PT, LT, HT, FT, FT2, KT)

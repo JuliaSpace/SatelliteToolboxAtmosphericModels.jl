@@ -172,7 +172,7 @@ end
                 F10ₐ    = 80
                 ap      = 7
 
-                input = [instant; h; ϕ_gd; λ; F10; F10ₐ; ap]
+                input = [instant; h; ϕ_gd; λ; F10ₐ; F10; ap]
                 input2 = input[1:4]
 
 
@@ -203,6 +203,9 @@ end
                     backend[2],
                     input2
                 )
+
+                println(backend[1], " ", df_ad)
+                println(backend[1], " ", df_ad2)
 
                 @test f_fd2 ≈ f_ad2 rtol=1e-14
                 @test df_fd2 ≈ df_ad2 atol=1e-5

@@ -133,7 +133,7 @@ function nrlmsise00(
     λ::Number;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing,
+    P::Union{Nothing, AbstractMatrix} = nothing,
     verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     return nrlmsise00(
@@ -155,7 +155,7 @@ function nrlmsise00(
     λ::LT;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing,
+    P::Union{Nothing, AbstractMatrix} = nothing,
     verbose::Val{verbosity} = Val(true),
 ) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, verbosity}
 
@@ -214,7 +214,7 @@ function nrlmsise00(
     ap::Union{Number, AbstractVector};
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing
+    P::Union{Nothing, AbstractMatrix} = nothing
 )
     return nrlmsise00(
         datetime2julian(instant),
@@ -240,7 +240,7 @@ function nrlmsise00(
     ap::T_AP;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing
+    P::Union{Nothing, AbstractMatrix} = nothing
 ) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, FT<:Number, FT2<:Number, T_AP<:Union{Number, AbstractVector}}
 
     RT = promote_type(JT, HT, PT, LT, FT, FT2)
@@ -248,13 +248,13 @@ function nrlmsise00(
     # == Compute Auxiliary Variables =======================================================
 
     # Convert the Julian Day to Date.
-    Y, M, D, hour, min, sec = jd_to_date(jd)
+    Y, _, _, _, _, _ = jd_to_date(jd)
 
     # Get the number of days since the beginning of the year.
-    doy = round(Int, date_to_jd(Y, M, D, 0, 0, 0) - date_to_jd(Y, 1, 1, 0, 0, 0)) + 1
+    doy = _get_doy(jd)
 
     # Get the number of seconds since the beginning of the day.
-    Δds = 3600hour + 60min + sec
+    Δds = jd - floor(jd)
 
     # Get the local apparent solar time [hours].
     #
