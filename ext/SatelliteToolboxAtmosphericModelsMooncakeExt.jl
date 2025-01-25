@@ -2,7 +2,8 @@ module SatelliteToolboxAtmosphericModelsMooncakeExt
 
 using SatelliteToolboxAtmosphericModels
 
-using Mooncake.ChainRulesCore
+using Mooncake
+using ChainRulesCore
 
 function ChainRulesCore.rrule(::typeof(AtmosphericModels._get_doy), jd::Number)
 
@@ -16,6 +17,6 @@ function ChainRulesCore.rrule(::typeof(AtmosphericModels._get_doy), jd::Number)
 
 end
 
-@from_rrule DefaultCtx Tuple{::typeof(AtmosphericModels._get_doy), Base.IEEEFloat}
+Mooncake.@from_rrule DefaultCtx Tuple{::typeof(AtmosphericModels._get_doy), Base.IEEEFloat}
 
 end
