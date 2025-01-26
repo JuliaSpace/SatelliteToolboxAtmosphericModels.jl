@@ -17,7 +17,6 @@ function ChainRulesCore.rrule(::typeof(AtmosphericModels._get_doy), jd::Number)
 
 end
 
-Mooncake.@from_rrule Mooncake.DefaultCtx Tuple{typeof(floor), Base.IEEEFloat}
 Mooncake.@from_rrule Mooncake.DefaultCtx Tuple{typeof(AtmosphericModels._get_doy), Base.IEEEFloat}
 
 end

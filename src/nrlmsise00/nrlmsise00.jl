@@ -254,7 +254,7 @@ function nrlmsise00(
     doy = _get_doy(jd)
 
     # Get the number of seconds since the beginning of the day.
-    Δds = jd - floor(jd)
+    Δds = (doy - floor(doy)) * 86400.0
 
     # Get the local apparent solar time [hours].
     #
