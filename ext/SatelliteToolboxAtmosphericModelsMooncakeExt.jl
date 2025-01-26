@@ -1,6 +1,7 @@
 module SatelliteToolboxAtmosphericModelsMooncakeExt
 
 using SatelliteToolboxAtmosphericModels
+using SatelliteToolboxBase
 
 using Mooncake
 using ChainRulesCore
