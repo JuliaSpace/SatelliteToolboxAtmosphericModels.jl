@@ -11,7 +11,7 @@ function ChainRulesCore.rrule(::typeof(AtmosphericModels._get_doy), jd::Number)
     y = AtmosphericModels._get_doy(jd)
 
     function _get_doy_pullback(Δ::Number)
-        return (NoTangent(), Δ)
+        return (ChainRulesCore.NoTangent(), Δ)
     end
 
     return y, _get_doy_pullback
@@ -23,7 +23,7 @@ function ChainRulesCore.rrule(::typeof(jd_to_date), jd::Number)
     y = jd_to_date(jd)
 
     function jd_to_date_pullback(Δ)
-        return (NoTangent(), 0.0, 0.0, 0.0, 0.0, 0.0, Δ)
+        return (ChainRulesCore.NoTangent(), (0.0, 0.0, 0.0, 0.0, 0.0, Δ))
     end
 
     return y, jd_to_date_pullback
