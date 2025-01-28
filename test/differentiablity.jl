@@ -1,3 +1,9 @@
+## Description #############################################################################
+#
+# Tests related to differentiation of the Atmospheric Models.
+#
+############################################################################################
+
 const _BACKENDS = (
     ("ForwardDiff", AutoForwardDiff()),
     ("Enzyme", AutoEnzyme()),
@@ -8,13 +14,11 @@ const _BACKENDS = (
 
 ##########################################################################################
 # MRLMSISE-00 Fails these Packages
-# 1. Enzyme: The Enzyme compiler seems to have issue with either the nested structure
-# of some of the NRLMSISE-00 structures or with the type Union of the Ap space index. Either
-# way it seems like it will take a bigger rework to get this working. I've tried a number of 
-# attempts but end up with a large LLVM stack trace that I can't seem to resolve.
+# 1. Enzyme: The Enzyme compiler has issue with mixed immutable and mutable tyoes of
+# some of the NRLMSISE-00 structures. Enzyme.set_runtime_activity needs to be used in
+# this model.
 ##########################################################################################
-#TODO: Revisit and get this working
-const _nrlmsise00_skip_backends = ["Enzyme"]
+
 
 @testset "Exponential Atmosphere Differentiation" begin
     
@@ -159,8 +163,8 @@ end
     hs = collect(90:50:1000) .* 1000.0
 
     for backend in _BACKENDS
-        if backend[1] in _nrlmsise00_skip_backends
-            continue
+        if backend[1] == "Enzyme"
+            backend  = ("Enzyme", AutoEnzyme(; mode=Enzyme.set_runtime_activity(Enzyme.Forward)))
         end
         testset_name = "NRLMSISE-00 Atmosphere " * string(backend[1])
         @testset "$testset_name" begin
