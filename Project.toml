@@ -49,15 +49,8 @@ Zygote = "0.6, 0.7"
 julia = "1.10, 1.11"
 
 [extras]
-AllocCheck = "9b6a8646-10ed-4001-bbdc-1d2f46dfbb1a"
-Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
-DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
-Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
-FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
-JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
-PolyesterForwardDiff = "98d1487c-24ca-40b6-b7ab-df2af84e126b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "AllocCheck", "Aqua", "DelimitedFiles", "DifferentiationInterface", "Enzyme", "FiniteDiff", "ForwardDiff", "JET", "Mooncake", "PolyesterForwardDiff", "Zygote"]
+test = ["Test", "DelimitedFiles"]
