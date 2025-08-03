@@ -74,7 +74,7 @@ end
                 )
                 
                 # Include something() to replace Zygote "nothing" with 0.0
-                @test f_fd ≈ f_ad rtol=1e-14
+                @test f_fd ≈ f_ad atol=1e-14
                 @test df_fd ≈ something.(df_ad, 0) rtol=2e-1
 
                 f_ad2, df_ad2 = value_and_gradient(
@@ -84,7 +84,7 @@ end
                 )
 
                 # Include something() to replace Zygote "nothing" with 0.0
-                @test f_fd2 ≈ f_ad2 rtol = 1e-14
+                @test f_fd2 ≈ f_ad2 atol = 1e-14
                 @test df_fd2 ≈ something.(df_ad2, 0) rtol=2e-1
                 
             end
