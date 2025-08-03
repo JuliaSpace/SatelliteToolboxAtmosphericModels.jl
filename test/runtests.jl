@@ -33,6 +33,7 @@ if isempty(VERSION.prerelease)
     Pkg.add("Mooncake")
     Pkg.add("PolyesterForwardDiff")
     Pkg.add("Zygote")
+    Pkg.add("ImplicitDifferentiation")
 
     Pkg.add("JET")
     Pkg.add("AllocCheck")
@@ -41,6 +42,8 @@ if isempty(VERSION.prerelease)
     # Test with Mooncake and Enzyme along with the other backends
     using DifferentiationInterface
     using Enzyme, FiniteDiff, ForwardDiff, Mooncake, PolyesterForwardDiff, Zygote
+    using ImplicitDifferentiation
+    
     const _BACKENDS = (
         ("ForwardDiff", AutoForwardDiff()),
         ("Enzyme", AutoEnzyme()),
