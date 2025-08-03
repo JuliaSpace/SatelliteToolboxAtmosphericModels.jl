@@ -549,6 +549,8 @@ end
 # returns `r₁`, `r₂`, `x`, and `y`.
 function _jr1971_roots(p::AbstractVector{<:Number})
     # Compute the roots with a first guess.
+    #TODO: All of the allocations are in PolynomialRoots, this package also doesn't allow a SVector input
+    #TODO: Work through these in PolynomialRoots.jl or consider a different package
     r = roots(p, _JR1971_ROOT_GUESS; polish = true)
 
     # We expect two real roots and two complex roots. Here, we will perform the following
