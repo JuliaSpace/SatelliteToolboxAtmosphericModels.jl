@@ -21,10 +21,12 @@ StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 [weakdeps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+ImplicitDifferentiation = "57b37032-215b-411a-8a7c-41a003a55207"
 Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [extensions]
+SatelliteToolboxAtmosphericModelsForwardDiffExt = ["ForwardDiff", "ImplicitDifferentiation"]
 SatelliteToolboxAtmosphericModelsMooncakeExt = ["Mooncake", "ChainRulesCore"]
 SatelliteToolboxAtmosphericModelsZygoteExt = ["Zygote", "ForwardDiff"]
 
@@ -33,7 +35,8 @@ Accessors = "0.1"
 ChainRulesCore = "1.25"
 Crayons = "4"
 DelimitedFiles = "1.9"
-ForwardDiff = "1.0"
+ForwardDiff = "0.10, 1"
+ImplicitDifferentiation = "0.9"
 LinearAlgebra = "1.10"
 Mooncake = "0.4"
 PolynomialRoots = "1"

@@ -282,13 +282,13 @@ function jr1971(
         c₄ = Ca[5] / Ca[5]
 
         if isnothing(roots_container)
-            cs = [c₀; c₁; c₂; c₃; c₄]
+            roots_container = [c₀; c₁; c₂; c₃; c₄]
         else
             @assert length(roots_container) == 5
             roots_container .= [c₀; c₁; c₂; c₃; c₄]
         end
 
-        r₁, r₂, x, y = _jr1971_roots(cs)
+        r₁, r₂, x, y = _jr1971_roots(roots_container)
 
         # -- f and k, [1. p. 371] ----------------------------------------------------------
 
@@ -547,7 +547,7 @@ end
 #
 # Compute the roots of the polynomial `p` necessary to compute the density below 125 km. It
 # returns `r₁`, `r₂`, `x`, and `y`.
-function _jr1971_roots(p::AbstractVector)
+function _jr1971_roots(p::AbstractVector{<:Number})
     # Compute the roots with a first guess.
     r = roots(p, _JR1971_ROOT_GUESS; polish = true)
 

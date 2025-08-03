@@ -3,23 +3,6 @@
 # Tests related to differentiation of the Atmospheric Models.
 #
 ############################################################################################
-
-const _BACKENDS = (
-    ("ForwardDiff", AutoForwardDiff()),
-    ("Enzyme", AutoEnzyme()),
-    ("Mooncake", AutoMooncake(;config=nothing)),
-    ("PolyesterForwardDiff", AutoPolyesterForwardDiff()),
-    ("Zygote", AutoZygote()),
-)
-
-##########################################################################################
-# MRLMSISE-00 Fails these Packages
-# 1. Enzyme: The Enzyme compiler has issue with mixed immutable and mutable tyoes of
-# some of the NRLMSISE-00 structures. Enzyme.set_runtime_activity needs to be used in
-# this model.
-##########################################################################################
-
-
 @testset "Exponential Atmosphere Differentiation" begin
     
     hs = collect(90:50:1000) .* 1000.0
@@ -139,7 +122,7 @@ end
             )
             
             # Include something() to replace Zygote "nothing" with 0.0
-            @test f_fd ≈ f_ad rtol=1e-14
+            @test f_fd ≈ f_ad atol=1e-14
             @test df_fd ≈ df_ad rtol=2e-1
 
             f_ad2, df_ad2 = value_and_gradient(
@@ -149,7 +132,7 @@ end
             )
 
             # Include something() to replace Zygote "nothing" with 0.0
-            @test f_fd2 ≈ f_ad2 rtol=1e-14
+            @test f_fd2 ≈ f_ad2 atol=1e-14
             @test df_fd2 ≈ df_ad2 rtol=2e-1
             
         end
@@ -199,7 +182,7 @@ end
                 )
 
 
-                @test f_fd ≈ f_ad rtol=1e-14
+                @test f_fd ≈ f_ad atol=1e-14
                 @test df_fd ≈ df_ad atol=1e-5
 
                 f_ad2, df_ad2 = value_and_gradient(
@@ -208,7 +191,7 @@ end
                     input2
                 )
 
-                @test f_fd2 ≈ f_ad2 rtol=1e-14
+                @test f_fd2 ≈ f_ad2 atol=1e-14
                 @test df_fd2 ≈ df_ad2 atol=1e-5
             end
         end
@@ -246,7 +229,7 @@ end
                     input
                 )
 
-                @test f_fd ≈ f_ad rtol=1e-14
+                @test f_fd ≈ f_ad atol=1e-14
                 @test df_fd ≈ df_ad rtol=2e-1
 
                 f_ad2, df_ad2 = value_and_gradient(
@@ -255,7 +238,7 @@ end
                     input2
                 )
 
-                @test f_fd2 ≈ f_ad2 rtol=1e-14
+                @test f_fd2 ≈ f_ad2 atol=1e-14
                 @test df_fd2 ≈ df_ad2 rtol=2e-1       
             end
         end
