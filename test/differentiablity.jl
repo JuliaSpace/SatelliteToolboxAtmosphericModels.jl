@@ -43,7 +43,6 @@ end
                 "Enzyme",
                 AutoEnzyme(;
                     mode=Enzyme.set_runtime_activity(Enzyme.Forward),
-                    function_annotation=Enzyme.Duplicated,
                 ),
             )
         end
