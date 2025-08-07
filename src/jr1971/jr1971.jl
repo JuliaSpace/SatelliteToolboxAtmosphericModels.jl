@@ -159,7 +159,7 @@ function jr1971(
     # Compute the hour angle at the selected location, which is the angle measured at the XY
     # plane between the right ascension of the selected position and the right ascension of
     # the Sun.
-    H = rem2pi(Ωp - Ωs, RoundNearest)
+    H = Ωp - Ωs
 
     ########################################################################################
     #                                      Algorithm                                       #
