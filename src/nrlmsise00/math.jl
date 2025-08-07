@@ -40,8 +40,8 @@ function _spline_∫(
 
         a² = a^2
         b² = b^2
-        a⁴ = a^4
-        b⁴ = b^4
+        a⁴ = a^4.0
+        b⁴ = b^4.0
         h² = h^2
 
         k_a = -(1 + a⁴) / 4 + a² / 2
@@ -167,7 +167,7 @@ function _spline(
 
     a  = (x[k₁] - xᵢ   ) / h
     b  = (xᵢ    - x[k₀]) / h
-    yᵢ = a * y[k₀] + b * y[k₁] + ((a^3 - a) * ∂²y[k₀] + (b^3 - b) * ∂²y[k₁]) * h^2 / 6
+    yᵢ = a * y[k₀] + b * y[k₁] + ((a^3.0 - a) * ∂²y[k₀] + (b^3.0 - b) * ∂²y[k₁]) * h^2 / 6
 
     return yᵢ
 end

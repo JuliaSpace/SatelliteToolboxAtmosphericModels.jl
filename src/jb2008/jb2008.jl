@@ -803,9 +803,9 @@ function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
     F  = (F10 - 100) / 100
     θ  = lst / 24
     θ² = θ^2
-    θ³ = θ^3
-    θ⁴ = θ^4
-    θ⁵ = θ^5
+    θ³ = θ^3.0
+    θ⁴ = θ^4.0
+    θ⁵ = θ^5.0
     cϕ = cos(ϕ_gd)
 
     ΔTc = 0.0

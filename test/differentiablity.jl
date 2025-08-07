@@ -39,7 +39,12 @@ end
 
     for backend in _BACKENDS
         if backend[1] == "Enzyme"
-            continue
+            backend = (
+                "Enzyme",
+                AutoEnzyme(;
+                    mode=Enzyme.set_runtime_activity(Enzyme.Forward),
+                ),
+            )
         end
         testset_name = "JR1971 Atmosphere " * string(backend[1])
         @testset "$testset_name" begin
@@ -90,53 +95,6 @@ end
             end
         end
     end
-    testset_name = "JR1971 Atmosphere Enzyme"
-        @testset "$testset_name" begin
-        for h in hs
-            instant = datetime2julian(DateTime("2023-01-01T10:00:00"))
-            ϕ_gd    = -23 |> deg2rad
-            λ       = -45 |> deg2rad
-            F10     = 152.6
-            F10ₐ    = 159.12345679012347
-            Kp      = 2.667
-
-            input = [instant; ϕ_gd; λ; h; F10; F10ₐ; Kp]
-            input2 = input[1:4]
-
-            f_fd, df_fd = value_and_gradient(
-                (x) -> AtmosphericModels.jr1971(x...; verbose=Val(false)).total_density,
-                AutoFiniteDiff(),
-                input
-            )
-
-            f_fd2, df_fd2 = value_and_gradient(
-                (x) -> AtmosphericModels.jr1971(x...; verbose=Val(false)).total_density,
-                AutoFiniteDiff(),
-                input2
-            )
-
-            f_ad, df_ad = value_and_gradient(
-                Const((x) -> AtmosphericModels.jr1971(x...; verbose=Val(false)).total_density),
-                AutoEnzyme(),
-                input
-            )
-            
-            # Include something() to replace Zygote "nothing" with 0.0
-            @test f_fd ≈ f_ad atol=1e-14
-            @test df_fd ≈ df_ad rtol=2e-1
-
-            f_ad2, df_ad2 = value_and_gradient(
-                Const((x) -> AtmosphericModels.jr1971(x...; verbose=Val(false)).total_density),
-                AutoEnzyme(),
-                input2
-            )
-
-            # Include something() to replace Zygote "nothing" with 0.0
-            @test f_fd2 ≈ f_ad2 atol=1e-14
-            @test df_fd2 ≈ df_ad2 rtol=2e-1
-            
-        end
-    end
 end
 
 @testset "NRLMSISE-00 Atmosphere Differentiation" begin 
@@ -147,7 +105,12 @@ end
 
     for backend in _BACKENDS
         if backend[1] == "Enzyme"
-            backend  = ("Enzyme", AutoEnzyme(; mode=Enzyme.set_runtime_activity(Enzyme.Forward)))
+            backend = (
+                "Enzyme",
+                AutoEnzyme(;
+                    mode=Enzyme.set_runtime_activity(Enzyme.Forward),
+                ),
+            )
         end
         testset_name = "NRLMSISE-00 Atmosphere " * string(backend[1])
         @testset "$testset_name" begin
