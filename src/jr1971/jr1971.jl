@@ -284,7 +284,7 @@ function jr1971(
         if isnothing(roots_container)
             roots_container = [c₀; c₁; c₂; c₃; c₄]
         else
-            @assert length(roots_container) == 5
+            (length(roots_container) != 5) && throw(ArgumentError("The roots container must have 5 elements."))
             roots_container .= [c₀; c₁; c₂; c₃; c₄]
         end
 

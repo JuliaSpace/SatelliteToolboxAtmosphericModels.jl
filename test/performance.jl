@@ -20,7 +20,8 @@ end
     @test length(check_allocs(AtmosphericModels.exponential, (Float64,))) == 0
     #TODO: All of the allocations are in PolynomialRoots, this package also doesn't allow a SVector input
     #TODO: Work through these in PolynomialRoots.jl or consider a different package
-    @test length(check_allocs((x1, x2, x3, x4, rc) -> AtmosphericModels.jr1971(x1, x2, x3, x4; roots_container=rc, verbose=Val(false)), (DateTime, Float64, Float64, Float64, Vector{Float64}))) == 10
+    #TODO: 5 Allocations on Julia 1.10 CI and 10 on Julia 1 CI
+    @test length(check_allocs((x1, x2, x3, x4, rc) -> AtmosphericModels.jr1971(x1, x2, x3, x4; roots_container=rc, verbose=Val(false)), (DateTime, Float64, Float64, Float64, Vector{Float64}))) <= 10
     @test length(check_allocs((x1, x2, x3, x4) -> AtmosphericModels.jb2008(x1, x2, x3, x4; verbose=Val(false)), (DateTime, Float64, Float64, Float64))) == 0
     @test length(check_allocs((x1, x2, x3, x4, P) -> AtmosphericModels.nrlmsise00(x1, x2, x3, x4; P=P, verbose=Val(false)) , (DateTime, Float64, Float64, Float64, Matrix{Float64}))) == 0
 end
