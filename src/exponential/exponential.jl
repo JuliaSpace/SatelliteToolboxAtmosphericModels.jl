@@ -33,7 +33,7 @@ function exponential(h::Number)
     h /= 1000
 
     # Get the values for the exponential model.
-    δh = SVector{28}(_EXPONENTIAL_ATMOSPHERE_H₀[i] - h for i in 1:28)
+    δh  = SVector{28}(_EXPONENTIAL_ATMOSPHERE_H₀[i] - h for i in 1:28)
     aux = findfirst(>(0), δh)
     id  = isnothing(aux) ? 28 : aux - 1
     h₀  = _EXPONENTIAL_ATMOSPHERE_H₀[id]

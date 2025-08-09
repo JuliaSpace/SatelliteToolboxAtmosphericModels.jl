@@ -530,7 +530,20 @@ function _densu(
     r_lat::RLT,
     tn1::NTuple{5, TNT},
     tgn1::NTuple{2, TGT}
-) where {HT<:Number, DT<:Number, TinfT<:Number, TT<:Number, XT<:Number, AT<:Number, ZT<:Number, ST<:Number, GLT<:Number, RLT<:Number, TNT<:Number, TGT<:Number}
+) where {
+    HT<:Number,
+    DT<:Number,
+    TinfT<:Number,
+    TT<:Number,
+    XT<:Number,
+    AT<:Number,
+    ZT<:Number,
+    ST<:Number,
+    GLT<:Number,
+    RLT<:Number,
+    TNT<:Number,
+    TGT<:Number
+}
 
     RT = promote_type(HT, DT, TinfT, TT, XT, AT, ZT, ST, GLT, RLT, TNT, TGT)
 

@@ -46,11 +46,32 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 
 - `JR1971Output{Float64}`: Structure containing the results obtained from the model.
 """
-function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true), roots_container::Union{Nothing, AbstractVector}=nothing) where {verbosity}
-    return jr1971(datetime2julian(instant), ϕ_gd, λ, h; verbose=verbose, roots_container=roots_container)
+function jr1971(
+    instant::DateTime,
+    ϕ_gd::Number,
+    λ::Number,
+    h::Number;
+    verbose::Val{verbosity} = Val(true),
+    roots_container::Union{Nothing, AbstractVector} = nothing
+) where {verbosity}
+    return jr1971(
+        datetime2julian(instant),
+        ϕ_gd,
+        λ,
+        h;
+        verbose = verbose,
+        roots_container = roots_container
+    )
 end
 
-function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true), roots_container::Union{Nothing, AbstractVector}=nothing) where {verbosity}
+function jr1971(
+    jd::Number,
+    ϕ_gd::Number,
+    λ::Number,
+    h::Number;
+    verbose::Val{verbosity} = Val(true),
+    roots_container::Union{Nothing, AbstractVector} = nothing
+) where {verbosity}
     # Get the data in the desired Julian Day.
     F10  = space_index(Val(:F10obs), jd)
     F10ₐ = sum(space_index.(Val(:F10obs), jd + k) for k in -40:40) / 81
@@ -79,7 +100,17 @@ function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{v
       3-hour delayed Kp     : $(Kp)
     """
 
-    return jr1971(jd, ϕ_gd, λ, h, F10, F10ₐ, Kp; verbose=Val(verbosity), roots_container=roots_container)
+    return jr1971(
+        jd,
+        ϕ_gd,
+        λ,
+        h,
+        F10,
+        F10ₐ,
+        Kp;
+        verbose = Val(verbosity),
+        roots_container = roots_container
+    )
 end
 
 function jr1971(
@@ -90,10 +121,20 @@ function jr1971(
     F10::Number,
     F10ₐ::Number,
     Kp::Number;
-    verbose::Val{verbosity}=Val(true),
+    verbose::Val{verbosity} = Val(true),
     roots_container::Union{Nothing, AbstractVector}=nothing,
 ) where {verbosity}
-    return jr1971(datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp, verbose=Val(verbosity), roots_container=roots_container)
+    return jr1971(
+        datetime2julian(instant),
+        ϕ_gd,
+        λ,
+        h,
+        F10,
+        F10ₐ,
+        Kp,
+        verbose = Val(verbosity),
+        roots_container=roots_container
+    )
 end
 
 function jr1971(
@@ -104,9 +145,18 @@ function jr1971(
     F10::FT,
     F10ₐ::FT2,
     Kp::KT;
-    verbose::Val{verbosity}=Val(true),
-    roots_container::Union{Nothing, AbstractVector}=nothing,
-)   where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, KT<:Number, verbosity}
+    verbose::Val{verbosity} = Val(true),
+    roots_container::Union{Nothing, AbstractVector} = nothing,
+)   where {
+    JT<:Number,
+    PT<:Number,
+    LT<:Number,
+    HT<:Number,
+    FT<:Number,
+    FT2<:Number,
+    KT<:Number,
+    verbosity
+}
 
     RT = promote_type(JT, PT, LT, HT, FT, FT2, KT)
 
@@ -342,8 +392,8 @@ function jr1971(
                 B₀ - r₁ * r₂ * Ra² * (B₄ + (2x + r₁ + r₂ - Ra) * B₅) -
                 r₁ * r₂ * Ra * (x^2 + y^2) * B₅ + r₁ * r₂ * (Ra² - (x^2 + y^2)) * p₅ +
                 W(r₁) * p₂ + W(r₂) * p₃
-            ) 
-            
+            )
+
             p₄ = p₄ / X
 
             p₆ = B₄ + (2x + r₁ + r₂ - Ra ) * B₅ - p₅ - 2(x + Ra) * p₄ - (r₂ + Ra) * p₃ - (r₁ + Ra) * p₂
@@ -363,7 +413,7 @@ function jr1971(
 
             # -- Compute the Density, eq. 13 [1] -------------------------------------------
 
-            Mz = _jr1971_mean_molecular_mass(h; verbose=Val(verbosity))
+            Mz = _jr1971_mean_molecular_mass(h; verbose = Val(verbosity))
             ρ  = ρ₁ * Δρ_c * Mz * T₁ / (M₁ * Tz) * exp(k * (log_F₁ + F₂))
 
             # Convert to SI and return.
@@ -533,7 +583,10 @@ end
 #
 # Compute the mean molecular mass at altitude `z` [km] using the empirical profile in eq. 1
 # **[3, 4]**.
-function _jr1971_mean_molecular_mass(z::Number; verbose::Val{verbosity}=Val(true)) where {verbosity}
+function _jr1971_mean_molecular_mass(
+    z::Number;
+    verbose::Val{verbosity} = Val(true)
+) where {verbosity}
     verbosity && !(90 <= z <= 100) &&
         @warn("The empirical model for the mean molecular mass is valid only for 90 <= z <= 100 km.")
 

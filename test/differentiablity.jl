@@ -3,8 +3,9 @@
 # Tests related to differentiation of the Atmospheric Models.
 #
 ############################################################################################
-@testset "Exponential Atmosphere Differentiation" begin
-    
+
+@testset "Exponential Atmosphere Differentiation" verbose = true begin
+
     hs = collect(90:50:1000) .* 1000.0
 
     for backend in _BACKENDS
@@ -31,7 +32,7 @@
 end
 
 
-@testset "Jacchia-Roberts 1971 Atmosphere Differentiation" begin 
+@testset "Jacchia-Roberts 1971 Atmosphere Differentiation" verbose = true begin
 
     SpaceIndices.init()
 
@@ -71,13 +72,13 @@ end
                     input2
                 )
 
-                
+
                 f_ad, df_ad = value_and_gradient(
                     (x) -> AtmosphericModels.jr1971(x...; verbose=Val(false)).total_density,
                     backend[2],
                     input
                 )
-                
+
                 # Include something() to replace Zygote "nothing" with 0.0
                 @test f_fd ≈ f_ad atol=1e-10
                 @test df_fd ≈ something.(df_ad, 0) rtol=2e-1
@@ -91,13 +92,13 @@ end
                 # Include something() to replace Zygote "nothing" with 0.0
                 @test f_fd2 ≈ f_ad2 atol = 1e-10
                 @test df_fd2 ≈ something.(df_ad2, 0) rtol=2e-1
-                
+
             end
         end
     end
 end
 
-@testset "NRLMSISE-00 Atmosphere Differentiation" begin 
+@testset "NRLMSISE-00 Atmosphere Differentiation" vebose = true begin
 
     SpaceIndices.init()
 
@@ -161,7 +162,7 @@ end
     end
 end
 
-@testset "Jacchia-Bowman 2008 Atmosphere Differentiation" begin 
+@testset "Jacchia-Bowman 2008 Atmosphere Differentiation" verbose = true begin
 
     SpaceIndices.init()
 
@@ -171,7 +172,22 @@ end
         testset_name = "JB2008 Atmosphere " * string(backend[1])
         @testset "$testset_name" begin
             for h in hs
-                input = [datetime2julian(DateTime("2023-01-01T10:00:00")); 0; 0; 500e3; 100; 100; 100; 100; 100; 100; 100; 100; 85]
+                input = [
+                    datetime2julian(DateTime("2023-01-01T10:00:00"));
+                    0;
+                    0;
+                    500e3;
+                    100;
+                    100;
+                    100;
+                    100;
+                    100;
+                    100;
+                    100;
+                    100;
+                    85
+                ]
+
                 input2 = input[1:4]
 
                 f_fd, df_fd = value_and_gradient(
@@ -202,7 +218,7 @@ end
                 )
 
                 @test f_fd2 ≈ f_ad2 atol=1e-14
-                @test df_fd2 ≈ df_ad2 rtol=2e-1       
+                @test df_fd2 ≈ df_ad2 rtol=2e-1
             end
         end
     end

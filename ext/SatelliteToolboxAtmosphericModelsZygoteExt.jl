@@ -32,14 +32,33 @@ function ChainRulesCore.rrule(
     P::Union{Nothing, Matrix} = nothing
 ) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, FT<:Number, FT2<:Number, T_AP<:Union{Number, AbstractVector}}
 
-    y = AtmosphericModels.nrlmsise00(jd, h, ϕ_gd, λ, F10ₐ, F10, ap; flags=flags, include_anomalous_oxygen=include_anomalous_oxygen, P=P)
+    y = AtmosphericModels.nrlmsise00(
+        jd,
+        h,
+        ϕ_gd,
+        λ,
+        F10ₐ,
+        F10,
+        ap;
+        flags = flags,
+        include_anomalous_oxygen = include_anomalous_oxygen,
+        P = P
+    )
 
     function nrlmsise00_pullback(Δ)
 
         fields = fieldnames(AtmosphericModels.Nrlmsise00Output)
 
         jac = reduce(hcat, ForwardDiff.gradient(
-            (x) -> getfield(AtmosphericModels.nrlmsise00(x...; flags=flags, include_anomalous_oxygen=include_anomalous_oxygen, P=P), field),
+            (x) -> getfield(
+                AtmosphericModels.nrlmsise00(
+                    x...;
+                    flags = flags,
+                    include_anomalous_oxygen = include_anomalous_oxygen,
+                    P = P
+                ),
+                field
+            ),
             [jd, h, ϕ_gd, λ, F10ₐ, F10, ap]
         ) for field in fields)'
 
