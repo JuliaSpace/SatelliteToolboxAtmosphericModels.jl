@@ -15,6 +15,7 @@ using SpaceIndices
 using SatelliteToolboxBase
 using SatelliteToolboxCelestialBodies
 using SatelliteToolboxLegendre
+using StaticArraysCore
 
 import Base: show
 
@@ -28,6 +29,7 @@ const _B = string(crayon"bold")
 ############################################################################################
 #                                         Includes                                         #
 ############################################################################################
+include("utils.jl")
 
 include("./exponential/constants.jl")
 include("./exponential/exponential.jl")

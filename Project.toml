@@ -16,28 +16,45 @@ SatelliteToolboxBase = "9e17983a-0463-41a7-9a16-1682db6d8b66"
 SatelliteToolboxCelestialBodies = "b0edd99f-a7ca-4aa6-9a1e-a53e8f506046"
 SatelliteToolboxLegendre = "7fa26607-a272-47b2-9aa2-a6c1d419d9d2"
 SpaceIndices = "5a540a4e-639f-452a-b107-23ea09ed4d36"
+StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+
+[weakdeps]
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+ImplicitDifferentiation = "57b37032-215b-411a-8a7c-41a003a55207"
+Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+
+[extensions]
+SatelliteToolboxAtmosphericModelsForwardDiffExt = ["ForwardDiff", "ImplicitDifferentiation"]
+SatelliteToolboxAtmosphericModelsMooncakeExt = ["Mooncake", "ChainRulesCore"]
+SatelliteToolboxAtmosphericModelsZygoteExt = ["Zygote", "ForwardDiff"]
 
 [compat]
 Accessors = "0.1"
+ChainRulesCore = "1.25"
 Crayons = "4"
 DelimitedFiles = "1.9"
+ForwardDiff = "0.10, 1"
+ImplicitDifferentiation = "0.9"
 LinearAlgebra = "1.10"
+Mooncake = "0.4"
 PolynomialRoots = "1"
 Printf = "1.10"
 Reexport = "1"
 SatelliteToolboxBase = "1"
 SatelliteToolboxCelestialBodies = "1"
 SatelliteToolboxLegendre = "1"
-SpaceIndices = "1"
+SpaceIndices = "1.2"
+StaticArraysCore = "1.4"
 Test = "1.10"
-julia = "1.10"
+Zygote = "0.6, 0.7"
+julia = "1.10, 1.11"
 
 [extras]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
-DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
-FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "DelimitedFiles", "DifferentiationInterface", "FiniteDiff", "ForwardDiff"]
+test = ["Test", "DelimitedFiles", "Pkg"]

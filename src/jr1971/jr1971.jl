@@ -46,14 +46,14 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 
 - `JR1971Output{Float64}`: Structure containing the results obtained from the model.
 """
-function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number)
-    return jr1971(datetime2julian(instant), ϕ_gd, λ, h)
+function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true), roots_container::Union{Nothing, AbstractVector}=nothing) where {verbosity}
+    return jr1971(datetime2julian(instant), ϕ_gd, λ, h; verbose=verbose, roots_container=roots_container)
 end
 
-function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
+function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity}=Val(true), roots_container::Union{Nothing, AbstractVector}=nothing) where {verbosity}
     # Get the data in the desired Julian Day.
     F10  = space_index(Val(:F10obs), jd)
-    F10ₐ = sum((space_index.(Val(:F10obs), k) for k in (jd - 40):(jd + 40))) / 81
+    F10ₐ = sum(space_index.(Val(:F10obs), jd + k) for k in -40:40) / 81
 
     # For the Kp, we must obtain the index using a 3-hour delay. Thus, we need to obtain the
     # Kp vector first, containing the Kp values for every 3 hours.
@@ -72,14 +72,14 @@ function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
     id = round(Int, clamp(div(Δt, 10_800) + 1, 1, 8))
     Kp = Kp_vect[id]
 
-    @debug """
+    verbosity && @debug """
     JR1971 - Fetched Space Indices
       Daily F10.7           : $(F10) sfu
       81-day averaged F10.7 : $(F10ₐ) sfu
       3-hour delayed Kp     : $(Kp)
     """
 
-    return jr1971(jd, ϕ_gd, λ, h, F10, F10ₐ, Kp)
+    return jr1971(jd, ϕ_gd, λ, h, F10, F10ₐ, Kp; verbose=Val(verbosity), roots_container=roots_container)
 end
 
 function jr1971(
@@ -89,9 +89,11 @@ function jr1971(
     h::Number,
     F10::Number,
     F10ₐ::Number,
-    Kp::Number
-)
-    return jr1971(datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp)
+    Kp::Number;
+    verbose::Val{verbosity}=Val(true),
+    roots_container::Union{Nothing, AbstractVector}=nothing,
+) where {verbosity}
+    return jr1971(datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp, verbose=Val(verbosity), roots_container=roots_container)
 end
 
 function jr1971(
@@ -101,8 +103,10 @@ function jr1971(
     h::HT,
     F10::FT,
     F10ₐ::FT2,
-    Kp::KT
-)   where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, KT<:Number}
+    Kp::KT;
+    verbose::Val{verbosity}=Val(true),
+    roots_container::Union{Nothing, AbstractVector}=nothing,
+)   where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, KT<:Number, verbosity}
 
     RT = promote_type(JT, PT, LT, HT, FT, FT2, KT)
 
@@ -254,7 +258,7 @@ function jr1971(
         ρ = ρ₁ * Δρ_c
 
         # Convert to SI and return.
-        return JR1971Output(
+        return JR1971Output{RT}(
             1000ρ,
             Tz,
             T∞,
@@ -271,13 +275,20 @@ function jr1971(
         # First, we need to find the roots of the polynomial:
         #
         #   P(Z) = c₀ + c₁ ⋅ z + c₂ ⋅ z² + c₃ ⋅ z³ + c₄ ⋅ z⁴
-
         c₀ = (35^4 * Tx / (Tx - T₁) + Ca[1]) / Ca[5]
         c₁ = Ca[2] / Ca[5]
         c₂ = Ca[3] / Ca[5]
         c₃ = Ca[4] / Ca[5]
         c₄ = Ca[5] / Ca[5]
-        r₁, r₂, x, y = _jr1971_roots([c₀, c₁, c₂, c₃, c₄])
+
+        if isnothing(roots_container)
+            roots_container = [c₀; c₁; c₂; c₃; c₄]
+        else
+            (length(roots_container) != 5) && throw(ArgumentError("The roots container must have 5 elements."))
+            roots_container .= [c₀; c₁; c₂; c₃; c₄]
+        end
+
+        r₁, r₂, x, y = _jr1971_roots(roots_container)
 
         # -- f and k, [1. p. 371] ----------------------------------------------------------
 
@@ -331,7 +342,9 @@ function jr1971(
                 B₀ - r₁ * r₂ * Ra² * (B₄ + (2x + r₁ + r₂ - Ra) * B₅) -
                 r₁ * r₂ * Ra * (x^2 + y^2) * B₅ + r₁ * r₂ * (Ra² - (x^2 + y^2)) * p₅ +
                 W(r₁) * p₂ + W(r₂) * p₃
-            ) / X
+            ) 
+            
+            p₄ = p₄ / X
 
             p₆ = B₄ + (2x + r₁ + r₂ - Ra ) * B₅ - p₅ - 2(x + Ra) * p₄ - (r₂ + Ra) * p₃ - (r₁ + Ra) * p₂
             p₁ = B₅ - 2p₄ - p₃ - p₂
@@ -350,11 +363,11 @@ function jr1971(
 
             # -- Compute the Density, eq. 13 [1] -------------------------------------------
 
-            Mz = _jr1971_mean_molecular_mass(h)
+            Mz = _jr1971_mean_molecular_mass(h; verbose=Val(verbosity))
             ρ  = ρ₁ * Δρ_c * Mz * T₁ / (M₁ * Tz) * exp(k * (log_F₁ + F₂))
 
             # Convert to SI and return.
-            return JR1971Output(
+            return JR1971Output{RT}(
                 1000ρ,
                 Tz,
                 T∞,
@@ -520,8 +533,8 @@ end
 #
 # Compute the mean molecular mass at altitude `z` [km] using the empirical profile in eq. 1
 # **[3, 4]**.
-function _jr1971_mean_molecular_mass(z::Number)
-    !(90 <= z <= 100) &&
+function _jr1971_mean_molecular_mass(z::Number; verbose::Val{verbosity}=Val(true)) where {verbosity}
+    verbosity && !(90 <= z <= 100) &&
         @warn("The empirical model for the mean molecular mass is valid only for 90 <= z <= 100 km.")
 
     Aa = _JR1971_CONSTANTS.Aa
@@ -534,8 +547,10 @@ end
 #
 # Compute the roots of the polynomial `p` necessary to compute the density below 125 km. It
 # returns `r₁`, `r₂`, `x`, and `y`.
-function _jr1971_roots(p::AbstractVector)
+function _jr1971_roots(p::AbstractVector{<:Number})
     # Compute the roots with a first guess.
+    #TODO: All of the allocations are in PolynomialRoots, this package also doesn't allow a SVector input
+    #TODO: Work through these in PolynomialRoots.jl or consider a different package
     r = roots(p, _JR1971_ROOT_GUESS; polish = true)
 
     # We expect two real roots and two complex roots. Here, we will perform the following
@@ -552,7 +567,7 @@ function _jr1971_roots(p::AbstractVector)
     x  = real(r[c])
     y  = abs(imag(r[c]))
 
-    return r₁, r₂, x, y
+    return r₁[1], r₂[1], x[1], y[1]
 end
 
 #   _jr1971_temperature(z::Number, Tx::Number, T∞::Number) -> Float64

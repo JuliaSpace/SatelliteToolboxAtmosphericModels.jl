@@ -133,8 +133,9 @@ function nrlmsise00(
     λ::Number;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing
-)
+    P::Union{Nothing, AbstractMatrix} = nothing,
+    verbose::Val{verbosity} = Val(true),
+) where {verbosity}
     return nrlmsise00(
         datetime2julian(instant),
         h,
@@ -142,7 +143,8 @@ function nrlmsise00(
         λ;
         flags = flags,
         include_anomalous_oxygen = include_anomalous_oxygen,
-        P = P
+        P = P,
+        verbose = Val(verbosity),
     )
 end
 
@@ -153,10 +155,9 @@ function nrlmsise00(
     λ::LT;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing
-) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number}
-
-    RT = promote_type(JT, HT, PT, LT)
+    P::Union{Nothing, AbstractMatrix} = nothing,
+    verbose::Val{verbosity} = Val(true),
+) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, verbosity}
 
     # Fetch the space indices.
     #
@@ -167,7 +168,7 @@ function nrlmsise00(
         F10  = 150.0
         ap   = 4.0
 
-        @debug """
+        verbosity && @debug """
         NRLMSISE00 - Using default indices since h < 80 km
           Daily F10.7           : $(F10) sfu
           90-day avareged F10.7 : $(F10ₐ) sfu
@@ -176,11 +177,11 @@ function nrlmsise00(
     else
         # TODO: The online version of NRLMSISE-00 seems to use 89 days, whereas the
         # NRLMSISE-00 source code mentions 81 days.
-        F10ₐ = sum((space_index.(Val(:F10adj), k) for k in (jd - 45):(jd + 44))) / 90
+        F10ₐ = sum((space_index.(Val(:F10adj), jd + k) for k in -45:44)) / 90
         F10  = space_index(Val(:F10adj), jd - 1)
         ap   = sum(space_index(Val(:Ap), jd)) / 8
 
-        @debug """
+        verbosity && @debug """
         NRLMSISE00 - Fetched Space Indices
           Daily F10.7           : $(F10) sfu
           90-day avareged F10.7 : $(F10ₐ) sfu
@@ -213,7 +214,7 @@ function nrlmsise00(
     ap::Union{Number, AbstractVector};
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing
+    P::Union{Nothing, AbstractMatrix} = nothing
 )
     return nrlmsise00(
         datetime2julian(instant),
@@ -239,7 +240,7 @@ function nrlmsise00(
     ap::T_AP;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, Matrix} = nothing
+    P::Union{Nothing, AbstractMatrix} = nothing
 ) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, FT<:Number, FT2<:Number, T_AP<:Union{Number, AbstractVector}}
 
     RT = promote_type(JT, HT, PT, LT, FT, FT2)
@@ -247,13 +248,13 @@ function nrlmsise00(
     # == Compute Auxiliary Variables =======================================================
 
     # Convert the Julian Day to Date.
-    Y, M, D, hour, min, sec = jd_to_date(jd)
+    Y, _, _, _, _, _ = jd_to_date(jd)
 
     # Get the number of days since the beginning of the year.
-    doy = round(Int, date_to_jd(Y, M, D, 0, 0, 0) - date_to_jd(Y, 1, 1, 0, 0, 0)) + 1
+    doy = _get_doy(jd)
 
     # Get the number of seconds since the beginning of the day.
-    Δds = 3600hour + 60min + sec
+    Δds = (doy - floor(doy)) * 86400.0
 
     # Get the local apparent solar time [hours].
     #
@@ -300,7 +301,7 @@ function nrlmsise00(
 
     nrlmsise00d = Nrlmsise00Structure{RT, T_AP}(
         Y,
-        doy,
+        floor(doy),
         Δds,
         h / 1000,
         ϕ_gd / _DEG_TO_RAD,
@@ -556,8 +557,8 @@ function _densu(
         # Compute the temperature below ZA temperature gradient at ZA from Bates profile.
         dta = (tinf - ta) * s2 * ((r_lat + zlb) / (r_lat + _ZN1[begin]))^2
 
-        @reset tgn1[begin] = dta
-        @reset tn1[begin]  = ta
+        @reset tgn1[begin] = RT(dta)
+        @reset tn1[begin]  = RT(ta)
         z  = (h > _ZN1[end]) ? h : _ZN1[end]
         z1 = _ZN1[begin]
         z2 = _ZN1[end]
@@ -1380,19 +1381,19 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # Lower thermosphere temperature variations not significant for density above 300 km.
 
     if h < 300
-        @reset meso_tn1[2]  = ptm[7] * ptl_1[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_1))
-        @reset meso_tn1[3]  = ptm[3] * ptl_2[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_2))
-        @reset meso_tn1[4]  = ptm[8] * ptl_3[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_3))
-        @reset meso_tn1[5]  = ptm[5] * ptl_4[1] / (1 - flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, ptl_4))
-        @reset meso_tgn1[2] = ptm[9] * pma_9[1] * (
+        @reset meso_tn1[2]  = T(ptm[7] * ptl_1[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_1)))
+        @reset meso_tn1[3]  = T(ptm[3] * ptl_2[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_2)))
+        @reset meso_tn1[4]  = T(ptm[8] * ptl_3[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_3)))
+        @reset meso_tn1[5]  = T(ptm[5] * ptl_4[1] / (1 - flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, ptl_4)))
+        @reset meso_tgn1[2] = T(ptm[9] * pma_9[1] * (
             1 + flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, pma_9)
-        ) * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2
+        ) * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2)
     else
-        @reset meso_tn1[2]  = ptm[7] * ptl_1[1]
-        @reset meso_tn1[3]  = ptm[3] * ptl_2[1]
-        @reset meso_tn1[4]  = ptm[8] * ptl_3[1]
-        @reset meso_tn1[5]  = ptm[5] * ptl_4[1]
-        @reset meso_tgn1[2] = ptm[9] * pma_9[1] * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2
+        @reset meso_tn1[2]  = T(ptm[7] * ptl_1[1])
+        @reset meso_tn1[3]  = T(ptm[3] * ptl_2[1])
+        @reset meso_tn1[4]  = T(ptm[8] * ptl_3[1])
+        @reset meso_tn1[5]  = T(ptm[5] * ptl_4[1])
+        @reset meso_tgn1[2] = T(ptm[9] * pma_9[1] * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2)
     end
 
     # N2 variation factor at Zlb.
@@ -2016,9 +2017,9 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     Ar_number_density *= T(1e6)
 
     # Repack variables that were modified.
-    @reset nrlmsise00d.meso_tn1_5  = meso_tn1[5]
-    @reset nrlmsise00d.meso_tgn1_2 = meso_tgn1[2]
-    @reset nrlmsise00d.dm28        = dm28
+    @reset nrlmsise00d.meso_tn1_5  = T(meso_tn1[5])
+    @reset nrlmsise00d.meso_tgn1_2 = T(meso_tgn1[2])
+    @reset nrlmsise00d.dm28        = T(dm28)
 
     # Create output structure and return.
     nrlmsise00_out = Nrlmsise00Output{T}(

@@ -74,7 +74,7 @@ struct Nrlmsise00Structure{T<:Number, T_AP<:Union{Number, AbstractVector}}
     # == Inputs ============================================================================
 
     year::Int
-    doy::Int
+    doy::T
     sec::T
     h::T
     ϕ_gd::T
