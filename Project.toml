@@ -3,7 +3,7 @@ uuid = "5718ef0a-a30f-426d-bcd9-4cf31dd12909"
 license = "MIT"
 desc = "Atmospheric models for the SatelliteToolbox.jl ecosystem."
 authors = ["Ronan Arraes Jardim Chagas <ronisbr@gmail.com>"]
-version = "1.0.0"
+version = "1.1.0"
 
 [deps]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
