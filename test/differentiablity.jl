@@ -5,8 +5,7 @@
 ############################################################################################
 
 @testset "Exponential Atmosphere Differentiation" verbose = true begin
-
-    hs = collect(90:50:1000) .* 1000.0
+    hs = collect(90:200:1090) .* 1000.0
 
     for backend in _BACKENDS
         testset_name = "Exponential Atmosphere " * string(backend[1])
@@ -31,12 +30,10 @@
     end
 end
 
-
 @testset "Jacchia-Roberts 1971 Atmosphere Differentiation" verbose = true begin
-
     SpaceIndices.init()
 
-    hs = collect(90:50:1000) .* 1000.0
+    hs = collect(90:200:1090) .* 1000.0
 
     for backend in _BACKENDS
         if backend[1] == "Enzyme"
@@ -98,11 +95,10 @@ end
     end
 end
 
-@testset "NRLMSISE-00 Atmosphere Differentiation" vebose = true begin
-
+@testset "NRLMSISE-00 Atmosphere Differentiation" verbose = true begin
     SpaceIndices.init()
 
-    hs = collect(90:50:1000) .* 1000.0
+    hs = collect(90:200:1090) .* 1000.0
 
     for backend in _BACKENDS
         if backend[1] == "Enzyme"
@@ -163,10 +159,9 @@ end
 end
 
 @testset "Jacchia-Bowman 2008 Atmosphere Differentiation" verbose = true begin
-
     SpaceIndices.init()
 
-    hs = collect(90:50:1000) .* 1000.0
+    hs = collect(90:200:1090) .* 1000.0
 
     for backend in _BACKENDS
         testset_name = "JB2008 Atmosphere " * string(backend[1])
@@ -176,7 +171,7 @@ end
                     datetime2julian(DateTime("2023-01-01T10:00:00"));
                     0;
                     0;
-                    500e3;
+                    h;
                     100;
                     100;
                     100;
