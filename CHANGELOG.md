@@ -1,6 +1,13 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 1.1.0
+-------------
+
+- ![Feature][badge-feature] The package now supports automatic differentiation using
+  different backends. (PR [#6][gh-pr-6])
+- ![Enhancement][badge-enhancement] Some allocations were removed. (PR [#6][gh-pr-6])
+
 Version 1.0.0
 -------------
 
@@ -49,3 +56,4 @@ Version 0.1.0
 [badge-info]: https://img.shields.io/badge/Info-gray.svg
 
 [gh-pr-3]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/3
+[gh-pr-6]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/6
