@@ -234,7 +234,7 @@ function jr1971(
 
     # Eq. 16 [2], Section B.1.1 [3]
 
-    τ = H + deg2rad(-37 + 6sin(H + deg2rad(43)))
+    τ = rem2pi(H + deg2rad(-37 + 6sin(H + deg2rad(43))), RoundNearest)
 
     # Eq. 17 [2], Section B.1.1 [3]
 
