@@ -259,16 +259,16 @@ end
     str = sprint(show, result)
 
     expected = """
-        Jacchia-Roberts 1971 Atmospheric Model Result:
-              Total density :    5.15927e-14  kg / m³
-                Temperature :         679.39  K
-           Exospheric Temp. :         679.44  K
-          N₂ number density :    1.47999e+09  1 / m³
-          O₂ number density :    1.50981e+07  1 / m³
-          O  number density :    1.58322e+12  1 / m³
-          Ar number density :        2149.38  1 / m³
-          He number density :    1.42329e+12  1 / m³
-          H  number density :              0  1 / m³"""
+          Jacchia-Roberts 1971 Atmospheric Model Result:
+                Total density :    3.63066e-13  kg / m³
+                  Temperature :         907.60  K
+             Exospheric Temp. :         907.92  K
+            N₂ number density :    7.30485e+10  1 / m³
+            O₂ number density :    1.35105e+09  1 / m³
+            O  number density :    1.29933e+13  1 / m³
+            Ar number density :         630285  1 / m³
+            He number density :    2.16503e+12  1 / m³
+            H  number density :              0  1 / m³"""
 
     str = sprint(show, MIME("text/plain"), result)
     @test str == expected
