@@ -1,6 +1,12 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 1.1.1
+-------------
+
+- ![Bugfix][badge-bugfix] 𝜏 angle must be in the interval [-π, π] in JR1971 model. (PR
+  [#8][gh-pr-8])
+
 Version 1.1.0
 -------------
 
@@ -57,3 +63,4 @@ Version 0.1.0
 
 [gh-pr-3]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/3
 [gh-pr-6]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/6
+[gh-pr-8]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/8
