@@ -26,15 +26,15 @@ AtmosphericModels.jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10:
 <span class="sgr1">  H  number density :</span>    4.07234e+10  1 / m³</code></pre><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; SpaceIndices.init()</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr36"><span class="sgr1">[ Info: </span></span>Downloading the file &#39;DTCFILE.TXT&#39; from &#39;https://sol.spacenvironment.net/JB2008/indices/DTCFILE.TXT&#39;...
 <span class="sgr36"><span class="sgr1">[ Info: </span></span>Downloading the file &#39;SOLFSMY.TXT&#39; from &#39;https://sol.spacenvironment.net/JB2008/indices/SOLFSMY.TXT&#39;...
 <span class="sgr36"><span class="sgr1">[ Info: </span></span>Downloading the file &#39;SW-All.csv&#39; from &#39;https://celestrak.org/SpaceData/SW-All.csv&#39;...</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; AtmosphericModels.jb2008(DateTime(&quot;2022-06-19T18:35:00&quot;), deg2rad(-22), deg2rad(-45), 700e3)</code><code class="nohighlight hljs ansi" style="display:block;">Jacchia-Bowman 2008 Atmospheric Model Result:
-<span class="sgr1">      Total density :</span>    3.37353e-14  kg / m³
-<span class="sgr1">        Temperature :</span>        1108.78  K
-<span class="sgr1">   Exospheric Temp. :</span>        1098.81  K
-<span class="sgr1">  N₂ number density :</span>    3.28342e+09  1 / m³
-<span class="sgr1">  O₂ number density :</span>    4.96075e+07  1 / m³
-<span class="sgr1">  O  number density :</span>    1.06342e+12  1 / m³
-<span class="sgr1">  Ar number density :</span>        14560.8  1 / m³
-<span class="sgr1">  He number density :</span>    8.00349e+11  1 / m³
-<span class="sgr1">  H  number density :</span>    6.14423e+09  1 / m³</code></pre><p>If we use the automatic space index fetching mechanism, it is possible to obtain the fetched values by turning on the debugging logs according to the <a href="https://docs.julialang.org/en/v1/stdlib/Logging/">Julia documentation</a>:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using Logging</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; with_logger(ConsoleLogger(stderr, Logging.Debug)) do
+<span class="sgr1">      Total density :</span>    3.37173e-14  kg / m³
+<span class="sgr1">        Temperature :</span>        1108.81  K
+<span class="sgr1">   Exospheric Temp. :</span>        1098.85  K
+<span class="sgr1">  N₂ number density :</span>     3.2825e+09  1 / m³
+<span class="sgr1">  O₂ number density :</span>    4.95974e+07  1 / m³
+<span class="sgr1">  O  number density :</span>    1.06289e+12  1 / m³
+<span class="sgr1">  Ar number density :</span>          14560  1 / m³
+<span class="sgr1">  He number density :</span>    7.99781e+11  1 / m³
+<span class="sgr1">  H  number density :</span>    6.13831e+09  1 / m³</code></pre><p>If we use the automatic space index fetching mechanism, it is possible to obtain the fetched values by turning on the debugging logs according to the <a href="https://docs.julialang.org/en/v1/stdlib/Logging/">Julia documentation</a>:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using Logging</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; with_logger(ConsoleLogger(stderr, Logging.Debug)) do
            AtmosphericModels.jb2008(DateTime(&quot;2022-06-19T18:35:00&quot;), deg2rad(-22), deg2rad(-45), 700e3)
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr34"><span class="sgr1">┌ Debug: </span></span>JB2008 - Fetched Space Indices
 <span class="sgr34"><span class="sgr1">│ </span></span>  Daily F10.7           : 140.2 sfu
@@ -42,18 +42,18 @@ AtmosphericModels.jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10:
 <span class="sgr34"><span class="sgr1">│ </span></span>  Daily S10             : 123.1
 <span class="sgr34"><span class="sgr1">│ </span></span>  81-day averaged S10   : 111.6
 <span class="sgr34"><span class="sgr1">│ </span></span>  Daily M10             : 163.2
-<span class="sgr34"><span class="sgr1">│ </span></span>  81-day averaged M10   : 138.0
+<span class="sgr34"><span class="sgr1">│ </span></span>  81-day averaged M10   : 137.9
 <span class="sgr34"><span class="sgr1">│ </span></span>  Daily Y10             : 150.7
 <span class="sgr34"><span class="sgr1">│ </span></span>  81-day averaged Y10   : 143.7
 <span class="sgr34"><span class="sgr1">│ </span></span>  Exo. temp. variation  : 64.58333330073704
 <span class="sgr34"><span class="sgr1">└ </span></span><span class="sgr90">@ SatelliteToolboxAtmosphericModels.AtmosphericModels ~/work/SatelliteToolboxAtmosphericModels.jl/SatelliteToolboxAtmosphericModels.jl/src/jb2008/jb2008.jl:95</span>
 Jacchia-Bowman 2008 Atmospheric Model Result:
-<span class="sgr1">      Total density :</span>    3.37353e-14  kg / m³
-<span class="sgr1">        Temperature :</span>        1108.78  K
-<span class="sgr1">   Exospheric Temp. :</span>        1098.81  K
-<span class="sgr1">  N₂ number density :</span>    3.28342e+09  1 / m³
-<span class="sgr1">  O₂ number density :</span>    4.96075e+07  1 / m³
-<span class="sgr1">  O  number density :</span>    1.06342e+12  1 / m³
-<span class="sgr1">  Ar number density :</span>        14560.8  1 / m³
-<span class="sgr1">  He number density :</span>    8.00349e+11  1 / m³
-<span class="sgr1">  H  number density :</span>    6.14423e+09  1 / m³</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../jr1971/">« Jacchia-Roberts 1971</a><a class="docs-footer-nextpage" href="../nrlmsise00/">NRLMSISE-00 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Friday 15 August 2025 18:47">Friday 15 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<span class="sgr1">      Total density :</span>    3.37173e-14  kg / m³
+<span class="sgr1">        Temperature :</span>        1108.81  K
+<span class="sgr1">   Exospheric Temp. :</span>        1098.85  K
+<span class="sgr1">  N₂ number density :</span>     3.2825e+09  1 / m³
+<span class="sgr1">  O₂ number density :</span>    4.95974e+07  1 / m³
+<span class="sgr1">  O  number density :</span>    1.06289e+12  1 / m³
+<span class="sgr1">  Ar number density :</span>          14560  1 / m³
+<span class="sgr1">  He number density :</span>    7.99781e+11  1 / m³
+<span class="sgr1">  H  number density :</span>    6.13831e+09  1 / m³</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../jr1971/">« Jacchia-Roberts 1971</a><a class="docs-footer-nextpage" href="../nrlmsise00/">NRLMSISE-00 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Monday 18 August 2025 00:11">Monday 18 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
