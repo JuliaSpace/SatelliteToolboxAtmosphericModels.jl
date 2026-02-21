@@ -34,6 +34,10 @@ include("utils.jl")
 include("./exponential/constants.jl")
 include("./exponential/exponential.jl")
 
+include("./harrispriester/constants.jl")
+include("./harrispriester/harrispriester.jl")
+include("./harrispriester/harrispriester_modified.jl")
+
 include("./jr1971/types.jl")
 include("./jr1971/constants.jl")
 include("./jr1971/jr1971.jl")

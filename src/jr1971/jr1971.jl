@@ -90,7 +90,7 @@ function jr1971(
     Δt = Dates.value(instant - day) / 1000
 
     # Get the index and the Kp value.
-    id = round(Int, clamp(div(Δt, 10_800) + 1, 1, 8))
+    id = clamp(floor(Int, Δt / 10_800) + 1, 1, 8)
     Kp = Kp_vect[id]
 
     verbosity && @debug """

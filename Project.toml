@@ -32,24 +32,24 @@ SatelliteToolboxAtmosphericModelsZygoteExt = ["Zygote", "ForwardDiff"]
 
 [compat]
 Accessors = "0.1"
-ChainRulesCore = "1.25"
+ChainRulesCore = "1"
 Crayons = "4"
 DelimitedFiles = "1.9"
-ForwardDiff = "0.10, 1"
+ForwardDiff = "1"
 ImplicitDifferentiation = "0.9"
-LinearAlgebra = "1.10"
-Mooncake = "0.4"
+LinearAlgebra = "1"
+Mooncake = "0.5"
 PolynomialRoots = "1"
-Printf = "1.10"
+Printf = "1"
 Reexport = "1"
 SatelliteToolboxBase = "1"
 SatelliteToolboxCelestialBodies = "1"
 SatelliteToolboxLegendre = "1"
 SpaceIndices = "1.2, 2"
 StaticArraysCore = "1.4"
-Test = "1.10"
-Zygote = "0.6, 0.7"
-julia = "1.10, 1.11"
+Test = "1"
+Zygote = "0.7"
+julia = "1.10, 1.11, 1.12"
 
 [extras]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
@@ -57,4 +57,4 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "DelimitedFiles", "Pkg"]
+test = ["Test", "ChainRulesCore", "DelimitedFiles", "ForwardDiff", "ImplicitDifferentiation", "Mooncake", "Pkg", "Zygote"]
