@@ -8,8 +8,12 @@
     Aqua.test_all(SatelliteToolboxAtmosphericModels; ambiguities=(recursive = false), deps_compat=(check_extras = false))
 end
 
-@testset "JET Testing" begin
-    rep = JET.test_package(SatelliteToolboxAtmosphericModels; toplevel_logger=nothing, target_modules=(@__MODULE__,))
+if VERSION >= v"1.12"
+    @warn "JET.jl test skipped on Julia 1.12+ due to MethodTableView incompatibility"
+else
+    @testset "JET Testing" begin
+        rep = JET.test_package(SatelliteToolboxAtmosphericModels; toplevel_logger=nothing, target_modules=(SatelliteToolboxAtmosphericModels,))
+    end
 end
 
 # Verbose Val check added to logging. See link for more information.

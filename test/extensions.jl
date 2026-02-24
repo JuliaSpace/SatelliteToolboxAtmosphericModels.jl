@@ -4,12 +4,6 @@
 #
 ############################################################################################
 
-using ForwardDiff
-using ImplicitDifferentiation
-using Mooncake
-using ChainRulesCore
-using Zygote
-
 @testset "ForwardDiff Extension" begin
     SpaceIndices.init()
 

@@ -26,10 +26,6 @@ end
     include("./harrispriester.jl")
 end
 
-@testset "Extension Tests" verbose = true begin
-    include("./extensions.jl")
-end
-
 if isempty(VERSION.prerelease)
     using Pkg
     Pkg.add("JET")
@@ -43,6 +39,22 @@ if isempty(VERSION.prerelease)
     @testset "Performance Tests" verbose = true begin
         include("./performance.jl")
     end
+
+    Pkg.add("ForwardDiff")
+    Pkg.add("ImplicitDifferentiation")
+    Pkg.add("Mooncake")
+    Pkg.add("ChainRulesCore")
+    Pkg.add("Zygote")
+
+    using ForwardDiff
+    using ImplicitDifferentiation
+    using Mooncake
+    using ChainRulesCore
+    using Zygote
+
+    @testset "Extension Tests" verbose = true begin
+        include("./extensions.jl")
+    end
 else
-    @warn "Performance checks not guaranteed to work on julia-nightly, skipping"
+    @warn "Performance checks and autodiff extensions are not guaranteed to work on julia-nightly, skipping"
 end
