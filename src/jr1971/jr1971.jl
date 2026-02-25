@@ -90,7 +90,7 @@ function jr1971(
     Δt = Dates.value(instant - day) / 1000
 
     # Get the index and the Kp value.
-    id = round(Int, clamp(div(Δt, 10_800) + 1, 1, 8))
+    id = clamp(floor(Int, Δt / 10_800) + 1, 1, 8)
     Kp = Kp_vect[id]
 
     verbosity && @debug """
@@ -335,7 +335,11 @@ function jr1971(
             roots_container = [c₀; c₁; c₂; c₃; c₄]
         else
             (length(roots_container) != 5) && throw(ArgumentError("The roots container must have 5 elements."))
-            roots_container .= [c₀; c₁; c₂; c₃; c₄]
+            roots_container[1] = c₀
+            roots_container[2] = c₁
+            roots_container[3] = c₂
+            roots_container[4] = c₃
+            roots_container[5] = c₄
         end
 
         r₁, r₂, x, y = _jr1971_roots(roots_container)
@@ -345,20 +349,7 @@ function jr1971(
         f = 35^4 * Ra² / Ca[5]
         k = -g₀ / (Rstar * (Tx - T₁))
 
-        # -- U(ν), V(ν), and W(ν) Functions, [1, p. 372] -----------------------------------
-
-        U(ν) = (ν + Ra)^2 * (ν^2 - 2x * ν + x^2 + y^2) * (r₁ - r₂)
-        V(ν) = (ν^2 - 2x * ν + x^2 + y^2) * (ν - r₁) * (ν - r₂)
-
-        # The equation for `W(ν)` in [1] was:
-        #
-        #   W(ν) = r₁ * r₂ * Ra² * (ν + Ra) + (x^2 + y^2) * Ra * (Ra * ν + r₁ * r₂)
-        #
-        # However, [3,4] mention that this is not correct, and must be replaced by:
-
-        W(ν) = r₁ * r₂ * Ra * (Ra + ν) * (Ra + (x^2 + y^2) / ν)
-
-        # -- X, [1, p. 372] ----------------------------------------------------------------
+        # -- U(ν), V(ν), W(ν), and X — see _jr1971_U, _jr1971_V, _jr1971_W ----------------
 
         X = -2r₁ * r₂ * Ra * (Ra² + 2x * Ra + x^2 + y^2)
 
@@ -378,20 +369,18 @@ function jr1971(
             B₄ = α[5] + β[5] * Tx / (Tx - T₁)
             B₅ = α[6] + β[6] * Tx / (Tx - T₁)
 
-            S(z) = @evalpoly(z, B₀, B₁, B₂, B₃, B₄, B₅)
-
             # -- Auxiliary Variables, [1. p. 372] ------------------------------------------
 
-            p₂ =  S(r₁) / U(r₁)
-            p₃ = -S(r₂) / U(r₂)
-            p₅ = S(-Ra) / V(-Ra)
+            p₂ =  _jr1971_S(r₁, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_U(r₁, Ra, x, y, r₁, r₂)
+            p₃ = -_jr1971_S(r₂, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_U(r₂, Ra, x, y, r₁, r₂)
+            p₅ =  _jr1971_S(-Ra, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_V(-Ra, x, y, r₁, r₂)
 
             # There is a typo in the fourth term in [1] that was corrected in [3].
 
             p₄ = (
                 B₀ - r₁ * r₂ * Ra² * (B₄ + (2x + r₁ + r₂ - Ra) * B₅) -
                 r₁ * r₂ * Ra * (x^2 + y^2) * B₅ + r₁ * r₂ * (Ra² - (x^2 + y^2)) * p₅ +
-                W(r₁) * p₂ + W(r₂) * p₃
+                _jr1971_W(r₁, Ra, x, y, r₁, r₂) * p₂ + _jr1971_W(r₂, Ra, x, y, r₁, r₂) * p₃
             )
 
             p₄ = p₄ / X
@@ -404,7 +393,7 @@ function jr1971(
             log_F₁ = p₁ * log((h + Ra) / (z₁ + Ra)) +
                      p₂ * log((h - r₁) / (z₁ - r₁)) +
                      p₃ * log((h - r₂) / (z₁ - r₂)) +
-                     p₄ * log((h^2 - 2x * h  + x^2 + y^2 ) / (z₁^2 - 2x * z₁ + x^2 + y^2))
+                     p₄ * log((h^2 - 2x * h + x^2 + y^2) / (z₁^2 - 2x * z₁ + x^2 + y^2))
 
             # This equation in [4] is wrong, since `f` is multiplying `A₆`. We will use the
             # one in [3].
@@ -450,10 +439,10 @@ function jr1971(
 
             # -- Auxiliary Variables, [1, p. 374] ------------------------------------------
 
-            q₂ =  1 / U(r₁)
-            q₃ = -1 / U(r₂)
-            q₅ =  1 / V(-Ra)
-            q₄ = (1 + r₁ * r₂ * (Ra² - (x^2 + y^2)) * q₅ + W(r₁) * q₂ + W(r₂) * q₃) / X
+            q₂ =  1 / _jr1971_U(r₁,  Ra, x, y, r₁, r₂)
+            q₃ = -1 / _jr1971_U(r₂,  Ra, x, y, r₁, r₂)
+            q₅ =  1 / _jr1971_V(-Ra, x, y, r₁, r₂)
+            q₄ = (1 + r₁ * r₂ * (Ra² - (x^2 + y^2)) * q₅ + _jr1971_W(r₁, Ra, x, y, r₁, r₂) * q₂ + _jr1971_W(r₂, Ra, x, y, r₁, r₂) * q₃) / X
             q₆ = -q₅ - 2 * (x + Ra) * q₄ - (r₂ + Ra) * q₃ - (r₁ + Ra) * q₂
             q₁ = -2q₄ - q₃ - q₂
 
@@ -577,6 +566,28 @@ end
 
 ############################################################################################
 #                                    Private Functions                                     #
+############################################################################################
+
+# Partial-fraction helper functions from [1, p. 372].
+#
+# Defined at module scope as @inline to avoid closures, which incur a runtime allocation
+# from `jl_has_free_typevars` on Julia 1.12+.
+#
+# The equation for W in [1] was incorrect; the corrected form from [3, 4] is used.
+
+@inline _jr1971_U(ν, Ra, x, y, r₁, r₂) =
+    (ν + Ra)^2 * (ν^2 - 2x * ν + x^2 + y^2) * (r₁ - r₂)
+
+@inline _jr1971_V(ν, x, y, r₁, r₂) =
+    (ν^2 - 2x * ν + x^2 + y^2) * (ν - r₁) * (ν - r₂)
+
+@inline _jr1971_W(ν, Ra, x, y, r₁, r₂) =
+    r₁ * r₂ * Ra * (Ra + ν) * (Ra + (x^2 + y^2) / ν)
+
+# S(z) polynomial, [1, p. 371].
+@inline _jr1971_S(z, B₀, B₁, B₂, B₃, B₄, B₅) =
+    @evalpoly(z, B₀, B₁, B₂, B₃, B₄, B₅)
+
 ############################################################################################
 
 #   _jr1971_mean_molecular_mass(z::Number) -> Float64
