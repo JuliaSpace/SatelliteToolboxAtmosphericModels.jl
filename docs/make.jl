@@ -13,6 +13,7 @@ makedocs(
         "Home" => "index.md",
         "Atmospheric Models" => [
             "Exponential" => "man/exponential.md",
+            "Harris-Priester" => "man/harrispriester.md",
             "Jacchia-Roberts 1971" => "man/jr1971.md",
             "Jacchia-Bowman 2008" => "man/jb2008.md",
             "NRLMSISE-00" => "man/nrlmsise00.md"
