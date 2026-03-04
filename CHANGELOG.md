@@ -1,6 +1,12 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 1.2.0
+-------------
+
+- ![Feature][badge-feature] The package now supports the Harris Priester model. (PR
+  [#9][gh-pr-9] and [#10][gh-pr-10])
+
 Version 1.1.1
 -------------
 
@@ -64,3 +70,5 @@ Version 0.1.0
 [gh-pr-3]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/3
 [gh-pr-6]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/6
 [gh-pr-8]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/8
+[gh-pr-9]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/9
+[gh-pr-10]: https://github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl/pull/10
