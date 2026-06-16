@@ -1,6 +1,11 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 1.2.1
+-------------
+
+- ![Info][badge-info] We updated the license information and links for the JB2008 model.
+
 Version 1.2.0
 -------------
 
