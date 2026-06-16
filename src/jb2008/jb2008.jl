@@ -3,13 +3,17 @@
 # The Jacchia-Bowman 2008 Atmospheric Model, a product of the Space Environment
 # Technologies.
 #
-# The source code is available at the following git:
+# The source code is available at:
 #
-#     http://sol.spacenvironment.net/jb2008/code.html
+#     https://www.mathworks.com/matlabcentral/fileexchange/56163-jacchia-bowman-atmospheric-density-model/
 #
 # For more information about the model, see:
 #
-#     http://sol.spacenvironment.net/~JB2008/
+#     https://spacewx.com/JB2008/
+#
+# The license of the code used as reference can be found at:
+#
+#     LICENSES/JB2008.txt
 #
 ## References ##############################################################################
 #
@@ -25,6 +29,7 @@
 #     empirical temperature profiles. SAO Special Report #313.
 #
 ############################################################################################
+
 export jb2008
 
 """
@@ -36,7 +41,7 @@ Compute the atmospheric density using the Jacchia-Bowman 2008 (JB2008) model.
 This model is a product of the **Space Environment Technologies**, please, refer to the
 following website for more information:
 
-http://sol.spacenvironment.net/JB2008/
+https://spacewx.com/JB2008/
 
 If we omit all space indices, the system tries to obtain them automatically for the selected
 day `jd` or `instant`. However, the indices must be already initialized using the function
