@@ -145,7 +145,7 @@ end
                 Temperature :         923.19  K
            Exospheric Temp. :         924.79  K
           N₂ number density :    1.38441e+11  1 / m³
-          O₂ number density :    3.20415e+09  1 / m³
+          O₂ number density :    3.20416e+09  1 / m³
           O  number density :    1.23957e+13  1 / m³
           Ar number density :    2.20193e+06  1 / m³
           He number density :     2.4238e+12  1 / m³

@@ -507,9 +507,11 @@ function jb2008(
         doy = _get_doy(jd)
 
         # Use the new semiannual model from [1].
+        #
+        # Notice that the source-code also checks if `Fz` is negative, zeroing the
+        # semiannual variation in this case. However, this check can never be triggered
+        # since `Fz` is clamped to be equal or higher than 10⁻⁶ inside the function.
         Fz, Gz, Δsalog₁₀ρ = _jb2008_semiannual(doy, h, F10ₐ, S10ₐ, M10ₐ)
-
-        (Fz < 0) && (Δsalog₁₀ρ = 0.0)
 
         # Convert from `log10` to `log`.
         Δsalogρ = log(10) * Δsalog₁₀ρ
@@ -594,7 +596,7 @@ end
 # Compute the gravity [m / s] at altitude `z` [km] according to the model Jacchia 1971 [3].
 function _jb2008_gravity(z::Number)
     # Mean Earth radius [km].
-    Re = 6356.776
+    Re = 6356.766
 
     # Gravity at Earth surface [m/s²].
     g₀ = 9.80665
@@ -903,6 +905,8 @@ function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
                  C[22] * θ  * F * cϕ +
                  C[23] * θ² * F * cϕ
 
+        # Notice that the source-code uses `B[2]` in the following expression, even though
+        # all other coefficients come from `C`. Both values are numerically identical.
         ΔTc200Δz = C[ 1] +
                    B[ 2] * F +
                    C[ 3] * θ  * F +
