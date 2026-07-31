@@ -95,6 +95,30 @@
     end
 end
 
+@testset "Hydrogen Number Density Below 105 km" begin
+    # Below 105 km, the model computes the hydrogen number density in log scale as the
+    # helium number density minus 25. Since both species receive the same corrections
+    # afterwards, we must have nH = nHe / exp(25).
+    result = AtmosphericModels.jb2008(
+        DateTime("2023-01-01T10:00:00"),
+        0,
+        0,
+        100e3,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        85
+    )
+
+    @test result.H_number_density ≈ result.He_number_density * exp(-25)
+    @test result.H_number_density > 1
+end
+
 @testset "Show" begin
     result = AtmosphericModels.jb2008(
         DateTime("2023-01-01T10:00:00"),
