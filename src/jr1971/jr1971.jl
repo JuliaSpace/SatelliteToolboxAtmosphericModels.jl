@@ -318,7 +318,8 @@ function jr1971(
 
         # -- U(ν), V(ν), W(ν), and X — see _jr1971_U, _jr1971_V, _jr1971_W ----------------
 
-        X = -2r₁ * r₂ * Ra * (Ra² + 2x * Ra + x^2 + y^2)
+        x²_plus_y² = x * x + y * y
+        X = -2r₁ * r₂ * Ra * (Ra² + 2x * Ra + x²_plus_y²)
 
         # The original paper [1] divided into two sections: 90 km to 105 km, and 105 km to
         # 125 km. However, [3] divided into 90 to 100 km, and 100 km to 125 km.
@@ -329,12 +330,14 @@ function jr1971(
 
             # -- S(z) Polynomial, [1, p. 371] ----------------------------------------------
 
-            B₀ = α[1] + β[1] * Tx / (Tx - T₁)
-            B₁ = α[2] + β[2] * Tx / (Tx - T₁)
-            B₂ = α[3] + β[3] * Tx / (Tx - T₁)
-            B₃ = α[4] + β[4] * Tx / (Tx - T₁)
-            B₄ = α[5] + β[5] * Tx / (Tx - T₁)
-            B₅ = α[6] + β[6] * Tx / (Tx - T₁)
+            Tx_ratio = Tx / (Tx - T₁)
+
+            B₀ = α[1] + β[1] * Tx_ratio
+            B₁ = α[2] + β[2] * Tx_ratio
+            B₂ = α[3] + β[3] * Tx_ratio
+            B₃ = α[4] + β[4] * Tx_ratio
+            B₄ = α[5] + β[5] * Tx_ratio
+            B₅ = α[6] + β[6] * Tx_ratio
 
             # -- Auxiliary Variables, [1. p. 372] ------------------------------------------
 
@@ -346,7 +349,7 @@ function jr1971(
 
             p₄ = (
                 B₀ - r₁ * r₂ * Ra² * (B₄ + (2x + r₁ + r₂ - Ra) * B₅) -
-                r₁ * r₂ * Ra * (x^2 + y^2) * B₅ + r₁ * r₂ * (Ra² - (x^2 + y^2)) * p₅ +
+                r₁ * r₂ * Ra * x²_plus_y² * B₅ + r₁ * r₂ * (Ra² - x²_plus_y²) * p₅ +
                 _jr1971_W(r₁, Ra, x, y, r₁, r₂) * p₂ + _jr1971_W(r₂, Ra, x, y, r₁, r₂) * p₃
             )
 
@@ -360,7 +363,7 @@ function jr1971(
             log_F₁ = p₁ * log((h + Ra) / (z₁ + Ra)) +
                      p₂ * log((h - r₁) / (z₁ - r₁)) +
                      p₃ * log((h - r₂) / (z₁ - r₂)) +
-                     p₄ * log((h^2 - 2x * h + x^2 + y^2) / (z₁^2 - 2x * z₁ + x^2 + y^2))
+                     p₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₁^2 - 2x * z₁ + x²_plus_y²))
 
             # This equation in [4] is wrong, since `f` is multiplying `A₆`. We will use the
             # one in [3].
@@ -409,7 +412,7 @@ function jr1971(
             q₂ =  1 / _jr1971_U(r₁,  Ra, x, y, r₁, r₂)
             q₃ = -1 / _jr1971_U(r₂,  Ra, x, y, r₁, r₂)
             q₅ =  1 / _jr1971_V(-Ra, x, y, r₁, r₂)
-            q₄ = (1 + r₁ * r₂ * (Ra² - (x^2 + y^2)) * q₅ + _jr1971_W(r₁, Ra, x, y, r₁, r₂) * q₂ + _jr1971_W(r₂, Ra, x, y, r₁, r₂) * q₃) / X
+            q₄ = (1 + r₁ * r₂ * (Ra² - x²_plus_y²) * q₅ + _jr1971_W(r₁, Ra, x, y, r₁, r₂) * q₂ + _jr1971_W(r₂, Ra, x, y, r₁, r₂) * q₃) / X
             q₆ = -q₅ - 2 * (x + Ra) * q₄ - (r₂ + Ra) * q₃ - (r₁ + Ra) * q₂
             q₁ = -2q₄ - q₃ - q₂
 
@@ -418,7 +421,7 @@ function jr1971(
             log_F₃ = q₁ * log((h + Ra) / (z₂ + Ra)) +
                      q₂ * log((h - r₁) / (z₂ - r₁)) +
                      q₃ * log((h - r₂) / (z₂ - r₂)) +
-                     q₄ * log((h^2 - 2x*h + x^2 + y^2) / (z₂^2 - 2x*z₂ + x^2 + y^2))
+                     q₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₂^2 - 2x * z₂ + x²_plus_y²))
 
             F₄ = q₅ * (h - z₂) / ((h + Ra) * (Ra + z₂)) +
                  q₆ / y * atan(y * (h - z₂) / (y^2 + (h - x) * (z₂ - x)))
@@ -500,7 +503,7 @@ function jr1971(
 
         # -- For Altitude Higher than 500 km, We Must Account for H ------------------------
 
-        ρH = 0.0
+        ρH = zero(ρHe)
 
         if h > 500
             # Compute the temperature and the H density at 500 km.
