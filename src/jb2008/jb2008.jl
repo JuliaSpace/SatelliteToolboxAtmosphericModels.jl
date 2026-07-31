@@ -293,15 +293,18 @@ function jb2008(
 
     # == Eq. 17 [3] ========================================================================
 
-    m = 2.5
-    n = 3.0
+    # The exponents in eq. 17 [3] are m = 2.5 and n = 3. We compute the powers using the
+    # relations x^2.5 = x² √x and x^3 = x² x, which are faster than the generic power.
     R = 0.31
-    C = cos(η)^m
-    S = sin(θ)^m
+    cos_η = cos(η)
+    sin_θ = sin(θ)
+    C = cos_η^2 * √cos_η
+    S = sin_θ^2 * √sin_θ
 
     # NOTE: The original equation in [3] does not have the `abs` as in the source-code of
     # JB2008.
-    Tl = Tc * (1 + R * (S + (C - S) * abs(cos(τ / 2))^n))
+    abs_cos_τ2 = abs(cos(τ / 2))
+    Tl = Tc * (1 + R * (S + (C - S) * abs_cos_τ2^3))
 
     # Compute the correction to `Tc` considering the local solar time and latitude.
     ΔTc = _jb2008_ΔTc(F10, lst, ϕ_gd, h)
@@ -380,10 +383,9 @@ function jb2008(
 
     log_nO₂ = log(NM / Mb₀ * (1 + q₀O₂) - N)
     log_nO  = log(2 * (N - NM / Mb₀))
-    log_nH  = 0.0
 
-    Tz = 0.0
-
+    # Notice that both `Tz` and `log_nH` are assigned in the two branches below. Hence, we
+    # do not need to initialize them, which would harm type stability for generic inputs.
     if h <= 105
         Tz = Tl₂
         log_nH = log_nHe - 25
@@ -517,7 +519,7 @@ function jb2008(
         Δsalogρ = log(10) * Δsalog₁₀ρ
 
     else
-        Δsalogρ = 0.0
+        Δsalogρ = zero(Δlogρ)
     end
 
     # Compute the total variation.
@@ -547,31 +549,16 @@ function jb2008(
     log_nHe += log_FρH
     log_nH  += log_FρH
 
-    # Compute the mass density and mean molecular weight and convert number density logs
-    # from natural to common.
-    sum_n  = 0.0
-    sum_mn = 0.0
-
-    for (log_n, M) in (
-        (log_nN₂, MN₂),
-        (log_nO₂, MO₂),
-        (log_nO, MO),
-        (log_nAr, MAr),
-        (log_nHe, MHe),
-        (log_nH, MH)
-    )
-        n = exp(log_n)
-        sum_n  += n
-        sum_mn += n * M
-    end
-
+    # Compute the number densities and the mass density.
     nN₂ = exp(log_nN₂)
     nO₂ = exp(log_nO₂)
     nO  = exp(log_nO)
     nAr = exp(log_nAr)
     nHe = exp(log_nHe)
     nH  = exp(log_nH)
-    ρ   = sum_mn / A
+
+    sum_mn = nN₂ * MN₂ + nO₂ * MO₂ + nO * MO + nAr * MAr + nHe * MHe + nH * MH
+    ρ      = sum_mn / A
 
     # Create and return the output structure.
     return JB2008Output{RT}(
@@ -617,7 +604,7 @@ function _jb2008_high_altitude(h::Number, F10ₐ::Number)
     C = _JB2008_CHT
 
     # Compute the high-altitude density correction.
-    FρH = 1.0
+    FρH = one(promote_type(typeof(h), typeof(F10ₐ)))
 
     @inbounds if 1000 <= h <= 1500
         z = (h - 1000) / 500
@@ -703,8 +690,10 @@ function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
         c₄ = 0.8 / (1.9 * Δz₁^3) * Gx
         T  = @evalpoly(Δz, Tx, c₁, c₂, c₃, c₄)
     else
+        # Notice that `Δz > 0` in this branch, so we can compute `Δz^2.5` as `Δz² √Δz`,
+        # which is faster than the generic power.
         A  = 2 * (T∞ - Tx) / π
-        T  = Tx + A * atan(Gx / A * Δz * (1 + 4.5e-6 * Δz^2.5))
+        T  = Tx + A * atan(Gx / A * Δz * (1 + 4.5e-6 * Δz^2 * √Δz))
     end
 
     return T
@@ -771,12 +760,13 @@ function _jb2008_∫(
     n  = floor(al / R) + 1
     zr = exp(al / n)
 
-    # Initialize the integration auxiliary variables.
-    zi₁ = z₀
-    zj  = 0.0
+    # Initialize the integration auxiliary variables using the promoted type to keep the
+    # loop type-stable for generic inputs.
+    zi₁ = float(z₀ * one(zr))
+    zj  = zero(zi₁)
 
     # Variable to store the integral from `z₀` to `z₁`.
-    int = 0.0
+    int = zero(promote_type(typeof(zi₁), typeof(Tx), typeof(T∞)))
 
     # For each integration step, use the Newton-Cotes 4th degree formula to integrate
     # (Boole's rule).
@@ -887,13 +877,13 @@ function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
     C  = _JB2008_C
     F  = (F10 - 100) / 100
     θ  = lst / 24
-    θ² = θ^2
-    θ³ = θ^3.0
-    θ⁴ = θ^4.0
-    θ⁵ = θ^5.0
+    θ² = θ * θ
+    θ³ = θ² * θ
+    θ⁴ = θ² * θ²
+    θ⁵ = θ⁴ * θ
     cϕ = cos(ϕ_gd)
 
-    ΔTc = 0.0
+    ΔTc = zero(promote_type(typeof(F), typeof(θ), typeof(cϕ), typeof(h)))
 
     # Compute the temperature variation given the altitude.
     @inbounds if 120 <= h <= 200
