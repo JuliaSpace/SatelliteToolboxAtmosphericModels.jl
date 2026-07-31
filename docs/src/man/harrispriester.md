@@ -29,8 +29,8 @@ derivatives and eliminating singularities.
 In this package, we can evaluate the classic model using the following functions:
 
 ```julia
-AtmosphericModels.harrispriester(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Float64
-AtmosphericModels.harrispriester(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Float64
+AtmosphericModels.harrispriester(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Number
+AtmosphericModels.harrispriester(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Number
 ```
 
 where:
@@ -50,7 +50,10 @@ The following keywords are available:
     ρ_min [kg/m³], ρ_max [kg/m³]]`.
     (**Default** = built-in table for mean solar activity)
 
-These functions return the atmospheric density [kg/m³].
+These functions return the atmospheric density [kg/m³]. Notice that the model is valid
+only inside the altitude range of the density profile (100 km to 1000 km for the default
+table). The functions throw an `ArgumentError` if the altitude is lower than the minimum
+altitude in the profile, and return zero if it is higher than the maximum altitude.
 
 ### Examples
 
@@ -78,8 +81,8 @@ AtmosphericModels.harrispriester(
 In this package, we can evaluate the modified model using the following functions:
 
 ```julia
-AtmosphericModels.harrispriester_modified(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10ₐ::Number]; n::Number = 4) -> Float64
-AtmosphericModels.harrispriester_modified(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10ₐ::Number]; n::Number = 4) -> Float64
+AtmosphericModels.harrispriester_modified(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10ₐ::Number]; kwargs...) -> Number
+AtmosphericModels.harrispriester_modified(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10ₐ::Number]; kwargs...) -> Number
 ```
 
 where:
@@ -95,8 +98,8 @@ where:
     equatorial orbits and `n ≈ 6` for polar orbits.
     (**Default** = `4`)
 
-If we omit all space indices, the system tries to obtain them automatically for the selected
-day `jd` or `instant`. However, the indices must be already initialized using the function
+If we omit `F10ₐ`, the system tries to obtain it automatically for the selected day `jd` or
+`instant`. However, the space indices must be already initialized using the function
 `SpaceIndices.init()`.
 
 These functions return the atmospheric density [kg/m³].

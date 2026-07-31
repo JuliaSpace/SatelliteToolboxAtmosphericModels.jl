@@ -13,7 +13,7 @@ Output of the atmospheric model Jacchia-Roberts 1971.
 
 # Fields
 
-- `total_density::T`: Total atmospheric density [1 / m³].
+- `total_density::T`: Total atmospheric density [kg / m³].
 - `temperature::T`: Temperature at the selected position [K].
 - `exospheric_temperature::T`: Exospheric temperature [K].
 - `N2_number_density::T`: Number density of N₂ [1 / m³].

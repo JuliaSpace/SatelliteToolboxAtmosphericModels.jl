@@ -1,29 +1,38 @@
 export harrispriester
 
 """
-    harrispriester(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Float64
-    harrispriester(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Float64
+    harrispriester(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Number
+    harrispriester(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Number
 
 Compute the atmospheric density [kg / m³] using the Harris-Priester model.
 
+The model is valid only inside the altitude range of the density profile `alt_ρ` (100 km to
+1000 km for the default profile). The function throws an `ArgumentError` if the altitude
+`h` is lower than the minimum altitude in the profile, and returns zero if it is higher
+than the maximum altitude.
+
 # Arguments
-- `jd`: The Julian day to compute the model.
-- `ϕ_gd`: Geodetic latitude [rad].
-- `λ`: Geodetic longitude [rad].
-- `h`: Geodetic altitude [m].
-- `n`: Cosine exponent in the diurnal bulge modeling (`2` <= `n` <= `6`).
-    - If `n` is `2`, it models a smooth transition.
-    - If `n` is `6`, it models a sharp transition.
-    - **Default**: 4
-- `alt_ρ::AbstractMatrix`: A matrix containing the minimum and maximum density profiles.
-    - `[:, 1]`: Altitude [m].
-    - `[:, 2]`: Minimum density [kg / m³].
-    - `[:, 3]`: Maximum density [kg / m³].
-    - **Default**: `_HARRIS_PRIESTER_ALT_RHO` (mean solar activity).
+
+- `instant::DateTime`: Instant to compute the model represented using `DateTime`.
+- `jd::Number`: Julian day to compute the model.
+- `ϕ_gd::Number`: Geodetic latitude [rad].
+- `λ::Number`: Geodetic longitude [rad].
+- `h::Number`: Geodetic altitude [m].
+
+# Keywords
+
+- `n::Int`: Cosine exponent in the diurnal bulge modeling (`2 <= n <= 6`). If `n` is `2`,
+    it models a smooth transition, whereas if `n` is `6`, it models a sharp transition.
+    (**Default**: `4`)
+- `alt_ρ::AbstractMatrix`: Matrix containing the minimum and maximum density profiles,
+    where the columns are the altitude [m], the minimum density [kg / m³], and the maximum
+    density [kg / m³], respectively.
+    (**Default**: `_HARRIS_PRIESTER_ALT_RHO`, related to the mean solar activity)
 
 # Returns
 
-- The atmospheric density [kg / m³].
+- `Number`: Atmospheric density [kg / m³]. The type is the promotion of the types of the
+    numeric inputs.
 """
 function harrispriester(
     instant::DateTime,

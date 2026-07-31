@@ -24,7 +24,7 @@ obtained after evaluation of some accurate models.
 In this package, we can compute the model using the following function:
 
 ```julia
-AtmosphericModels.exponential(h::T) where T<:Number -> Float64
+AtmosphericModels.exponential(h::T) where T<:Number -> Number
 ```
 
 where `h` is the desired height [m].

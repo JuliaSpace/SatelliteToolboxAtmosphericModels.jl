@@ -40,8 +40,8 @@
 export nrlmsise00
 
 """
-    nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
-    nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
+    nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output
+    nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output
 
 Compute the atmospheric density using the NRLMSISE-00 model.
 
@@ -56,7 +56,7 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 - `h::Number`: Altitude [m].
 - `ϕ_gd::Number`: Geodetic latitude [rad].
 - `λ::Number`: Longitude [rad].
-- `F10ₐ::Number`: 10.7-cm averaged solar flux, 90-day centered on input time [sfu].
+- `F10ₐ::Number`: 10.7-cm averaged solar flux, 81-day centered on input time [sfu].
 - `F10::Number`: 10.7-cm solar flux [sfu].
 - `ap::Union{Number, AbstractVector}`: Magnetic index, see the section **AP** for more
     information.
@@ -64,17 +64,26 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 # Keywords
 
 - `flags::Nrlmsise00Flags`: A list of flags to configure the model. For more information,
-    see [`Nrlmsise00Flags`]@(ref). (**Default** = `Nrlmsise00Flags()`)
+    see [`Nrlmsise00Flags`](@ref).
+    (**Default**: `Nrlmsise00Flags()`)
 - `include_anomalous_oxygen::Bool`: If `true`, the anomalous oxygen density will be included
-    in the total density computation. (**Default** = `true`)
+    in the total density computation.
+    (**Default**: `true`)
 - `P::Union{Nothing, Matrix}`: If the user passes a matrix with dimensions equal to or
     greater than 8 × 4, it will be used when computing the Legendre associated functions,
     reducing allocations and improving the performance. If it is `nothing`, the matrix is
-    allocated inside the function. (**Default** `nothing`)
+    allocated inside the function.
+    (**Default**: `nothing`)
+- `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
+    index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
+    `Val` object, not a `Bool`, and it is only available in the methods that fetch the
+    space indices automatically.
+    (**Default**: `Val(true)`)
 
 # Returns
 
-- `Nrlmsise00Output{Float64}`: Structure containing the results obtained from the model.
+- `Nrlmsise00Output`: Structure containing the results obtained from the model. Its element
+    type is the promotion of the types of the numeric inputs.
 
 # AP
 
@@ -83,7 +92,7 @@ The input variable `ap` contains the magnetic index. It can be a `Number` or an
 
 If `ap` is a number, it must contain the daily magnetic index.
 
-If `ap` is an `AbstractVector`, it must be a vector with 7 dimensions as described below:
+If `ap` is an `AbstractVector`, it must be a vector with 7 elements as described below:
 
 | Index | Description                                                                   |
 |-------|:------------------------------------------------------------------------------|
@@ -96,7 +105,7 @@ If `ap` is an `AbstractVector`, it must be a vector with 7 dimensions as describ
 |     7 | Average of eight 3 hour AP indices from 36 to 57 hours prior to current time. |
 
 
-# Extended Help
+# Extended help
 
 1. The densities of `O`, `H`, and `N` are set to `0` below `72.5 km`.
 2. The exospheric temperature is set to global average for altitudes below `120 km`. The
@@ -122,7 +131,7 @@ If `include_anomalous_oxygen` is `false`, the `total_density` field in the outpu
 of the mass densities of the species `He`, `O`, `N₂`, `O₂`, `Ar`, `H`, and `N`, but **does
 not** include anomalous oxygen.
 
-If `include_anomalous_oxygen` is `false`, the `total_density` field in the output is the
+If `include_anomalous_oxygen` is `true`, the `total_density` field in the output is the
 effective total mass density for drag and is the sum of the mass densities of all species in
 this model **including** the anomalous oxygen.
 """
@@ -343,7 +352,7 @@ end
 ############################################################################################
 
 """
-    _densm(h::T, d0::T, xm::T, tz::T, r_lat::T, g_lat::T, tn2::NTuple{N2, T}, tgn2::NTuple{2, T}, tn3::NTuple{N3, T}, tgn3::NTuple{2, T}) where {N2<:Integer, N3<:Integer, T<:Number} -> float(T), float(T)
+    _densm(h::Number, d₀::Number, xm::Number, g_lat::Number, r_lat::Number, tn2::NTuple{4, Number}, tgn2::NTuple{2, Number}, tn3::NTuple{5, Number}, tgn3::NTuple{2, Number}) -> Number
 
 Compute the temperature and density profiles for the lower atmosphere.
 
@@ -352,19 +361,20 @@ Compute the temperature and density profiles for the lower atmosphere.
 
 # Arguments
 
-- `h::T`: Altitude [km].
-- `d₀::T`: Reference density, returned if `h > _ZN2[1]`.
-- `xm::T`: Species molecular weight [ ].
-- `g_lat::T`: Reference gravity at desired latitude [cm / s²].
-- `r_lat::T`: Reference radius at desired latitude [km].
-- `tn2::NTuple{N2, T}`: Temperature at the nodes for ZN2 scale [K].
-- `tgn2::NTuple{N2, T}`: Temperature gradients at the end nodes for ZN2 scale.
-- `tn3::NTuple{N3, T}`: Temperature at the nodes for ZN3 scale [K].
-- `tgn3::NTuple{N3, T}`: Temperature gradients at the end nodes for ZN3 scale.
+- `h::Number`: Altitude [km].
+- `d₀::Number`: Reference density, returned if `h > _ZN2[1]`.
+- `xm::Number`: Species molecular weight [ ].
+- `g_lat::Number`: Reference gravity at desired latitude [cm / s²].
+- `r_lat::Number`: Reference radius at desired latitude [km].
+- `tn2::NTuple{4, Number}`: Temperature at the nodes for ZN2 scale [K].
+- `tgn2::NTuple{2, Number}`: Temperature gradients at the end nodes for ZN2 scale.
+- `tn3::NTuple{5, Number}`: Temperature at the nodes for ZN3 scale [K].
+- `tgn3::NTuple{2, Number}`: Temperature gradients at the end nodes for ZN3 scale.
 
 # Returns
 
-- `T`: Density [1 / cm³] is `xm` is not 0, or the temperature [K] otherwise.
+- `Number`: Density [1 / cm³] if `xm` is not 0, or the temperature [K] otherwise. The type
+    is the promotion of the types of the numeric inputs.
 """
 function _densm(
     h::HT,
@@ -516,7 +526,7 @@ polynomial.
 
 # Returns
 
-- `T`: Density [1 / cm³] is `xm` is not 0, or the temperature [K] otherwise.
+- `T`: Density [1 / cm³] if `xm` is not 0, or the temperature [K] otherwise.
 - `NTuple{5, T}`: Updated `tn1`.
 - `NTuple{2, T}`: Updated `tgn1`.
 """
@@ -650,7 +660,7 @@ function _densu(
 end
 
 """
-    _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number -> Nrlmsise00Structure{T}, T
+    _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) where {T<:Number, V<:Number} -> Nrlmsise00Structure{T}, T
 
 Compute the function `G(L)` with upper thermosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00`.
@@ -911,7 +921,7 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
 end
 
 """
-    _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{T}) where T<:Number -> T
+    _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) where {T<:Number, V<:Number} -> T
 
 Compute the function `G(L)` with lower atmosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00d`.
@@ -1322,8 +1332,8 @@ end
     _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
 
 Compute the temperatures and densities using the information inside the structure
-`nrlmsise00d` and including the anomalous oxygen in the total density for altitudes higher
-than 72.5 km (thermospheric portion of NRLMSISE-00).
+`nrlmsise00d` for altitudes higher than 72.5 km (thermospheric portion of NRLMSISE-00).
+Notice that the anomalous oxygen is **not** included in the total density.
 
 # Returns
 

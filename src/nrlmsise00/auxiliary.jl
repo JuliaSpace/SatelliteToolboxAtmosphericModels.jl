@@ -5,7 +5,7 @@
 ############################################################################################
 
 """
-    _ccor(h::T, r::T, h₁::T, zh::T) where T<:Number -> T
+    _ccor(h::Number, r::Number, h₁::Number, zh::Number) -> Number
 
 Compute the chemistry / dissociation correction for MSIS models.
 
@@ -29,7 +29,7 @@ function _ccor(h::HT, r::T, h₁::HT2, zh::ZT) where {HT<:Number, T<:Number, HT2
 end
 
 """
-    _ccor2(alt::T, r::T, h₁::T, zh::T, h₂::T) where T<:Number -> T
+    _ccor2(h::Number, r::Number, h₁::Number, zh::Number, h₂::Number) -> Number
 
 Compute the O and O₂ chemistry / dissociation correction for MSIS models.
 
@@ -55,17 +55,17 @@ function _ccor2(h::HT, r::T, h₁::HT2, zh::ZT, h₂::HT3) where {HT<:Number, T<
 end
 
 """
-  _dnet(dd::T, dm::T, zhm::T, xmm::T, xm::T) where T<:Number -> T
+    _dnet(dd::Number, dm::Number, zhm::Number, xmm::Number, xm::Number) -> Number
 
 Compute the turbopause correction for MSIS models, returning the combined density.
 
 # Arguments
 
-- `dd::T`: Diffusive density.
-- `dm::T`: Full mixed density.
-- `zhm::T`: Transition scale length.
-- `xmm::T`: Full mixed molecular weight.
-- `xm::T`: Species molecular weight.
+- `dd::Number`: Diffusive density.
+- `dm::Number`: Full mixed density.
+- `zhm::Number`: Transition scale length.
+- `xmm::Number`: Full mixed molecular weight.
+- `xm::Number`: Species molecular weight.
 """
 function _dnet(dd::DT, dm::DT2, zhm::ZT, xmm::XT, xm::XT2) where {DT<:Number, DT2<:Number, ZT<:Number, XT<:Number, XT2<:Number}
 
@@ -107,17 +107,17 @@ function _gravity_and_effective_radius(ϕ_gd::T) where T<:Number
 end
 
 """
-    _scale_height(h::T, xm::T, temp::T, g_lat::T, r_lat::T) where T<:Number -> T
+    _scale_height(h::Number, xm::Number, temp::Number, g_lat::Number, r_lat::Number) -> Number
 
 Compute the scale height.
 
 # Arguments
 
-- `h::T`: Altitude [km].
-- `xm::T`: Species molecular weight [ ].
-- `temp::T`: Temperature [K].
-- `g_lat::T`: Reference gravity at desired latitude [cm / s²].
-- `r_lat::T`: Reference radius at desired latitude [km].
+- `h::Number`: Altitude [km].
+- `xm::Number`: Species molecular weight [ ].
+- `temp::Number`: Temperature [K].
+- `g_lat::Number`: Reference gravity at desired latitude [cm / s²].
+- `r_lat::Number`: Reference radius at desired latitude [km].
 """
 function _scale_height(h::HT, xm::XT, temp::TT, g_lat::GT, r_lat::RLT) where {HT<:Number, XT<:Number, TT<:Number, GT<:Number, RLT<:Number}
 
@@ -137,7 +137,7 @@ end
 ############################################################################################
 
 """
-    _g0(a::Number, p::AbstractVector)
+    _g₀(a::Number, abs_p25::Number, p26::Number) -> Number
 
 Compute `g₀` function (see Eq. A24d) using the coefficients `abs_p25 = abs(p[25])` and
 `p26 = p[26]`.
@@ -147,7 +147,7 @@ function _g₀(a::Number, abs_p25::Number, p26::Number)
 end
 
 """
-    _sg₀(ex::Number, ap::AbstractVector, abs_p25::Number, p26::Number)
+    _sg₀(ex::Number, ap::AbstractVector, abs_p25::Number, p26::Number) -> Number
 
 Compute the `sg₀` function (see Eq. A24a) using the `ap` vector and the coefficients
 `abs_p25` and `p26`.

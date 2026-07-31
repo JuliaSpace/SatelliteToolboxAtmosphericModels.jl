@@ -1,10 +1,8 @@
 export harrispriester_modified
 
 """
-    harrispriester_modified(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number, F10ₐ::Number; n::Number = 4) -> Float64
-    harrispriester_modified(jd::Number, ϕ_gd::Number, λ::Number, h::Number, F10ₐ::Number; n::Number = 4) -> Float64
-    harrispriester_modified(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; n::Number = 4) -> Float64
-    harrispriester_modified(jd::Number, ϕ_gd::Number, λ::Number, h::Number; n::Number = 4) -> Float64
+    harrispriester_modified(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10ₐ::Number]; kwargs...) -> Number
+    harrispriester_modified(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10ₐ::Number]; kwargs...) -> Number
 
 Compute the atmospheric density [kg / m³] using the modified Harris-Priester model.
 
@@ -13,38 +11,39 @@ developed by Noble Hatten and Ryan P. Russell [1]. It ensures continuous first d
 eliminates singularities, and uses a cubic dependency on the 81-day centered average of the
 F10.7 solar flux index (`F10ₐ`) to model density variations.
 
-If `F10ₐ` is not provided, it will be automatically fetched using the `SpaceIndices` package.
-In this case, the initialization of the space indices package with `SpaceIndices.init()` is
-required.
+If `F10ₐ` is not provided, it will be automatically fetched using the `SpaceIndices`
+package. In this case, the initialization of the space indices package with
+`SpaceIndices.init()` is required.
+
+# Arguments
+
+- `instant::DateTime`: Instant to compute the model represented using `DateTime`.
+- `jd::Number`: Julian day to compute the model.
+- `ϕ_gd::Number`: Geodetic latitude [rad].
+- `λ::Number`: Geodetic longitude [rad].
+- `h::Number`: Geodetic altitude [m].
+- `F10ₐ::Number`: 81-day centered average of the F10.7 solar flux index [sfu].
+
+# Keywords
+
+- `n::Number`: Cosine exponent in the diurnal bulge modeling. The original Fortran
+    implementation computes `n` from the orbital inclination as
+    `n = 2.001 + 4 sin²(inclination)`. Hence, use `n = 2.001` for equatorial orbits,
+    `n = 6.001` for polar orbits, and interpolate for intermediate inclinations. If the
+    orbital inclination is unknown, the default provides a reasonable approximation. This
+    functionality was purposefully removed here to avoid needing an additional dependency.
+    (**Default**: `4`)
+
+# Returns
+
+- `Number`: Atmospheric density [kg / m³]. The type is the promotion of the types of the
+    numeric inputs.
 
 # References
 
 - **[1]** Hatten, N., & Russell, R. P. (2017). A smooth and robust Harris-Priester
     atmospheric density model for low Earth orbit applications. *Advances in Space
     Research*, 59(2), 571-586.
-
-# Arguments
-
-- `instant`: The `DateTime` to compute the model.
-- `jd`: The Julian day to compute the model.
-- `ϕ_gd`: Geodetic latitude [rad].
-- `λ`: Geodetic longitude [rad].
-- `h`: Geodetic altitude [m].
-- `F10ₐ`: (Optional) 81-day centered average of the F10.7 solar flux index [sfu].
-- `n`: (Optional) Cosine exponent in the diurnal bulge modeling. Default: 4.
-    **IMPORTANT:** The original FORTRAN implementation computes `n` from orbital inclination:
-    ```
-    n = 2.001 + 4 * sin²(inclination)
-    ```
-    - For equatorial orbits (inclination = 0°): use `n = 2.001`
-    - For polar orbits (inclination = 90°): use `n = 6.001`
-    - For intermediate orbits: calculate appropriately
-    If orbital inclination is unknown, the default `n = 4` provides a reasonable approximation. This functionality was
-    purposefully removed here to avoid needing an additional dependency.
-
-# Returns
-
-- The atmospheric density [kg / m³].
 """
 function harrispriester_modified(
     instant::DateTime,

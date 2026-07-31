@@ -19,8 +19,8 @@ Doug Drob based on the MSISE90 model:
 In this package, we can compute this model using the following functions:
 
 ```julia
-AtmosphericModels.nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
-AtmosphericModels.nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output{Float64}
+AtmosphericModels.nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output
+AtmosphericModels.nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output
 ```
 
 where
@@ -30,7 +30,7 @@ where
 - `h::Number`: Altitude [m].
 - `ϕ_gd::Number`: Geodetic latitude [rad].
 - `λ::Number`: Longitude [rad].
-- `F10ₐ::Number`: 10.7-cm averaged solar flux, 90-day centered on input time [sfu].
+- `F10ₐ::Number`: 10.7-cm averaged solar flux, 81-day centered on input time [sfu].
 - `F10::Number`: 10.7-cm solar flux [sfu].
 - `ap::Union{Number, AbstractVector}`: Magnetic index, see the section [AP](@ref) for more
   information.
@@ -53,7 +53,7 @@ If we omit all space indices, the system tries to obtain them automatically for 
 day `jd` or `instant`. However, the indices must be already initialized using the function
 `SpaceIndices.init()`.
 
-These functions return an object of type `Nrlmsise00Output{Float64}` that contains the
+These functions return an object of type `Nrlmsise00Output` that contains the
 following fields:
 
 - `total_density::T`: Total mass density [kg / m³].

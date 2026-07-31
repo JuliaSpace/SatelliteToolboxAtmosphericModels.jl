@@ -25,14 +25,16 @@
 export jr1971
 
 """
-    jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, Kp::Number]) -> JR1971Output{Float64}
-    jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, Kp::Number]) -> JR1971Output{Float64}
+    jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, Kp::Number]; kwargs...) -> JR1971Output
+    jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, Kp::Number]; kwargs...) -> JR1971Output
 
 Compute the atmospheric density using the Jacchia-Roberts 1971 model.
 
 If we omit all space indices, the system tries to obtain them automatically for the selected
 day `jd` or `instant`. However, the indices must be already initialized using the function
 `SpaceIndices.init()`.
+
+The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
 
 # Arguments
 
@@ -45,9 +47,17 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 - `F10ₐ::Number`: 10.7-cm averaged solar flux, 81-day centered on input time [sfu].
 - `Kp::Number`: Kp geomagnetic index with a delay of 3 hours.
 
+# Keywords
+
+- `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
+    index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
+    `Val` object, not a `Bool`.
+    (**Default**: `Val(true)`)
+
 # Returns
 
-- `JR1971Output{Float64}`: Structure containing the results obtained from the model.
+- `JR1971Output`: Structure containing the results obtained from the model. Its element
+    type is the promotion of the types of the numeric inputs.
 """
 function jr1971(
     instant::DateTime,

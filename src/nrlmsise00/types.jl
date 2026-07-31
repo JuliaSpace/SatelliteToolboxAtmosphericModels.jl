@@ -18,7 +18,7 @@ Flags to configure NRLMSISE-00.
 - `sym_annual::Bool`: Symmetrical annual.
 - `sym_semiannual::Bool`: Symmetrical semiannual.
 - `asym_annual::Bool`: Asymmetrical annual.
-- `asyn_semiannual::Bool`: Asymmetrical semiannual.
+- `asym_semiannual::Bool`: Asymmetrical semiannual.
 - `diurnal::Bool`: Diurnal.
 - `semidiurnal::Bool`: Semidiurnal.
 - `daily_ap::Bool`: Daily AP.

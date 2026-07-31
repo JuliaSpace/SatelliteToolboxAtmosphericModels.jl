@@ -33,8 +33,8 @@
 export jb2008
 
 """
-    jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, S10::Number, S10ₐ::Number, M10::Number, M10ₐ::Number, Y10::Number, Y10ₐ::Number, DstΔTc::Number]) -> JB2008Output{Float64}
-    jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, S10::Number, S10ₐ::Number, M10::Number, M10ₐ::Number, Y10::Number, Y10ₐ::Number, DstΔTc::Number]) -> JB2008Output{Float64}
+    jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, S10::Number, S10ₐ::Number, M10::Number, M10ₐ::Number, Y10::Number, Y10ₐ::Number, DstΔTc::Number]; kwargs...) -> JB2008Output
+    jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, S10::Number, S10ₐ::Number, M10::Number, M10ₐ::Number, Y10::Number, Y10ₐ::Number, DstΔTc::Number]; kwargs...) -> JB2008Output
 
 Compute the atmospheric density using the Jacchia-Bowman 2008 (JB2008) model.
 
@@ -65,9 +65,17 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 - `Y10ₐ`: Solar X-ray & Ly-α 81-day averaged centered index obtained 5 days before `jd`.
 - `DstΔTc`: Temperature variation related to the Dst.
 
+# Keywords
+
+- `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
+    index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
+    `Val` object, not a `Bool`.
+    (**Default**: `Val(true)`)
+
 # Returns
 
-- `JB2008Output{Float64}`: Structure containing the results obtained from the model.
+- `JB2008Output`: Structure containing the results obtained from the model. Its element
+    type is the promotion of the types of the numeric inputs.
 """
 function jb2008(
     instant::DateTime,
@@ -578,9 +586,9 @@ end
 #                                    Private Functions                                     #
 ############################################################################################
 
-#   _jb2008_gravity(z::Number) -> Float64
+#   _jb2008_gravity(z::Number) -> Number
 #
-# Compute the gravity [m / s] at altitude `z` [km] according to the model Jacchia 1971 [3].
+# Compute the gravity [m / s²] at altitude `z` [km] according to the model Jacchia 1971 [3].
 function _jb2008_gravity(z::Number)
     # Mean Earth radius [km].
     Re = 6356.766
@@ -631,7 +639,7 @@ function _jb2008_high_altitude(h::Number, F10ₐ::Number)
     return FρH
 end
 
-#   _jb2008_M(z::R) where R -> Float64
+#   _jb2008_mean_molecular_mass(z::Number; kwargs...) -> Number
 #
 # Compute the mean molecular mass at altitude `z` [km] using the empirical profile in eq. 1
 # [3].

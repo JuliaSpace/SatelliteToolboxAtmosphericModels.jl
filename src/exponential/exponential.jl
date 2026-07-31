@@ -12,7 +12,7 @@
 export exponential
 
 """
-    exponential(h::Number) -> Float64
+    exponential(h::Number) -> Number
 
 Compute the atmospheric density [kg / m³] at the altitude `h` [m] above the ellipsoid using
 the exponential atmospheric model:
