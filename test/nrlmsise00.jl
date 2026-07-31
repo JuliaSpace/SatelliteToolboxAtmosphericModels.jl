@@ -585,6 +585,21 @@ end
     end
 end
 
+@testset "Float32 Support" begin
+    # The model must work with Float32 inputs in every altitude regime, including the
+    # region below the mesosphere in which the spline interpolation is used. Notice that
+    # we do not check the accuracy against Float64 here since the Julian day cannot be
+    # accurately represented using Float32.
+    jd = Float32(date_to_jd(2023, 1, 1, 10, 0, 0))
+
+    for h in (0.0f0, 30.0f3, 50.0f3, 75.0f3, 100.0f3, 110.0f3, 400.0f3)
+        out = AtmosphericModels.nrlmsise00(jd, h, 0.3f0, 0.5f0, 150.0f0, 150.0f0, 4.0f0)
+        @test out isa AtmosphericModels.Nrlmsise00Output{Float32}
+        @test out.total_density > 0
+        @test isfinite(out.total_density)
+    end
+end
+
 @testset "Errors" begin
     # == Wrong Size in Matrix `P` ==========================================================
 

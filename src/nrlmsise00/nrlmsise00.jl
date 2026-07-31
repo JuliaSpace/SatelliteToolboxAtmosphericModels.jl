@@ -382,36 +382,37 @@ function _densm(
 
     # == Initialization of Variables =======================================================
 
-    density = d₀
+    density = RT(d₀)
     (h > _ZN2[begin]) && return density
 
     # == Stratosphere / Mesosphere Temperature =============================================
 
     z     = (h > _ZN2[end]) ? h : _ZN2[end]
-    z1    = _ZN2[begin]
-    z2    = _ZN2[end]
-    t1    = tn2[begin]
-    t2    = tn2[end]
-    zg    = _ζ(r_lat, z, z1)
-    zgdif = _ζ(r_lat, z2, z1)
+    z1    = RT(_ZN2[begin])
+    z2    = RT(_ZN2[end])
+    t1    = RT(tn2[begin])
+    t2    = RT(tn2[end])
+    zg    = RT(_ζ(r_lat, z, z1))
+    zgdif = RT(_ζ(r_lat, z2, z1))
 
-    # Set up spline nodes.
+    # Set up spline nodes. Notice that all values assigned with `@reset` must be converted
+    # to `RT` to keep the tuples homogeneous for heterogeneous inputs.
     xs2 = ntuple(_ -> RT(0), Val(4))
     ys2 = ntuple(_ -> RT(0), Val(4))
 
     @inbounds for k in 1:4
-        @reset xs2[k] = _ζ(r_lat, _ZN2[k], z1) / zgdif
-        @reset ys2[k] = 1 / tn2[k]
+        @reset xs2[k] = RT(_ζ(r_lat, _ZN2[k], z1) / zgdif)
+        @reset ys2[k] = RT(1 / tn2[k])
     end
 
     ∂²y₁ = -tgn2[begin] / (t1 * t1) * zgdif
     ∂²yₙ = -tgn2[end]   / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
 
     # Calculate spline coefficients.
-    ∂²y = _spline_∂²(xs2, ys2, ∂²y₁, ∂²yₙ)
+    ∂²y = _spline_∂²(xs2, ys2, RT(∂²y₁), RT(∂²yₙ))
 
     # Interpolate at desired point.
-    x = zg / zgdif
+    x = RT(zg / zgdif)
     y = _spline(xs2, ys2, ∂²y, x)
 
     # Temperature at altitude.
@@ -444,26 +445,27 @@ function _densm(
     z     = h
     z1    = RT(_ZN3[begin])
     z2    = RT(_ZN3[end])
-    t1    = tn3[begin]
-    t2    = tn3[end]
-    zg    = _ζ(r_lat, z, z1)
-    zgdif = _ζ(r_lat, z2, z1)
+    t1    = RT(tn3[begin])
+    t2    = RT(tn3[end])
+    zg    = RT(_ζ(r_lat, z, z1))
+    zgdif = RT(_ζ(r_lat, z2, z1))
 
-    # Set up spline nodes.
+    # Set up spline nodes. Notice that all values assigned with `@reset` must be converted
+    # to `RT` to keep the tuples homogeneous for heterogeneous inputs.
     xs3 = ntuple(_ -> RT(0), Val(5))
     ys3 = ntuple(_ -> RT(0), Val(5))
 
     @inbounds for k in 1:5
-        @reset xs3[k] = _ζ(r_lat, _ZN3[k], z1) / zgdif
-        @reset ys3[k] = 1 / tn3[k]
+        @reset xs3[k] = RT(_ζ(r_lat, _ZN3[k], z1) / zgdif)
+        @reset ys3[k] = RT(1 / tn3[k])
     end
 
     ∂²y₁ = -tgn3[begin] / (t1 * t1) * zgdif
     ∂²yₙ = -tgn3[end]   / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
 
     # Calculate spline coefficients.
-    ∂²y = _spline_∂²(xs3, ys3, ∂²y₁, ∂²yₙ)
-    x   = zg / zgdif
+    ∂²y = _spline_∂²(xs3, ys3, RT(∂²y₁), RT(∂²yₙ))
+    x   = RT(zg / zgdif)
     y   = _spline(xs3, ys3, ∂²y, x)
 
     # Temperature at altitude.
@@ -548,6 +550,12 @@ function _densu(
 
     RT = promote_type(HT, DT, TinfT, TT, XT, AT, ZT, ST, GLT, RLT, TNT, TGT)
 
+    # Promote the temperature tuples so that every `@reset` below keeps them homogeneous.
+    # Otherwise, heterogeneous inputs would create mixed-type tuples, which cannot be
+    # passed to the spline functions.
+    tn1  = RT.(tn1)
+    tgn1 = RT.(tgn1)
+
     x     = RT(0)
     z1    = RT(0)
     t1    = RT(0)
@@ -565,7 +573,7 @@ function _densu(
     # Bates temperature.
     tt = tinf - (tinf - tlb) * exp(-s2 * zg2)
     ta = tt
-    tz = tt
+    tz = RT(tt)
 
     @inbounds if h < _ZN1[begin]
         # Compute the temperature below ZA temperature gradient at ZA from Bates profile.
@@ -574,19 +582,19 @@ function _densu(
         @reset tgn1[begin] = RT(dta)
         @reset tn1[begin]  = RT(ta)
         z  = (h > _ZN1[end]) ? h : _ZN1[end]
-        z1 = _ZN1[begin]
-        z2 = _ZN1[end]
+        z1 = RT(_ZN1[begin])
+        z2 = RT(_ZN1[end])
         t1 = tn1[begin]
         t2 = tn1[end]
 
         # Geopotential difference from z1.
-        zg    = _ζ(r_lat,  z, z1)
-        zgdif = _ζ(r_lat, z2, z1)
+        zg    = RT(_ζ(r_lat,  z, z1))
+        zgdif = RT(_ζ(r_lat, z2, z1))
 
         # Set up spline nodes.
         for k in 1:5
-            @reset xs[k] = _ζ(r_lat, _ZN1[k], z1) / zgdif
-            @reset ys[k] = 1 / tn1[k]
+            @reset xs[k] = RT(_ζ(r_lat, _ZN1[k], z1) / zgdif)
+            @reset ys[k] = RT(1 / tn1[k])
         end
 
         # End node derivatives.
@@ -597,7 +605,7 @@ function _densu(
         @reset ∂²y = _spline_∂²(xs, ys, ∂²y₁, ∂²yₙ)
 
         # Interpolate at the desired point.
-        x = zg / zgdif
+        x = RT(zg / zgdif)
         y = _spline(xs, ys, ∂²y, x)
 
         # Temperature at altitude.
@@ -1138,28 +1146,30 @@ function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # == Lower Mesosphere / Upper Stratosphere (between `_ZN3[1]` and `_ZN2[1]`) ===========
 
+    # Notice that all values assigned with `@reset` must be converted to `T` to keep the
+    # tuples homogeneous for non-Float64 structures.
     @reset meso_tgn2[1] = meso_tgn1_2
     @reset meso_tn2[1]  = meso_tn1_5
-    @reset meso_tn2[2]  = pma_1[1] * pavgm[1] / (1 - flags.all_tn2_var * _glob7s(nrlmsise00d, pma_1))
-    @reset meso_tn2[3]  = pma_2[1] * pavgm[2] / (1 - flags.all_tn2_var * _glob7s(nrlmsise00d, pma_2))
-    @reset meso_tn2[4]  = pma_3[1] * pavgm[3] / (1 - flags.all_tn2_var * flags.all_tn3_var * _glob7s(nrlmsise00d, pma_3))
+    @reset meso_tn2[2]  = T(pma_1[1] * pavgm[1] / (1 - flags.all_tn2_var * _glob7s(nrlmsise00d, pma_1)))
+    @reset meso_tn2[3]  = T(pma_2[1] * pavgm[2] / (1 - flags.all_tn2_var * _glob7s(nrlmsise00d, pma_2)))
+    @reset meso_tn2[4]  = T(pma_3[1] * pavgm[3] / (1 - flags.all_tn2_var * flags.all_tn3_var * _glob7s(nrlmsise00d, pma_3)))
     @reset meso_tn3[1]  = meso_tn2[4]
 
-    @reset meso_tgn2[2] = pavgm[9] * pma_10[1] * (
+    @reset meso_tgn2[2] = T(pavgm[9] * pma_10[1] * (
         1 + flags.all_tn2_var * flags.all_tn3_var * _glob7s(nrlmsise00d, pma_10)
-    ) * meso_tn2[4]^2 / (pma_3[1] * pavgm[3])^2
+    ) * meso_tn2[4]^2 / (pma_3[1] * pavgm[3])^2)
 
     # == Lower Stratosphere and Troposphere (below `zn3[1]`) ===============================
 
     if h < _ZN3[begin]
         @reset meso_tgn3[1] = meso_tgn2[2]
-        @reset meso_tn3[2]  = pma_4[1] * pavgm[4] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_4))
-        @reset meso_tn3[3]  = pma_5[1] * pavgm[5] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_5))
-        @reset meso_tn3[4]  = pma_6[1] * pavgm[6] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_6))
-        @reset meso_tn3[5]  = pma_7[1] * pavgm[7] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_7))
-        @reset meso_tgn3[2] = pma_8[1] * pavgm[8] * (
+        @reset meso_tn3[2]  = T(pma_4[1] * pavgm[4] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_4)))
+        @reset meso_tn3[3]  = T(pma_5[1] * pavgm[5] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_5)))
+        @reset meso_tn3[4]  = T(pma_6[1] * pavgm[6] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_6)))
+        @reset meso_tn3[5]  = T(pma_7[1] * pavgm[7] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_7)))
+        @reset meso_tgn3[2] = T(pma_8[1] * pavgm[8] * (
             1 + flags.all_tn3_var * _glob7s(nrlmsise00d, pma_8)
-        ) * meso_tn3[5] * meso_tn3[5] / (pma_7[1] * pavgm[7])^2
+        ) * meso_tn3[5] * meso_tn3[5] / (pma_7[1] * pavgm[7])^2)
     end
 
     # == Linear Transition to Full Mixing Below `_ZN2[1]` ==================================
