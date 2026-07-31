@@ -63,7 +63,6 @@ const _HARRIS_PRIESTER_ALT_RHO = [
 
 # Modified Harris-Priester constants
 
-const _HARRIS_PRIESTER_MOD_ε_NPOW = 1.0e-3
 const _HARRIS_PRIESTER_MOD_COS_ψ_BY_2_TOL = 1.0e-3
 const _HARRIS_PRIESTER_MOD_α = 0.5
 

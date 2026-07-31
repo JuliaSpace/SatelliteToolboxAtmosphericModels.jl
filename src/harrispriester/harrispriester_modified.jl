@@ -76,6 +76,12 @@ function harrispriester_modified(
 )
     # Fetch the 81-day centered average of F10.7 solar flux.
     F10ₐ = sum(space_index(Val(:F10obs), jd + k) for k in -40:40) / 81
+
+    @debug """
+    Modified Harris-Priester - Fetched Space Indices
+      81-day averaged F10.7 : $(F10ₐ) sfu
+    """
+
     return harrispriester_modified(jd, ϕ_gd, λ, h, F10ₐ; n = n)
 end
 
