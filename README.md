@@ -19,6 +19,7 @@ Currently, the following models are available:
 - Exponential atmospheric model;
 - Harris-Priester;
 - Modified Harris-Priester;
+- Jacchia 1977;
 - Jacchia-Roberts 1971;
 - [Jacchia-Bowman 2008](http://sol.spacenvironment.net/jb2008/); and
 - [NRLMSISE-00](https://ccmc.gsfc.nasa.gov/modelweb/models/nrlmsise00.php).

@@ -37,6 +37,11 @@ include("./harrispriester/constants.jl")
 include("./harrispriester/harrispriester.jl")
 include("./harrispriester/harrispriester_modified.jl")
 
+include("./jacchia1977/types.jl")
+include("./jacchia1977/constants.jl")
+include("./jacchia1977/jacchia1977.jl")
+include("./jacchia1977/show.jl")
+
 include("./jr1971/types.jl")
 include("./jr1971/constants.jl")
 include("./jr1971/jr1971.jl")

@@ -4,6 +4,12 @@ using DelimitedFiles
 using SatelliteToolboxAtmosphericModels
 using SatelliteToolboxBase
 
+@testset "Atmospheric Model Jacchia 1977" verbose = true begin
+    cd("./jacchia1977")
+    include("./jacchia1977/jacchia1977.jl")
+    cd("..")
+end
+
 @testset "Atmospheric Model Jacchia-Roberts 1971" verbose = true begin
     include("./jr1971.jl")
 end

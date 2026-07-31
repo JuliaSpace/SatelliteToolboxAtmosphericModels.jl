@@ -4,6 +4,13 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 2.0.0
 -------------
 
+- ![Feature][badge-feature] The package now supports the Jacchia 1977 model
+  (`AtmosphericModels.jacchia1977`). The implementation numerically integrates the
+  barometric and diffusion equations as described in SAO Special Report #375 and is
+  validated against the reference Fortran implementation developed at INPE. The automatic
+  space index fetching follows the prescriptions in the report: lagged daily F10.7,
+  Gaussian-weighted averaged F10.7, and Kp delayed by a geomagnetic latitude dependent
+  interval.
 - ![BREAKING][badge-breaking] The keyword argument `roots_container` of `jr1971` was
   removed. The model now computes the roots of the quartic polynomial using a closed-form
   algorithm that does not allocate. For the same reason, the dependency PolynomialRoots.jl

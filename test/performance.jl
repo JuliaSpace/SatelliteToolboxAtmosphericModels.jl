@@ -38,6 +38,15 @@ else
 
         @test length(
             check_allocs(
+                (x1, x2, x3, x4, x5, x6, x7) -> begin
+                    AtmosphericModels.jacchia1977(x1, x2, x3, x4, x5, x6, x7)
+                end,
+                (DateTime, Float64, Float64, Float64, Float64, Float64, Float64)
+            )
+        ) == 0
+
+        @test length(
+            check_allocs(
                 (x1, x2, x3, x4) -> begin
                     AtmosphericModels.jb2008(x1, x2, x3, x4; verbose = Val(false))
                 end,
