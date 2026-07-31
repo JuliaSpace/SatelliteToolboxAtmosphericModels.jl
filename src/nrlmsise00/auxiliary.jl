@@ -22,10 +22,10 @@ function _ccor(h::HT, r::T, h₁::HT2, zh::ZT) where {HT<:Number, T<:Number, HT2
 
     e = (h - zh) / h₁
 
-    (e > +70) && return exp(RT(0))
-    (e < -70) && return exp(r)
+    (e > +70) && return one(RT)
+    (e < -70) && return RT(exp(r))
 
-    return exp(r / (1 + exp(e)))
+    return RT(exp(r / (1 + exp(e))))
 end
 
 """
@@ -42,13 +42,16 @@ Compute the O and O₂ chemistry / dissociation correction for MSIS models.
 - `h₂::Number`: Transition scale length 2.
 """
 function _ccor2(h::HT, r::T, h₁::HT2, zh::ZT, h₂::HT3) where {HT<:Number, T<:Number, HT2<:Number, ZT<:Number, HT3<:Number}
+
+    RT = promote_type(HT, T, HT2, ZT, HT3)
+
     e1 = (h - zh) / h₁
     e2 = (h - zh) / h₂
 
-    ((e1 > +70) || (e2 > +70)) && return exp(T(0))
-    ((e1 < -70) && (e2 < -70)) && return exp(r)
+    ((e1 > +70) || (e2 > +70)) && return one(RT)
+    ((e1 < -70) && (e2 < -70)) && return RT(exp(r))
 
-    return exp(r / (1 + (exp(e1) + exp(e2)) / 2))
+    return RT(exp(r / (1 + (exp(e1) + exp(e2)) / 2)))
 end
 
 """
@@ -71,20 +74,18 @@ function _dnet(dd::DT, dm::DT2, zhm::ZT, xmm::XT, xm::XT2) where {DT<:Number, DT
     a  = zhm / (xmm - xm)
 
     if !((dm > 0) && (dd > 0))
-        if (dd == 0) && (dm == 0)
-            dd = RT(1)
-        end
+        ((dd == 0) && (dm == 0)) && return one(RT)
 
-        (dm == 0) && return dd
-        (dd == 0) && return dm
+        (dm == 0) && return RT(dd)
+        (dd == 0) && return RT(dm)
     end
 
     ylog = a * log(dm / dd)
 
-    (ylog < -10) && return dd
-    (ylog > +10) && return dm
+    (ylog < -10) && return RT(dd)
+    (ylog > +10) && return RT(dm)
 
-    return dd * (1 + exp(ylog))^(1 / a)
+    return RT(dd * (1 + exp(ylog))^(1 / a))
 end
 
 """

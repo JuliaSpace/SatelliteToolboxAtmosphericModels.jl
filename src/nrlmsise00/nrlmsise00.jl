@@ -331,7 +331,7 @@ function nrlmsise00(
     )
 
     # Call the NRLMSISE-00 model.
-    ~, nrlmsise00_out = include_anomalous_oxygen ?
+    _, nrlmsise00_out = include_anomalous_oxygen ?
         _gtd7d(nrlmsise00d) :
         _gtd7(nrlmsise00d)
 
@@ -680,20 +680,23 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
 
     # == Initialization of Variables =======================================================
 
-    t₁  = T(0)
-    t₂  = T(0)
-    t₃  = T(0)
-    t₄  = T(0)
-    t₅  = T(0)
-    t₆  = T(0)
-    t₇  = T(0)
-    t₈  = T(0)
-    t₉  = T(0)
-    t₁₀ = T(0)
-    t₁₁ = T(0)
-    t₁₂ = T(0)
-    t₁₃ = T(0)
-    t₁₄ = T(0)
+    # Notice that the accumulators must use the type promotion between the structure type
+    # and the coefficient vector type to keep the function type-stable.
+    zt  = zero(promote_type(T, V))
+    t₁  = zt
+    t₂  = zt
+    t₃  = zt
+    t₄  = zt
+    t₅  = zt
+    t₆  = zt
+    t₇  = zt
+    t₈  = zt
+    t₉  = zt
+    t₁₀ = zt
+    t₁₁ = zt
+    t₁₂ = zt
+    t₁₃ = zt
+    t₁₄ = zt
 
     tloc = lst
 
@@ -926,20 +929,23 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
 
     # == Initialization of Variables =======================================================
 
-    t₁  = T(0)
-    t₂  = T(0)
-    t₃  = T(0)
-    t₄  = T(0)
-    t₅  = T(0)
-    t₆  = T(0)
-    t₇  = T(0)
-    t₈  = T(0)
-    t₉  = T(0)
-    t₁₀ = T(0)
-    t₁₁ = T(0)
-    t₁₂ = T(0)
-    t₁₃ = T(0)
-    t₁₄ = T(0)
+    # Notice that the accumulators must use the type promotion between the structure type
+    # and the coefficient vector type to keep the function type-stable.
+    zt  = zero(promote_type(T, V))
+    t₁  = zt
+    t₂  = zt
+    t₃  = zt
+    t₄  = zt
+    t₅  = zt
+    t₆  = zt
+    t₇  = zt
+    t₈  = zt
+    t₉  = zt
+    t₁₀ = zt
+    t₁₁ = zt
+    t₁₂ = zt
+    t₁₃ = zt
+    t₁₄ = zt
 
     # Confirm parameter set. The source-code replaces a zero `p[100]` with 2 in place. We
     # only read the value here to avoid mutating the shared coefficient vector, which is

@@ -38,11 +38,11 @@ function _spline_∫(
         a  = (x[k₁] - xᵢ   ) / h
         b  = (xᵢ    - x[k₀]) / h
 
-        a² = a^2
-        b² = b^2
-        a⁴ = a^4.0
-        b⁴ = b^4.0
-        h² = h^2
+        a² = a * a
+        b² = b * b
+        a⁴ = a² * a²
+        b⁴ = b² * b²
+        h² = h * h
 
         k_a = -(1 + a⁴) / 4 + a² / 2
         k_b = b⁴ / 4 - b² / 2
@@ -151,7 +151,7 @@ function _spline(
     k₁ = N
 
     @inbounds while (k₁ - k₀) > 1
-        k = div(k₁ + k₀, 2, RoundNearest)
+        k = (k₁ + k₀) >> 1
 
         if x[k] > xᵢ
             k₁ = k
@@ -167,7 +167,7 @@ function _spline(
 
     a  = (x[k₁] - xᵢ   ) / h
     b  = (xᵢ    - x[k₀]) / h
-    yᵢ = a * y[k₀] + b * y[k₁] + ((a^3.0 - a) * ∂²y[k₀] + (b^3.0 - b) * ∂²y[k₁]) * h^2 / 6
+    yᵢ = a * y[k₀] + b * y[k₁] + ((a^3 - a) * ∂²y[k₀] + (b^3 - b) * ∂²y[k₁]) * h^2 / 6
 
     return yᵢ
 end
