@@ -51,7 +51,7 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 
 # Arguments
 
-- `instant::DateTime`: Instant to compute the model represent using `DateTime`.
+- `instant::DateTime`: Instant to compute the model represented using `DateTime`.
 - `jd::Number`: Julian day to compute the model.
 - `h::Number`: Altitude [m].
 - `ϕ_gd::Number`: Geodetic latitude [rad].
@@ -102,7 +102,7 @@ If `ap` is an `AbstractVector`, it must be a vector with 7 dimensions as describ
 2. The exospheric temperature is set to global average for altitudes below `120 km`. The
     `120 km` gradient is left at global average value for altitudes below `72.5 km`.
 3. Anomalous oxygen is defined as hot atomic oxygen or ionized oxygen that can become
-    appreciable at high altitudes (`> 500 km`) for some ranges of inputs, thereby affection
+    appreciable at high altitudes (`> 500 km`) for some ranges of inputs, thereby affecting
     drag on satellites and debris. We group these species under the term **Anomalous
     Oxygen**, since their individual variations are not presently separable with the drag
     data used to define this model component.
@@ -343,7 +343,7 @@ end
 ############################################################################################
 
 """
-    _densm(h::T, d0::T, xm::T, tz::T, r_lat::T, g_lat::T, tn2::NTuple{N2, T}, tgn2::NTuple{2, T}, tn3::NTuple{N3, T}, tgn3::NTuple{2, T}) where {N2<:Interger, N3<:Integer, T<:Number} -> float(T), float(T)
+    _densm(h::T, d0::T, xm::T, tz::T, r_lat::T, g_lat::T, tn2::NTuple{N2, T}, tgn2::NTuple{2, T}, tn3::NTuple{N3, T}, tgn3::NTuple{2, T}) where {N2<:Integer, N3<:Integer, T<:Number} -> float(T), float(T)
 
 Compute the temperature and density profiles for the lower atmosphere.
 
@@ -440,7 +440,7 @@ function _densm(
         end
     end
 
-    # == Troposhepre / Stratosphere Temperature ============================================
+    # == Troposphere / Stratosphere Temperature ============================================
 
     z     = h
     z1    = RT(_ZN3[begin])
@@ -1282,7 +1282,7 @@ Compute the temperatures and densities using the information inside the structur
 - `Nrlmsise00Output{T}`: Structure with the output information.
 """
 function _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
-    # Call `_gt7d!` to compute the NRLMSISE-00 outputs.
+    # Call `_gtd7` to compute the NRLMSISE-00 outputs.
     nrlmsise00d, out = _gtd7(nrlmsise00d)
 
     # Update the computation of the total mass density.
@@ -1567,7 +1567,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         # Net density at desired altitude.
         He_number_density = _dnet(He_number_density, dm04, zhm04, xmm, T(4))
 
-        # Correction to specified mixing ration at ground.
+        # Correction to specified mixing ratio at ground.
         rl   = log(b28 * pdm_1[2] / b04)
         zc04 = pdm_1[5] * pdl_2[1]
         hc04 = pdm_1[6] * pdl_2[2]

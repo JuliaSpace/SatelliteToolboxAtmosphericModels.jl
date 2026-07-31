@@ -36,7 +36,7 @@ Compute the O and O₂ chemistry / dissociation correction for MSIS models.
 # Arguments
 
 - `h::Number`: Altitude.
-- `r::Number`: Target ration.
+- `r::Number`: Target ratio.
 - `h₁::Number`: Transition scale length.
 - `zh::Number`: Altitude of `1/2 r`.
 - `h₂::Number`: Transition scale length 2.

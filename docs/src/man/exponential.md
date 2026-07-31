@@ -14,7 +14,7 @@ using SatelliteToolboxAtmosphericModels
 This model assumes we can compute the atmospheric density by:
 
 ```math
-\rho(h) = \rho_0 \cdot exp \left\lbrace - \frac{h - h_0}{H} \right\rbrace~,
+\rho(h) = \rho_0 \cdot \exp \left\lbrace - \frac{h - h_0}{H} \right\rbrace~,
 ```
 
 where ``\rho_0``, ``h_0``, and ``H`` are parameters obtained from tables. Reference [1]

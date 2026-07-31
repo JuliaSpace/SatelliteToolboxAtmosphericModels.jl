@@ -17,6 +17,9 @@
 #     Goddard Trajectory Determination System (GTDS) Mathematical Theory (Revision 1).
 #     FDD/552-89/0001 and CSC/TR-89/6001.
 #
+# [5] General Mission Analysis Tool (GMAT) R2018a source code.
+#     https://sourceforge.net/projects/gmat/
+#
 ############################################################################################
 
 export jr1971
@@ -34,7 +37,7 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 # Arguments
 
 - `jd::Number`: Julian day to compute the model.
-- `instant::DateTime`: Instant to compute the model represent using `DateTime`.
+- `instant::DateTime`: Instant to compute the model represented using `DateTime`.
 - `ϕ_gd::Number`: Geodetic latitude [rad].
 - `λ::Number`: Longitude [rad].
 - `h::Number`: Altitude [m].
@@ -467,7 +470,7 @@ function jr1971(
         ρ₁₂₅_Ar  = Δρ_c * Mi[4] * 10^(@evalpoly(T∞, δij.Ar...)) / Av
         ρ₁₂₅_He  = Δρ_c * Mi[5] * 10^(@evalpoly(T∞, δij.He...)) / Av
 
-        # However, it turns out that this approach leads to discontinuity at 100 km. This
+        # However, it turns out that this approach leads to discontinuity at 125 km. This
         # was also seen by GMAT [5].
         #
         # TODO: Check if we need to fix this.
@@ -716,7 +719,7 @@ end
 # Jacchia-Roberts 1971 [1, 3, 4] given the temperature `Tx` [K] at the inflection point and
 # the exospheric temperature `T∞` [K].
 #
-# The inflection point is considered to by `z = 125 km`.
+# The inflection point is considered to be `z = 125 km`.
 function _jr1971_temperature(z::Number, Tx::Number, T∞::Number)
     T₁ = _JR1971_CONSTANTS.T₁
     z₁ = _JR1971_CONSTANTS.z₁
@@ -727,7 +730,7 @@ function _jr1971_temperature(z::Number, Tx::Number, T∞::Number)
     (z  < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
     (T∞ < 0 ) && throw(ArgumentError("The exospheric temperature must be positive."))
 
-    # == Compute the Temperature at Desire Altitude ========================================
+    # == Compute the Temperature at Desired Altitude ========================================
 
     if z <= zx
         Ca = _JR1971_CONSTANTS.Ca

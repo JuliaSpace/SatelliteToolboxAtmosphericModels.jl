@@ -7,7 +7,7 @@
 """
     const _JR1971_CONSTANTS
 
-Constants for the Jacchia-Roberts 1971  atmospheric model.
+Constants for the Jacchia-Roberts 1971 atmospheric model.
 """
 const _JR1971_CONSTANTS = (;
 

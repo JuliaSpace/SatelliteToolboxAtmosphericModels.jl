@@ -27,7 +27,7 @@ in which `ρ₀`, `h₀`, and `H` are parameters obtained from tables that depen
 """
 function exponential(h::Number)
     # Check the bounds.
-    h < 0 && throw(ArgumentError("The height must be positive."))
+    h < 0 && throw(ArgumentError("The height must be non-negative."))
 
     # Transform `h` to km.
     h /= 1000

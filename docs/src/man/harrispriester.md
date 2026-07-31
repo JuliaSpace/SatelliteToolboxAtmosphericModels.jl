@@ -36,7 +36,7 @@ AtmosphericModels.harrispriester(jd::Number, ϕ_gd::Number, λ::Number, h::Numbe
 where:
 
 - `jd::Number`: Julian day to compute the model.
-- `instant::DateTime`: Instant to compute the model represent using `DateTime`.
+- `instant::DateTime`: Instant to compute the model represented using `DateTime`.
 - `ϕ_gd::Number`: Geodetic latitude [rad].
 - `λ::Number`: Longitude [rad].
 - `h::Number`: Altitude [m].
@@ -85,7 +85,7 @@ AtmosphericModels.harrispriester_modified(jd::Number, ϕ_gd::Number, λ::Number,
 where:
 
 - `jd::Number`: Julian day to compute the model.
-- `instant::DateTime`: Instant to compute the model represent using `DateTime`.
+- `instant::DateTime`: Instant to compute the model represented using `DateTime`.
 - `ϕ_gd::Number`: Geodetic latitude [rad].
 - `λ::Number`: Longitude [rad].
 - `h::Number`: Altitude [m].

@@ -50,7 +50,7 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 # Arguments
 
 - `jd::Number`: Julian day to compute the model.
-- `instant::DateTime`: Instant to compute the model represent using `DateTime`.
+- `instant::DateTime`: Instant to compute the model represented using `DateTime`.
 - `ϕ_gd`: Geodetic latitude [rad].
 - `λ`: Longitude [rad].
 - `h`: Altitude [m].
@@ -60,7 +60,7 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 - `S10`: EUV index (26-34 nm) scaled to F10.7 obtained 1 day before `jd`.
 - `S10ₐ`: EUV 81-day averaged centered index obtained 1 day before `jd`.
 - `M10`: MG2 index scaled to F10.7 obtained 2 days before `jd`.
-- `M10ₐ`: MG2 81-day averaged centered index obtained 2 day before `jd`.
+- `M10ₐ`: MG2 81-day averaged centered index obtained 2 days before `jd`.
 - `Y10`: Solar X-ray & Ly-α index scaled to F10.7 obtained 5 days before `jd`.
 - `Y10ₐ`: Solar X-ray & Ly-α 81-day averaged centered index obtained 5 days before `jd`.
 - `DstΔTc`: Temperature variation related to the Dst.
@@ -229,10 +229,10 @@ function jb2008(
     α_O  =  0.0
     α_Ar =  0.0
     α_He = -0.38
-    α_H₂ =  0.0
+    α_H  =  0.0
 
-    # Values used to establish height step sizes in the integration process between 90 km to
-    # 105 km, 105 km to 500 km, and above 500km.
+    # Values used to establish height step sizes in the integration process between 90 km and
+    # 105 km, 105 km to 500 km, and above 500 km.
     R1 = 0.010
     R2 = 0.025
     R3 = 0.075
@@ -362,7 +362,7 @@ function jb2008(
     Mb₂ = _jb2008_mean_molecular_mass(z₂; verbose = Val(verbosity))
     Tl₂ = _jb2008_temperature(z₂, Tx, T∞)
 
-    # `Mbj` and `Tlj` contains, respectively, the mean molecular mass and local temperature
+    # `Mbj` and `Tlj` contain, respectively, the mean molecular mass and local temperature
     # at the boundary of the integration interval.
     #
     # The factor 1000 converts `Rstar` to the appropriate units.
@@ -402,7 +402,7 @@ function jb2008(
         #        │            │      R* T
         #        └            ┘
         #
-        # where `n` is number density for the i-th specie. This equations must be integrated
+        # where `n` is number density for the i-th specie. These equations must be integrated
         # for each specie we are considering.
         #
         # Here, we will compute the following integral:
@@ -486,7 +486,7 @@ function jb2008(
         #                                            |
         #                       This factor converts from [1 / cm³] to [1 / m³].
 
-        # Compute the hydrogen density based on the value at 500km.
+        # Compute the hydrogen density based on the value at 500 km.
         log_nH = log_nH_500km + H_sign * (log(Tl₄ / Tl₃) + 1000 / Rstar * int₂ * MH)
     end
 
@@ -662,7 +662,7 @@ end
 # inflection point, and the exospheric temperature `T∞` [K] according to the theory of the
 # model Jacchia 1971 [3].
 #
-# The inflection point is considered to by `z = 125 km`.
+# The inflection point is considered to be `z = 125 km`.
 function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
     # == Constants =========================================================================
 
@@ -679,7 +679,7 @@ function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
     # Compute the temperature gradient at the inflection point.
     Gx = 1.9 * (Tx - T₁) / (zx - z₁)
 
-    # == Compute the Temperature at the Desire Altitude ====================================
+    # == Compute the Temperature at the Desired Altitude ====================================
 
     Δz = z - zx
 
@@ -754,8 +754,8 @@ function _jb2008_∫(
 ) where {verbosity}
     # Compute the number of integration steps.
     #
-    # This is computed so that `z₂ = z₁*(zr)^n`. Hence, `zr` is the factor that defines the
-    # size of each integration interval.
+    # This is computed so that `z₁ = z₀ * (zr)^n`. Hence, `zr` is the factor that defines
+    # the size of each integration interval.
     al = log(z₁ / z₀)
     n  = floor(al / R) + 1
     zr = exp(al / n)
@@ -858,7 +858,7 @@ end
 #
 # Compute the correction in the `Tc` for Jacchia-Bowman model.
 #
-# This correction is mention in [2]. However, the equations do not seem to match those in
+# This correction is mentioned in [2]. However, the equations do not seem to match those in
 # the source-code. The ones implemented here are exactly the same as in the source-code.
 #
 # # Arguments

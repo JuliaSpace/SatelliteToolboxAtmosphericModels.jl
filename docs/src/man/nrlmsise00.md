@@ -25,7 +25,7 @@ AtmosphericModels.nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, 
 
 where
 
-- `instant::DateTime`: Instant to compute the model represent using `DateTime`.
+- `instant::DateTime`: Instant to compute the model represented using `DateTime`.
 - `jd::Number`: Julian day to compute the model.
 - `h::Number`: Altitude [m].
 - `ϕ_gd::Number`: Geodetic latitude [rad].

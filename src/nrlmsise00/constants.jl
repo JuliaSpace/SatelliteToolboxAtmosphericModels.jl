@@ -24,7 +24,7 @@ const _SEC_TO_RAD = 7.2722e-5
 #                                    Chemical Constants                                    #
 ############################################################################################
 
-# Inverse of gas constant.
+# Gas constant [erg / (K mol)] in the units used by the NRLMSISE-00 model.
 const _RGAS = 831.4
 
 ############################################################################################

@@ -132,7 +132,7 @@ Output structure for NRLMSISE00 model.
 # Remarks
 
 Anomalous oxygen is defined as hot atomic oxygen or ionized oxygen that can become
-appreciable at high altitudes (`> 500 km`) for some ranges of inputs, thereby affection drag
+appreciable at high altitudes (`> 500 km`) for some ranges of inputs, thereby affecting drag
 on satellites and debris. We group these species under the term **Anomalous Oxygen**, since
 their individual variations are not presently separable with the drag data used to define
 this model component.
