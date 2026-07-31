@@ -196,10 +196,3 @@ const _JR1971_CONSTANTS = (;
         ),
     )
 )
-
-"""
-    const _JR1971_ROOT_GUESS
-
-First guess to compute the roots of a polynomial to find the density below 125 km.
-"""
-const _JR1971_ROOT_GUESS = Complex{Float64}[166.10; 61.32; 9.91 + 1.31im; 9.91 - 1.31im]

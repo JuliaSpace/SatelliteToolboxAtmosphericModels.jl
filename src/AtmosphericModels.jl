@@ -9,7 +9,6 @@ module AtmosphericModels
 using Accessors
 using Crayons
 using LinearAlgebra
-using PolynomialRoots
 using Printf
 using SpaceIndices
 using SatelliteToolboxBase

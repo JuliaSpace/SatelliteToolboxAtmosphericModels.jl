@@ -27,25 +27,14 @@ else
     @testset "Allocation Check" begin
         @test length(check_allocs(AtmosphericModels.exponential, (Float64,))) == 0
 
-        # TODO: All of the allocations are in PolynomialRoots, this package also doesn't allow a SVector input.
-        # TODO: Work through these in PolynomialRoots.jl or consider a different package.
-        # TODO: 5 Allocations on Julia 1.10 CI and 64 on Julia 1.12 CI.
-
         @test length(
             check_allocs(
-                (x1, x2, x3, x4, rc) -> begin
-                    AtmosphericModels.jr1971(
-                        x1,
-                        x2,
-                        x3,
-                        x4;
-                        roots_container = rc,
-                        verbose = Val(false)
-                    )
+                (x1, x2, x3, x4) -> begin
+                    AtmosphericModels.jr1971(x1, x2, x3, x4; verbose = Val(false))
                 end,
-                (DateTime, Float64, Float64, Float64, Vector{ComplexF64})
+                (DateTime, Float64, Float64, Float64)
             )
-        ) <= 64
+        ) == 0
 
         @test length(
             check_allocs(

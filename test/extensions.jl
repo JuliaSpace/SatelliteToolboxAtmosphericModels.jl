@@ -4,20 +4,23 @@
 #
 ############################################################################################
 
-@testset "ForwardDiff Extension" begin
+@testset "ForwardDiff Differentiation" begin
     SpaceIndices.init()
 
     instant = datetime2julian(DateTime("2023-01-01T10:00:00"))
     ϕ_gd    = deg2rad(-23.0)
     λ       = deg2rad(-45.0)
-    h       = 500e3
 
-    g = ForwardDiff.gradient(
-        x -> AtmosphericModels.jr1971(x...; verbose=Val(false)).total_density,
-        [instant, ϕ_gd, λ, h]
-    )
-    @test all(isfinite, g)
-    @test !all(iszero, g)
+    # We test altitudes in every branch of the model, including the region below 125 km in
+    # which the roots of the quartic polynomial are required.
+    for h in (95e3, 110e3, 500e3)
+        g = ForwardDiff.gradient(
+            x -> AtmosphericModels.jr1971(x...; verbose=Val(false)).total_density,
+            [instant, ϕ_gd, λ, h]
+        )
+        @test all(isfinite, g)
+        @test !all(iszero, g)
+    end
 end
 
 @testset "Mooncake Extension" begin

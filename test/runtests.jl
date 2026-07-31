@@ -41,13 +41,11 @@ if isempty(VERSION.prerelease)
     end
 
     Pkg.add("ForwardDiff")
-    Pkg.add("ImplicitDifferentiation")
     Pkg.add("Mooncake")
     Pkg.add("ChainRulesCore")
     Pkg.add("Zygote")
 
     using ForwardDiff
-    using ImplicitDifferentiation
     using Mooncake
     using ChainRulesCore
     using Zygote

@@ -51,17 +51,9 @@ function jr1971(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
-    verbose::Val{verbosity} = Val(true),
-    roots_container::Union{Nothing, AbstractVector} = nothing
+    verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
-    return jr1971(
-        datetime2julian(instant),
-        ϕ_gd,
-        λ,
-        h;
-        verbose = verbose,
-        roots_container = roots_container
-    )
+    return jr1971(datetime2julian(instant), ϕ_gd, λ, h; verbose = verbose)
 end
 
 function jr1971(
@@ -69,8 +61,7 @@ function jr1971(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
-    verbose::Val{verbosity} = Val(true),
-    roots_container::Union{Nothing, AbstractVector} = nothing
+    verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
     # Get the data in the desired Julian Day.
     F10  = space_index(Val(:F10obs), jd)
@@ -101,17 +92,7 @@ function jr1971(
       3-hour delayed Kp     : $(Kp)
     """
 
-    return jr1971(
-        jd,
-        ϕ_gd,
-        λ,
-        h,
-        F10,
-        F10ₐ,
-        Kp;
-        verbose = Val(verbosity),
-        roots_container = roots_container
-    )
+    return jr1971(jd, ϕ_gd, λ, h, F10, F10ₐ, Kp; verbose = Val(verbosity))
 end
 
 function jr1971(
@@ -122,8 +103,7 @@ function jr1971(
     F10::Number,
     F10ₐ::Number,
     Kp::Number;
-    verbose::Val{verbosity} = Val(true),
-    roots_container::Union{Nothing, AbstractVector}=nothing,
+    verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
     return jr1971(
         datetime2julian(instant),
@@ -132,9 +112,8 @@ function jr1971(
         h,
         F10,
         F10ₐ,
-        Kp,
-        verbose = Val(verbosity),
-        roots_container=roots_container
+        Kp;
+        verbose = Val(verbosity)
     )
 end
 
@@ -146,8 +125,7 @@ function jr1971(
     F10::FT,
     F10ₐ::FT2,
     Kp::KT;
-    verbose::Val{verbosity} = Val(true),
-    roots_container::Union{Nothing, AbstractVector} = nothing,
+    verbose::Val{verbosity} = Val(true)
 )   where {
     JT<:Number,
     PT<:Number,
@@ -325,25 +303,13 @@ function jr1971(
 
         # First, we need to find the roots of the polynomial:
         #
-        #   P(Z) = c₀ + c₁ ⋅ z + c₂ ⋅ z² + c₃ ⋅ z³ + c₄ ⋅ z⁴
+        #   P(Z) = c₀ + c₁ ⋅ z + c₂ ⋅ z² + c₃ ⋅ z³ + z⁴
         c₀ = (35^4 * Tx / (Tx - T₁) + Ca[1]) / Ca[5]
         c₁ = Ca[2] / Ca[5]
         c₂ = Ca[3] / Ca[5]
         c₃ = Ca[4] / Ca[5]
-        c₄ = Ca[5] / Ca[5]
 
-        if isnothing(roots_container)
-            roots_container = [c₀; c₁; c₂; c₃; c₄]
-        else
-            (length(roots_container) != 5) && throw(ArgumentError("The roots container must have 5 elements."))
-            roots_container[1] = c₀
-            roots_container[2] = c₁
-            roots_container[3] = c₂
-            roots_container[4] = c₃
-            roots_container[5] = c₄
-        end
-
-        r₁, r₂, x, y = _jr1971_roots(roots_container)
+        r₁, r₂, x, y = _jr1971_roots(c₀, c₁, c₂, c₃)
 
         # -- f and k, [1. p. 371] ----------------------------------------------------------
 
@@ -608,31 +574,137 @@ function _jr1971_mean_molecular_mass(
     return molecular_mass
 end
 
-#     _jr1971_roots(p::AbstractVector) where T<:Number -> NTuple{4, Float64}
+#     _jr1971_roots(c₀::Number, c₁::Number, c₂::Number, c₃::Number) -> NTuple{4, T}
 #
-# Compute the roots of the polynomial `p` necessary to compute the density below 125 km. It
-# returns `r₁`, `r₂`, `x`, and `y`.
-function _jr1971_roots(p::AbstractVector{<:Number})
-    # Compute the roots with a first guess.
-    #TODO: All of the allocations are in PolynomialRoots, this package also doesn't allow a SVector input
-    #TODO: Work through these in PolynomialRoots.jl or consider a different package
-    r = roots(p, _JR1971_ROOT_GUESS; polish = true)
+# Compute the roots of the monic quartic polynomial:
+#
+#   P(z) = z⁴ + c₃ ⋅ z³ + c₂ ⋅ z² + c₁ ⋅ z + c₀,
+#
+# which is necessary to compute the density below 125 km. The model theory states that this
+# polynomial always has two distinct real roots and one complex conjugate pair [1]. The
+# function returns `r₁` (highest real root), `r₂` (lowest real root), `x` (real part of the
+# complex root), and `y` (positive imaginary part of the complex root).
+#
+# The algorithm uses the Ferrari method: the depressed quartic is split into two quadratic
+# factors whose coefficients are obtained from the largest root of the resolvent cubic,
+# computed by the Cardano method. The real roots are polished with Newton iterations and
+# the complex pair is recovered from the Vieta relations, keeping the accuracy close to the
+# machine precision. Since only closed-form expressions are used, this function does not
+# allocate and is compatible with automatic differentiation.
+function _jr1971_roots(c₀::Number, c₁::Number, c₂::Number, c₃::Number)
+    c₀, c₁, c₂, c₃ = promote(float(c₀), float(c₁), float(c₂), float(c₃))
+    T = typeof(c₀)
 
-    # We expect two real roots and two complex roots. Here, we will perform the following
-    # processing:
+    # == Depressed Quartic =================================================================
     #
-    #   r₁ -> Highest real root.
-    #   r₂ -> Lowest real root.
-    #   x  -> Real part of the complex root.
-    #   y  -> Positive imaginary part of the complex root.
+    # Substituting z = t - c₃ / 4, we obtain the depressed quartic:
+    #
+    #   t⁴ + p ⋅ t² + q ⋅ t + r = 0 .
 
-    r₁ = maximum(v -> abs(imag(v)) < 1e-10 ? real(v) : -Inf, r)
-    r₂ = minimum(v -> abs(imag(v)) < 1e-10 ? real(v) : +Inf, r)
-    c  = findfirst(v -> imag(v) >= 1e-10, r)
-    x  = real(r[c])
-    y  = abs(imag(r[c]))
+    a  = c₃ / 4
+    a² = a * a
+    p  = c₂ - 6a²
+    q  = c₁ - 2c₂ * a + 8a * a²
+    r  = c₀ - c₁ * a + c₂ * a² - 3a² * a²
 
-    return r₁[1], r₂[1], x[1], y[1]
+    # == Resolvent Cubic ===================================================================
+    #
+    # The depressed quartic can be factored as:
+    #
+    #   (t² + α ⋅ t + β) ⋅ (t² - α ⋅ t + γ) ,
+    #
+    # in which u = α² is a root of the resolvent cubic:
+    #
+    #   u³ + 2p ⋅ u² + (p² - 4r) ⋅ u - q² = 0 .
+    #
+    # Since the cubic is negative at u = 0 and grows unbounded, its largest real root is
+    # always non-negative. We compute it using the Cardano method applied to the depressed
+    # cubic obtained with u = v - 2p / 3.
+
+    b₂ = 2p
+    b₁ = p * p - 4r
+    b₀ = -q * q
+
+    P = b₁ - b₂ * b₂ / 3
+    Q = (2b₂ * b₂ * b₂ / 9 - b₂ * b₁) / 3 + b₀
+    Δ = (Q / 2)^2 + (P / 3)^3
+
+    if Δ >= 0
+        # One real root.
+        sqrt_Δ = √Δ
+        u = cbrt(-Q / 2 + sqrt_Δ) + cbrt(-Q / 2 - sqrt_Δ) - b₂ / 3
+    else
+        # Three real roots. We take the largest one, which is obtained with k = 0 in the
+        # trigonometric solution of the depressed cubic.
+        m = √(-P / 3)
+        θ = acos(clamp(3Q / (2P * m), -1, 1))
+        u = 2m * cos(θ / 3) - b₂ / 3
+    end
+
+    u = max(u, zero(T))
+    α = √u
+
+    # == Quadratic Factors =================================================================
+
+    if α > √eps(T)
+        β = (p + u - q / α) / 2
+        γ = (p + u + q / α) / 2
+
+        # One factor contains the two real roots and the other contains the complex
+        # conjugate pair. We select them based on the discriminants.
+        Δ₁ = u - 4β
+        Δ₂ = u - 4γ
+
+        if Δ₁ >= Δ₂
+            # Real roots come from t² + α ⋅ t + β = 0.
+            sqrt_Δ₁ = √max(Δ₁, zero(T))
+            t₊ = (-α + sqrt_Δ₁) / 2
+            t₋ = (-α - sqrt_Δ₁) / 2
+        else
+            # Real roots come from t² - α ⋅ t + γ = 0.
+            sqrt_Δ₂ = √max(Δ₂, zero(T))
+            t₊ = (α + sqrt_Δ₂) / 2
+            t₋ = (α - sqrt_Δ₂) / 2
+        end
+    else
+        # Biquadratic case (q ≈ 0): t² = (-p ± √(p² - 4r)) / 2.
+        d  = √max(p * p - 4r, zero(T))
+        s₊ = (-p + d) / 2
+        t₊ = √max(s₊, zero(T))
+        t₋ = -t₊
+    end
+
+    # Undo the substitution to obtain the real roots of the original quartic.
+    r₁ = t₊ - a
+    r₂ = t₋ - a
+
+    # == Newton Polishing ==================================================================
+
+    for _ in 1:2
+        f₁  = @evalpoly(r₁, c₀, c₁, c₂, c₃, one(T))
+        f₁′ = @evalpoly(r₁, c₁, 2c₂, 3c₃, 4one(T))
+        r₁ -= f₁ / f₁′
+
+        f₂  = @evalpoly(r₂, c₀, c₁, c₂, c₃, one(T))
+        f₂′ = @evalpoly(r₂, c₁, 2c₂, 3c₃, 4one(T))
+        r₂ -= f₂ / f₂′
+    end
+
+    if r₁ < r₂
+        r₁, r₂ = r₂, r₁
+    end
+
+    # == Complex Conjugate Pair ============================================================
+    #
+    # Using the Vieta relations for the polished real roots, we have:
+    #
+    #   r₁ + r₂ + 2x = -c₃    and    r₁ ⋅ r₂ ⋅ (x² + y²) = c₀ .
+
+    x  = -(c₃ + r₁ + r₂) / 2
+    x²_plus_y² = c₀ / (r₁ * r₂)
+    y  = √(max(x²_plus_y² - x * x, zero(T)))
+
+    return r₁, r₂, x, y
 end
 
 #   _jr1971_temperature(z::Number, Tx::Number, T∞::Number) -> Float64

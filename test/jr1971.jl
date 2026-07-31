@@ -114,22 +114,9 @@
         4.00464e-19
     ] * 1000
 
-    roots_container = zeros(5)
-
     for i in 1:length(h)
         ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
         @test ret.total_density ≈ results[i - 1 + begin] rtol = 5e-4
-        ret_prealloc = AtmosphericModels.jr1971(
-            instant,
-            ϕ_gd,
-            λ,
-            h[i - 1 + begin],
-            F10,
-            F10ₐ,
-            Kp;
-            roots_container = roots_container
-        )
-        @test ret_prealloc.total_density ≈ results[i - 1 + begin] rtol = 5e-4
     end
 
     # == Scenario 02 =======================================================================
@@ -152,17 +139,6 @@
     for i in 1:length(h)
         ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
         @test ret.total_density ≈ results[i - 1 + begin] rtol = 5e-4
-        ret_prealloc = AtmosphericModels.jr1971(
-            instant,
-            ϕ_gd,
-            λ,
-            h[i - 1 + begin],
-            F10,
-            F10ₐ,
-            Kp;
-            roots_container = roots_container
-        )
-        @test ret_prealloc.total_density ≈ results[i - 1 + begin] rtol = 5e-4
     end
 
     # == Scenario 03 =======================================================================
@@ -185,17 +161,6 @@
     for i in 1:length(h)
         ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
         @test ret.total_density ≈ results[i - 1 + begin] rtol = 5e-4
-        ret_prealloc = AtmosphericModels.jr1971(
-            instant,
-            ϕ_gd,
-            λ,
-            h[i - 1 + begin],
-            F10,
-            F10ₐ,
-            Kp;
-            roots_container = roots_container
-        )
-        @test ret_prealloc.total_density ≈ results[i - 1 + begin] rtol = 5e-4
     end
 end
 
@@ -349,15 +314,4 @@ end
 
 @testset "Errors" begin
     @test_throws ArgumentError AtmosphericModels.jr1971(now(), 0, 0, 89.9e3, 100, 100, 3)
-    roots_container = zeros(6)
-    @test_throws ArgumentError AtmosphericModels.jr1971(
-        now(),
-        0,
-        0,
-        89.9e3,
-        100,
-        100,
-        3;
-        roots_container = roots_container
-    )
 end
