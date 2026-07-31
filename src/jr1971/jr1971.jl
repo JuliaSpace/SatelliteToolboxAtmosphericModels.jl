@@ -225,7 +225,7 @@ function jr1971(
     # geomagnetic index Kp is zero.
 
     ΔF10 = F10 - F10ₐ
-    Tc   = 379 + 3.24F10 + 1.3ΔF10
+    Tc   = 379 + 3.24F10ₐ + 1.3ΔF10
 
     # Eq. 15 [2], Section B.1.1 [3]
 

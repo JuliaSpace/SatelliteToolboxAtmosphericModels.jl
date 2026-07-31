@@ -203,6 +203,57 @@ end
 #                                       Test Results                                       #
 ############################################################################################
 #
+# The nighttime minimum global exospheric temperature is:
+#
+#   Tc = 379 + 3.24 F10ₐ + 1.3 (F10 - F10ₐ),
+#
+# where the term multiplied by 3.24 must use the 81-day averaged flux F10ₐ [1, 2]. All
+# GMAT-based scenarios above use F10 == F10ₐ and, thus, cannot detect an error in this
+# term. The values below are regression snapshots obtained from this implementation after
+# fixing the formula, using F10 = 150, F10ₐ = 100, and Kp = 4. For reference, the buggy
+# formula (3.24 F10) leads to T∞ ≈ 1056 K at 300 km, whereas the correct one yields
+# T∞ ≈ 894.35 K.
+#
+############################################################################################
+
+@testset "Exospheric Temperature When F10 != F10ₐ" begin
+    jd      = date_to_jd(2017, 1, 1, 0, 0, 0)
+    instant = julian2datetime(jd)
+    ϕ_gd    = 45 |> deg2rad
+    λ       = 0.0
+    F10     = 150.0
+    F10ₐ    = 100.0
+    Kp      = 4.0
+
+    h = [100, 125.1, 300, 700, 1500] * 1000
+
+    expected_ρ = [
+        3.953810506307218e-6
+        1.615563485591969e-8
+        1.647659416350587e-11
+        2.0027542699016525e-14
+        5.588020206270033e-16
+    ]
+
+    expected_T∞ = [
+        837.8040529227294
+        837.8040529227294
+        894.3500344230608
+        894.3500344230608
+        894.3500344230608
+    ]
+
+    for i in 1:length(h)
+        ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
+        @test ret.total_density          ≈ expected_ρ[i - 1 + begin]  rtol = 1e-6
+        @test ret.exospheric_temperature ≈ expected_T∞[i - 1 + begin] rtol = 1e-6
+    end
+end
+
+############################################################################################
+#                                       Test Results                                       #
+############################################################################################
+#
 # In this case, we already tested the function `AtmosphericModel.jr1971`. Hence, we will
 # select a day and run this function with and without passing the space indices. The result
 # must be the same.
