@@ -48,4 +48,37 @@ end
         AtmosphericModels.nrlmsise00, jd, h, ϕ_gd, λ, F10ₐ, F10, ap
     )
     @test result.total_density > 0
+
+    # Compute the gradient using Zygote and compare it against ForwardDiff. This exercises
+    # the pullback, which must return one tangent per positional argument.
+    g_zygote = Zygote.gradient(
+        (jd, h, ϕ_gd, λ, F10ₐ, F10, ap) ->
+            AtmosphericModels.nrlmsise00(jd, h, ϕ_gd, λ, F10ₐ, F10, ap).total_density,
+        jd, h, ϕ_gd, λ, F10ₐ, F10, ap
+    )
+
+    g_forwarddiff = ForwardDiff.gradient(
+        x -> AtmosphericModels.nrlmsise00(x...).total_density,
+        [jd, h, ϕ_gd, λ, F10ₐ, F10, ap]
+    )
+
+    for i in 1:7
+        @test g_zygote[i] ≈ g_forwarddiff[i] rtol = 1e-10
+    end
+
+    # Differentiating a call with a pre-allocated Legendre matrix must also work since the
+    # pullback must not forward the Float64 matrix to the dual-valued evaluation.
+    P = zeros(9, 9)
+
+    g_prealloc = Zygote.gradient(
+        (jd, h, ϕ_gd, λ, F10ₐ, F10, ap) -> AtmosphericModels.nrlmsise00(
+            jd, h, ϕ_gd, λ, F10ₐ, F10, ap;
+            P = P
+        ).total_density,
+        jd, h, ϕ_gd, λ, F10ₐ, F10, ap
+    )
+
+    for i in 1:7
+        @test g_prealloc[i] ≈ g_forwarddiff[i] rtol = 1e-10
+    end
 end
