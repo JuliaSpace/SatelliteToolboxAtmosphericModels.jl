@@ -1462,7 +1462,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         meso_tgn1
     )
 
-    if flags.departures_from_eq && (h < altl[3])
+    if flags.departures_from_eq && (h <= altl[3])
         # Mixed density at desired altitude.
         dm28, meso_tn1, meso_tgn1 = _densu(
             h,
@@ -1508,7 +1508,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         meso_tgn1
     )
 
-    if flags.departures_from_eq && (h < altl[3])
+    if flags.departures_from_eq && (h < altl[1])
         # Turbopause.
         zh04 = pdm_1[3]
 
