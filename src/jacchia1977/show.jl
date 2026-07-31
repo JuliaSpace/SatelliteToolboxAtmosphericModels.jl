@@ -10,7 +10,12 @@ function show(io::IO, out::Jacchia1977Output)
     b = color ? _B : ""
     d = color ? _D : ""
 
-    print(io, "$(b)Jacchia 1977 output$(d) (ρ = ", @sprintf("%g", out.total_density), " kg / m³)")
+    print(
+        io,
+        "$(b)Jacchia 1977 output$(d) (ρ = ",
+        @sprintf("%g", out.total_density),
+        " kg / m³)"
+    )
     return nothing
 end
 

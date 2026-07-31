@@ -18,8 +18,20 @@
 export jacchia1977
 
 """
-    jacchia1977(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, Kp::Number]; kwargs...) -> Jacchia1977Output
-    jacchia1977(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, Kp::Number]; kwargs...) -> Jacchia1977Output
+    jacchia1977(
+        instant::DateTime,
+        ϕ_gd::Number,
+        λ::Number,
+        h::Number[, F10::Number, F10ₐ::Number, Kp::Number];
+        kwargs...
+    ) -> Jacchia1977Output
+    jacchia1977(
+        jd::Number,
+        ϕ_gd::Number,
+        λ::Number,
+        h::Number[, F10::Number, F10ₐ::Number, Kp::Number];
+        kwargs...
+    ) -> Jacchia1977Output
 
 Compute the atmospheric density using the Jacchia 1977 model.
 
@@ -65,6 +77,13 @@ The function throws an `ArgumentError` if the altitude `h` is outside the interv
 
 - `Jacchia1977Output`: Structure containing the results obtained from the model. Its
     element type is the promotion of the types of the numeric inputs.
+
+# References
+
+- **[1]** Jacchia, L. G (1977). *Thermospheric temperature, density and composition: New
+    models*. SAO Special Report #375.
+- **[2]** de Matos, B. S., Carrara, V (1985-1987). *Fortran implementation of the Jacchia
+    1977 model*. INPE, São José dos Campos, BR.
 """
 function jacchia1977(
     instant::DateTime,
@@ -167,7 +186,15 @@ function jacchia1977(
     F10::FT,
     F10ₐ::FT2,
     Kp::KT
-) where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number, FT2<:Number, KT<:Number}
+) where {
+    JT<:Number,
+    PT<:Number,
+    LT<:Number,
+    HT<:Number,
+    FT<:Number,
+    FT2<:Number,
+    KT<:Number
+}
 
     RT = float(promote_type(JT, PT, LT, HT, FT, FT2, KT))
 
@@ -203,12 +230,40 @@ end
 #                                    Private Functions                                     #
 ############################################################################################
 
-#   _jacchia1977_dynamic(z::Number, ϕ::Number, Ωp::Number, Ωs::Number, δs::Number, λ::Number, Φ::Number, F10::Number, F10ₐ::Number, Kp::Number) -> Jacchia1977Output
-#
-# Compute the Jacchia 1977 dynamic model (routine ISDAMO of [2]) at the altitude `z` [km],
-# latitude `ϕ` [rad], right ascension `Ωp` [rad], Sun right ascension `Ωs` [rad], Sun
-# declination `δs` [rad], longitude `λ` [rad], and fraction of the tropic year `Φ`, given
-# the space indices `F10`, `F10ₐ` [sfu], and `Kp`.
+"""
+    _jacchia1977_dynamic(
+        z::Number,
+        ϕ::Number,
+        Ωp::Number,
+        Ωs::Number,
+        δs::Number,
+        λ::Number,
+        Φ::Number,
+        F10::Number,
+        F10ₐ::Number,
+        Kp::Number
+    ) -> Jacchia1977Output
+
+Compute the Jacchia 1977 dynamic model (routine ISDAMO of [2]).
+
+# Arguments
+
+- `z::Number`: Altitude [km].
+- `ϕ::Number`: Latitude [rad].
+- `Ωp::Number`: Right ascension of the selected location [rad].
+- `Ωs::Number`: Right ascension of the Sun [rad].
+- `δs::Number`: Declination of the Sun [rad].
+- `λ::Number`: Longitude of the selected location [rad].
+- `Φ::Number`: Fraction of the tropic year starting on January 1st [-].
+- `F10::Number`: 10.7-cm solar flux [sfu].
+- `F10ₐ::Number`: 10.7-cm averaged solar flux [sfu].
+- `Kp::Number`: Kp geomagnetic index [-].
+
+# Returns
+
+- `Jacchia1977Output`: Structure containing the results obtained from the model. Its
+    element type is the promotion of the types of the numeric inputs.
+"""
 function _jacchia1977_dynamic(
     z::Number,
     ϕ::Number,
@@ -283,11 +338,14 @@ function _jacchia1977_dynamic(
     )
 end
 
-#   _jacchia1977_profile_params(T∞::Number) -> NTuple{7, T}
-#
-# Compute the parameters of the temperature profile (eqs. 1 to 4 of [1]) related to the
-# exospheric temperature `T∞` [K]. The returned tuple is used by
-# `_jacchia1977_temperature`.
+"""
+    _jacchia1977_profile_params(T∞::Number) -> NTuple{7, Number}
+
+Compute the parameters of the temperature profile (eqs. 1 to 4 of [1]) related to the
+exospheric temperature `T∞` [K].
+
+See also: [`_jacchia1977_temperature`](@ref)
+"""
 function _jacchia1977_profile_params(T∞::Number)
     T₀ = _JACCHIA1977_CONSTANTS.T₀
     z₀ = _JACCHIA1977_CONSTANTS.z₀
@@ -310,10 +368,12 @@ function _jacchia1977_profile_params(T∞::Number)
     return (c₁, c₂, c₃, c₄, c₅, c₆, Tx)
 end
 
-#   _jacchia1977_temperature(z::Number, c::NTuple{7, Number}) -> Number
-#
-# Compute the temperature [K] at the altitude `z` [km] using the profile parameters `c`
-# obtained from `_jacchia1977_profile_params` (eqs. 3 and 4 of [1]).
+"""
+    _jacchia1977_temperature(z::Number, c::NTuple{7, T}) where {T<:Number} -> Number
+
+Compute the temperature [K] at the altitude `z` [km] using the profile parameters `c`
+obtained from [`_jacchia1977_profile_params`](@ref) (eqs. 3 and 4 of [1]).
+"""
 function _jacchia1977_temperature(z::Number, c::NTuple{7, T}) where {T<:Number}
     T₀ = _JACCHIA1977_CONSTANTS.T₀
     z₀ = _JACCHIA1977_CONSTANTS.z₀
@@ -332,22 +392,31 @@ function _jacchia1977_temperature(z::Number, c::NTuple{7, T}) where {T<:Number}
     end
 end
 
-#   _jacchia1977_static(T∞::Number, z::Number) -> NTuple{6, T}, T, T
-#
-# Compute the Jacchia 1977 static model (routine IMOWEI of [2]) for the exospheric
-# temperature `T∞` [K] and altitude `z` [km].
-#
-# The function numerically integrates the barometric equation between 90 km and 100 km and
-# the diffusion equations above 100 km using the Boole rule, as in the reference
-# implementation [2]. The atomic hydrogen is anchored at 500 km and integrated with its
-# flux term for other altitudes.
-#
-# # Returns
-#
-# - `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] in the internal
-#     order (He, O₂, N₂, Ar, O, H).
-# - `T`: Mean molecular mass at the selected altitude [g / mol].
-# - `T`: Total density at the selected altitude [kg / m³].
+"""
+    _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number} -> NTuple{6, T}, T, T
+
+Compute the Jacchia 1977 static model (routine IMOWEI of [2]) for the exospheric
+temperature `T∞` [K] and altitude `z` [km].
+
+The function numerically integrates the barometric equation between 90 km and 100 km and
+the diffusion equations above 100 km using the Boole rule, as in the reference
+implementation [2]. The atomic hydrogen is anchored at 500 km and integrated with its flux
+term for other altitudes.
+
+# Returns
+
+- `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] in the internal order
+    (He, O₂, N₂, Ar, O, H), where `T` is the promotion of `T1` and `T2`.
+- `T`: Mean molecular mass at the selected altitude [g / mol].
+- `T`: Total density at the selected altitude [kg / m³].
+
+# References
+
+- **[1]** Jacchia, L. G (1977). *Thermospheric temperature, density and composition: New
+    models*. SAO Special Report #375.
+- **[2]** de Matos, B. S., Carrara, V (1985-1987). *Fortran implementation of the Jacchia
+    1977 model*. INPE, São José dos Campos, BR.
+"""
 function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
     Rstar = _JACCHIA1977_CONSTANTS.Rstar
     Av    = _JACCHIA1977_CONSTANTS.Av
@@ -381,7 +450,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
     an = ntuple(_ -> RT(0), Val(6))
 
     ########################################################################################
-    #             Barometric Equation Between 90 km and min(z, 100 km), Eq. 8 [1]          #
+    #           Barometric Equation Between 90 km and min(z, 100 km), Eq. 8 [1]            #
     ########################################################################################
 
     z_end = min(z, RT(100))
@@ -424,7 +493,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
 
     if z > 100
         ####################################################################################
-        #            Diffusion Equations Between 100 km and min(z, 140 km), Eq. 16 [1]     #
+        #        Diffusion Equations Between 100 km and min(z, 140 km), Eq. 16 [1]         #
         ####################################################################################
 
         z_ini = RT(100)
@@ -458,7 +527,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
 
         if z > 140
             ################################################################################
-            #        Diffusion Equations Between 140 km and 500 km (H Anchor), Eq. 16 [1]  #
+            #     Diffusion Equations Between 140 km and 500 km (H Anchor), Eq. 16 [1]     #
             ################################################################################
 
             nc    = 6
@@ -494,7 +563,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
 
             if z < 500
                 ############################################################################
-                #    Downward Integration From 500 km to z With the H Flux Term            #
+                #        Downward Integration From 500 km to z With the H Flux Term        #
                 ############################################################################
 
                 Tᵢ    = Tf
@@ -510,10 +579,12 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
                     # Number densities with the departures from diffusive equilibrium
                     # corrections (eqs. 14 and 15 of [1]) at the beginning of the segment.
                     @reset al[1] = an[1]
-                    @reset al[2] = an[2] - RT(0.07) * (1 + tanh(RT(0.18) * (zᵢ - 111))) * ln10
+                    @reset al[2] = an[2] -
+                        RT(0.07) * (1 + tanh(RT(0.18) * (zᵢ - 111))) * ln10
                     @reset al[3] = an[3]
                     @reset al[4] = an[4]
-                    @reset al[5] = an[5] - RT(0.24) * exp(-RT(0.009) * (zᵢ - RT(97.7))^2) * ln10
+                    @reset al[5] = an[5] -
+                        RT(0.24) * exp(-RT(0.009) * (zᵢ - RT(97.7))^2) * ln10
 
                     g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
                     Σ  = zero(RT)
@@ -560,7 +631,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
                 end
             elseif z > 500
                 ############################################################################
-                #     Upward Integration From 500 km to z With the H Flux Term             #
+                #         Upward Integration From 500 km to z With the H Flux Term         #
                 ############################################################################
 
                 Tᵢ    = Tf
@@ -603,7 +674,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
     end
 
     ########################################################################################
-    #      Departures From Diffusive Equilibrium (Eqs. 14 and 15 [1]) and Output           #
+    #        Departures From Diffusive Equilibrium (Eqs. 14 and 15 [1]) and Output         #
     ########################################################################################
 
     @reset an[2] = an[2] - RT(0.07) * (1 + tanh(RT(0.18) * (z - 111))) * ln10
@@ -631,11 +702,13 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
     return log₁₀_n, M̄, ρ
 end
 
-#   _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number) -> Number
-#
-# Compute the integration step so that the interval between `z_ini` and `z_end` [km] is
-# divided into an integer number of Boole rule applications with a step close to
-# `base_step` [km], as in the reference implementation [2].
+"""
+    _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number) -> Number
+
+Compute the integration step [km] so that the interval between `z_ini` and `z_end` [km] is
+divided into an integer number of Boole rule applications with a step close to `base_step`
+[km], as in the reference implementation [2].
+"""
 function _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number)
     quarter = (z_end - z_ini) / 4
     n = trunc(quarter / base_step)
@@ -643,23 +716,40 @@ function _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number)
     return quarter / n
 end
 
-#   _jacchia1977_diurnal(T½::Number, Ωp::Number, Ωs::Number, δs::Number, ϕ::Number, z::Number, M̄::Number) -> NTuple{6, T}, NTuple{6, T}, T
-#
-# Compute the base-10 logarithm of the number densities considering the diurnal variation
-# (routine DIVARI of [2] and eqs. 24 to 27 of [1]) given the mean exospheric temperature
-# `T½` [K], the right ascension of the point `Ωp` [rad], the Sun right ascension `Ωs`
-# [rad], the Sun declination `δs` [rad], the latitude `ϕ` [rad], the altitude `z` [km], and
-# the local mean molecular mass `M̄` [g / mol].
-#
-# # Returns
-#
-# - `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] evaluated at the
-#     per-species pseudo exospheric temperatures, in the internal order (He, O₂, N₂, Ar, O,
-#     H).
-# - `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] of the static model
-#     evaluated at the hydrogen pseudo exospheric temperature.
-# - `T`: Pseudo exospheric temperature of the hydrogen [K], used as the quiet temperature
-#     by the geomagnetic variation.
+"""
+    _jacchia1977_diurnal(
+        T½::Number,
+        Ωp::Number,
+        Ωs::Number,
+        δs::Number,
+        ϕ::Number,
+        z::Number,
+        M̄::Number
+    ) -> NTuple{6, T}, NTuple{6, T}, T
+
+Compute the base-10 logarithm of the number densities considering the diurnal variation
+(routine DIVARI of [2] and eqs. 24 to 27 of [1]).
+
+# Arguments
+
+- `T½::Number`: Mean exospheric temperature [K].
+- `Ωp::Number`: Right ascension of the selected location [rad].
+- `Ωs::Number`: Right ascension of the Sun [rad].
+- `δs::Number`: Declination of the Sun [rad].
+- `ϕ::Number`: Latitude [rad].
+- `z::Number`: Altitude [km].
+- `M̄::Number`: Local mean molecular mass [g / mol].
+
+# Returns
+
+- `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] evaluated at the
+    per-species pseudo exospheric temperatures, in the internal order (He, O₂, N₂, Ar, O,
+    H), where `T` is the promotion of the input types.
+- `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] of the static model
+    evaluated at the hydrogen pseudo exospheric temperature.
+- `T`: Pseudo exospheric temperature of the hydrogen [K], used as the quiet temperature by
+    the geomagnetic variation.
+"""
 function _jacchia1977_diurnal(
     T½::Number,
     Ωp::Number,
@@ -720,13 +810,27 @@ function _jacchia1977_diurnal(
     return al, ac, Θ_H
 end
 
-#   _jacchia1977_geomagnetic(T_quiet::Number, Kp::Number, ϕ::Number, λ::Number, z::Number) -> NTuple{6, T}
-#
-# Compute the base-10 logarithm of the number densities of the static model evaluated at
-# the exospheric temperature increased by the geomagnetic activity `Kp`, together with the
-# homopause displacement and equatorial wave corrections (routine GEOACI of [2] and eqs. 28
-# to 35 of [1]), given the quiet exospheric temperature `T_quiet` [K], the latitude `ϕ`
-# [rad], the longitude `λ` [rad], and the altitude `z` [km].
+"""
+    _jacchia1977_geomagnetic(
+        T_quiet::Number,
+        Kp::Number,
+        ϕ::Number,
+        λ::Number,
+        z::Number
+    ) -> NTuple{6, T}
+
+Compute the base-10 logarithm of the number densities of the static model evaluated at the
+exospheric temperature increased by the geomagnetic activity `Kp` [-], together with the
+homopause displacement and equatorial wave corrections (routine GEOACI of [2] and eqs. 28
+to 35 of [1]), given the quiet exospheric temperature `T_quiet` [K], the latitude `ϕ`
+[rad], the longitude `λ` [rad], and the altitude `z` [km].
+
+# Returns
+
+- `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] in the internal order
+    (He, O₂, N₂, Ar, O, H), where `T` is the promotion of the input types. The caller must
+    subtract the static model evaluated at `T_quiet` to obtain the geomagnetic variation.
+"""
 function _jacchia1977_geomagnetic(
     T_quiet::Number,
     Kp::Number,
@@ -759,12 +863,20 @@ function _jacchia1977_geomagnetic(
     return ntuple(i -> dn[i] + ai[i] * Δz_H + Δe, Val(6))
 end
 
-#   _jacchia1977_seasonal_latitudinal(Φ::Number, δs::Number, ϕ::Number, z::Number) -> NTuple{6, T}
-#
-# Compute the seasonal-latitudinal variation of the base-10 logarithm of the number
-# densities (routine SEALAT of [2] and eqs. 36 to 39 of [1]) given the fraction of the
-# tropic year `Φ`, the Sun declination `δs` [rad], the latitude `ϕ` [rad], and the altitude
-# `z` [km].
+"""
+    _jacchia1977_seasonal_latitudinal(
+        Φ::Number,
+        δs::Number,
+        ϕ::Number,
+        z::Number
+    ) -> NTuple{6, T}
+
+Compute the seasonal-latitudinal variation of the base-10 logarithm of the number
+densities (routine SEALAT of [2] and eqs. 36 to 39 of [1]) given the fraction of the
+tropic year `Φ` [-], the Sun declination `δs` [rad], the latitude `ϕ` [rad], and the
+altitude `z` [km]. The result is in the internal order (He, O₂, N₂, Ar, O, H), and `T` is
+the promotion of the input types.
+"""
 function _jacchia1977_seasonal_latitudinal(Φ::Number, δs::Number, ϕ::Number, z::Number)
     ci = _JACCHIA1977_CONSTANTS.ci
 
@@ -787,11 +899,13 @@ function _jacchia1977_seasonal_latitudinal(Φ::Number, δs::Number, ϕ::Number, 
     return ntuple(i -> Δt * ci[i] + Δm, Val(6))
 end
 
-#   _jacchia1977_semiannual(Φ::Number, z::Number) -> Number
-#
-# Compute the semiannual variation of the base-10 logarithm of the number densities
-# (routine SEMIAN of [2] and eqs. 40 to 44 of [1]) given the fraction of the tropic year
-# `Φ` and the altitude `z` [km].
+"""
+    _jacchia1977_semiannual(Φ::Number, z::Number) -> Number
+
+Compute the semiannual variation of the base-10 logarithm of the number densities (routine
+SEMIAN of [2] and eqs. 40 to 44 of [1]) given the fraction of the tropic year `Φ` [-] and
+the altitude `z` [km]. The variation is the same for all species.
+"""
 function _jacchia1977_semiannual(Φ::Number, z::Number)
     f = (0.04 * z * z / 1e4 + 0.05) * exp(-0.0025 * z)
     τ = Φ + 0.0954 * ((0.5 + 0.5 * sin(2π * Φ + 6.04))^1.65 - 0.5)
