@@ -75,7 +75,7 @@ function harrispriester_modified(
     n::Number = 4
 )
     # Fetch the 81-day centered average of F10.7 solar flux.
-    F10ₐ = sum(space_index.(Val(:F10obs), jd + k) for k in -40:40) / 81
+    F10ₐ = sum(space_index(Val(:F10obs), jd + k) for k in -40:40) / 81
     return harrispriester_modified(jd, ϕ_gd, λ, h, F10ₐ; n = n)
 end
 
@@ -103,17 +103,17 @@ function harrispriester_modified(
     end
     
     if i < length(_HARRIS_PRIESTER_MOD_HVEC)
-        ρ_maxᵢ   = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i, 1:4])...)
-        ρ_minᵢ   = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i, 5:8])...)
-        ρ_maxᵢ₊₁ = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i + 1, 1:4])...)
-        ρ_minᵢ₊₁ = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i + 1, 5:8])...)
+        ρ_maxᵢ   = _harris_priester_mod_density_poly(F10ₐ, i, 1)
+        ρ_minᵢ   = _harris_priester_mod_density_poly(F10ₐ, i, 5)
+        ρ_maxᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i + 1, 1)
+        ρ_minᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i + 1, 5)
         hᵢ         = _HARRIS_PRIESTER_MOD_HVEC[i]
         hᵢ₊₁       = _HARRIS_PRIESTER_MOD_HVEC[i + 1]
     else # Above nominal altitude max
-        ρ_maxᵢ   = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i - 1, 1:4])...)
-        ρ_minᵢ   = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i - 1, 5:8])...)
-        ρ_maxᵢ₊₁ = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i, 1:4])...)
-        ρ_minᵢ₊₁ = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i, 5:8])...)
+        ρ_maxᵢ   = _harris_priester_mod_density_poly(F10ₐ, i - 1, 1)
+        ρ_minᵢ   = _harris_priester_mod_density_poly(F10ₐ, i - 1, 5)
+        ρ_maxᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i, 1)
+        ρ_minᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i, 5)
         hᵢ         = _HARRIS_PRIESTER_MOD_HVEC[i-1]
         hᵢ₊₁       = _HARRIS_PRIESTER_MOD_HVEC[i]
     end
@@ -131,8 +131,8 @@ function harrispriester_modified(
 
     if (h_km <= hᵢ + α) && (i > 1) # Near lower boundary
         hᵢ₋₁       = _HARRIS_PRIESTER_MOD_HVEC[i-1]
-        ρ_maxᵢ₋₁ = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i - 1, 1:4])...)
-        ρ_minᵢ₋₁ = @evalpoly(F10ₐ, @view(_HARRIS_PRIESTER_MOD_COEFS[i - 1, 5:8])...)
+        ρ_maxᵢ₋₁ = _harris_priester_mod_density_poly(F10ₐ, i - 1, 1)
+        ρ_minᵢ₋₁ = _harris_priester_mod_density_poly(F10ₐ, i - 1, 5)
 
         Δhᵢ₋₁ = hᵢ - hᵢ₋₁
         xbar     = SVector{2}(hᵢ - α, hᵢ + α)
@@ -151,8 +151,8 @@ function harrispriester_modified(
 
     elseif (h_km >= hᵢ₊₁ - α) && (i < length(_HARRIS_PRIESTER_MOD_HVEC) - 1) # Near upper boundary
         hᵢ₊₂       = _HARRIS_PRIESTER_MOD_HVEC[i+2]
-        ρ_maxᵢ₊₂ = @evalpoly(F10ₐ, view(_HARRIS_PRIESTER_MOD_COEFS, i + 2, 1:4)...)
-        ρ_minᵢ₊₂ = @evalpoly(F10ₐ, view(_HARRIS_PRIESTER_MOD_COEFS, i + 2, 5:8)...)
+        ρ_maxᵢ₊₂ = _harris_priester_mod_density_poly(F10ₐ, i + 2, 1)
+        ρ_minᵢ₊₂ = _harris_priester_mod_density_poly(F10ₐ, i + 2, 5)
 
         Δhᵢ₊₁ = hᵢ₊₂ - hᵢ₊₁
         xbar       = SVector{2}(hᵢ₊₁ - α, hᵢ₊₁ + α)
@@ -217,6 +217,15 @@ function harrispriester_modified(
 
     # Convert from g/km³ to kg/m³.
     return ρ * 1e-12
+end
+
+# Private function to evaluate the cubic polynomial in `F10ₐ` whose coefficients are stored
+# in the columns `c` to `c + 3` of the `i`-th row of `_HARRIS_PRIESTER_MOD_COEFS`. Notice
+# that we build the coefficient tuple explicitly since splatting a runtime view into
+# `@evalpoly` leads to dynamic dispatch and allocations.
+function _harris_priester_mod_density_poly(F10ₐ::Number, i::Integer, c::Integer)
+    C = _HARRIS_PRIESTER_MOD_COEFS
+    return evalpoly(F10ₐ, (C[i, c], C[i, c + 1], C[i, c + 2], C[i, c + 3]))
 end
 
 # Private function to calculate scale heights via Junkins/Jancaitis weighting method for

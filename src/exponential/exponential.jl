@@ -32,10 +32,9 @@ function exponential(h::Number)
     # Transform `h` to km.
     h /= 1000
 
-    # Get the values for the exponential model.
-    δh  = SVector{28}(_EXPONENTIAL_ATMOSPHERE_H₀[i] - h for i in 1:28)
-    aux = findfirst(>(0), δh)
-    id  = isnothing(aux) ? 28 : aux - 1
+    # Get the values for the exponential model. Since the altitude table is sorted, we can
+    # use a binary search to find the layer related to the altitude `h`.
+    id  = clamp(searchsortedlast(_EXPONENTIAL_ATMOSPHERE_H₀, h), 1, 28)
     h₀  = _EXPONENTIAL_ATMOSPHERE_H₀[id]
     ρ₀  = _EXPONENTIAL_ATMOSPHERE_ρ₀[id]
     H   = _EXPONENTIAL_ATMOSPHERE_H[id]
