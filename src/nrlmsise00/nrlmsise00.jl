@@ -767,11 +767,12 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
         if p[52] != 0
             exp1 = min(exp(-10800 * abs(p[52]) / (1 + p[139] * (45 - abs(ϕ_gd)))), 0.99999)
 
-            if p[25] < 1.0e-4
-                p[25] = 1.0e-4
-            end
+            # The source-code clamps `p[25]` in place to be at least 10⁻⁴. We use a local
+            # variable instead to avoid mutating the shared coefficient vector, which is
+            # not thread-safe.
+            p25 = max(p[25], 1.0e-4)
 
-            apt = _sg₀(exp1, ap, abs(p[25]), p[26])
+            apt = _sg₀(exp1, ap, abs(p25), p[26])
             aux = cos(_HOUR_TO_RAD * (tloc - p[132]))
 
             t₉ = apt * (
@@ -939,12 +940,12 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
     t₁₃ = T(0)
     t₁₄ = T(0)
 
-    # Confirm parameter set.
-    if p[100] == 0
-        p[100] = T(2)
-    end
+    # Confirm parameter set. The source-code replaces a zero `p[100]` with 2 in place. We
+    # only read the value here to avoid mutating the shared coefficient vector, which is
+    # not thread-safe.
+    p100 = (p[100] == 0) ? 2 : p[100]
 
-    (p[100] != 2) && error("Wrong parameter set for `_glob7s!`.")
+    (p100 != 2) && error("Wrong parameter set for `_glob7s`.")
 
     cd32 = cos(1 * _DAY_TO_RAD * (doy - p[32]))
     cd18 = cos(2 * _DAY_TO_RAD * (doy - p[18]))
