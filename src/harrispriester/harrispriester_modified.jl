@@ -203,13 +203,13 @@ function harrispriester_modified(
     # Compute cos(ψ/2)ⁿ with a smoothing function to avoid issues when cos(ψ/2) is near 0.
     cos_ψ_by_2_pow_n = RT(0)
     if cos_ψ_by_2 >= _HARRIS_PRIESTER_MOD_COS_ψ_BY_2_TOL
-        cos_ψ_by_2_pow_n = cos_ψ_by_2^n
+        cos_ψ_by_2_pow_n = RT(cos_ψ_by_2^n)
     elseif cos_ψ_by_2 > 0
         ξ = cos_ψ_by_2 / _HARRIS_PRIESTER_MOD_COS_ψ_BY_2_TOL
         xiterm = @evalpoly(ξ, 10, -15, 6)
         c1 = cos_ψ_by_2^n
         w1 = ξ^3 * xiterm
-        cos_ψ_by_2_pow_n = w1 * c1
+        cos_ψ_by_2_pow_n = RT(w1 * c1)
     end
 
     # Final density calculation [1, Eq. 1].
