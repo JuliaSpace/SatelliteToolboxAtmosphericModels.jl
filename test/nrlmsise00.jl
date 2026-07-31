@@ -389,13 +389,21 @@ end
         1000.0  1.762E+04  1.480E+00  2.504E-03 2.653E-18 1036.9  1037  3.168E+05  1.135E-07  4.005E+04  6.346E+02  5.377E+03  159.5  153.6   13.8   12.0    7.0   15.0    9.0   15.9   28.6
     ]
 
+    # First, we compare the model against the outputs of the online version. Notice that
+    # the online version uses a 90-day average of the F10.7 flux (153.6 sfu here), whereas
+    # this package uses the 81-day centered average stated in the NRLMSISE-00 documentation
+    # (154.24 sfu here). Hence, we must provide the indices used by the online version to
+    # compare the results.
     for i in axes(expected, 1)
         # Run the NRLMSISE-00 model wih the input parameters.
         out = AtmosphericModels.nrlmsise00(
             DateTime("2023-01-01T10:00:00"),
             expected[i, 1] * 1000,
             -23 |> deg2rad,
-            -45 |> deg2rad;
+            -45 |> deg2rad,
+            153.6,
+            159.5,
+            13.75;
             include_anomalous_oxygen = false
         )
 
@@ -411,6 +419,39 @@ end
         @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
         @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
     end
+
+    # Now, we check the automatic space index fetching by comparing the result against a
+    # call providing the indices obtained manually for this instant: the daily F10.7 of the
+    # previous day (159.5 sfu), the 81-day centered average (154.2407407407407 sfu), and
+    # the daily averaged Ap (13.75).
+    expected_fetch = AtmosphericModels.nrlmsise00(
+        DateTime("2023-01-01T10:00:00"),
+        400e3,
+        -23 |> deg2rad,
+        -45 |> deg2rad,
+        154.2407407407407,
+        159.5,
+        13.75
+    )
+
+    result_fetch = AtmosphericModels.nrlmsise00(
+        DateTime("2023-01-01T10:00:00"),
+        400e3,
+        -23 |> deg2rad,
+        -45 |> deg2rad
+    )
+
+    @test result_fetch.total_density          ≈ expected_fetch.total_density
+    @test result_fetch.temperature            ≈ expected_fetch.temperature
+    @test result_fetch.exospheric_temperature ≈ expected_fetch.exospheric_temperature
+    @test result_fetch.O_number_density       ≈ expected_fetch.O_number_density
+    @test result_fetch.N2_number_density      ≈ expected_fetch.N2_number_density
+    @test result_fetch.O2_number_density      ≈ expected_fetch.O2_number_density
+    @test result_fetch.He_number_density      ≈ expected_fetch.He_number_density
+    @test result_fetch.Ar_number_density      ≈ expected_fetch.Ar_number_density
+    @test result_fetch.H_number_density       ≈ expected_fetch.H_number_density
+    @test result_fetch.N_number_density       ≈ expected_fetch.N_number_density
+    @test result_fetch.aO_number_density      ≈ expected_fetch.aO_number_density
 
     # For altitudes lower than 80 km, we use default space indices.
     expected = AtmosphericModels.nrlmsise00(

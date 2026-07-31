@@ -171,20 +171,21 @@ function nrlmsise00(
         verbosity && @debug """
         NRLMSISE00 - Using default indices since h < 80 km
           Daily F10.7           : $(F10) sfu
-          90-day avareged F10.7 : $(F10ₐ) sfu
+          81-day averaged F10.7 : $(F10ₐ) sfu
           Ap                    : $(ap)
         """
     else
-        # TODO: The online version of NRLMSISE-00 seems to use 89 days, whereas the
-        # NRLMSISE-00 source code mentions 81 days.
-        F10ₐ = sum((space_index.(Val(:F10adj), jd + k) for k in -45:44)) / 90
+        # The NRLMSISE-00 documentation specifies an 81-day average of the F10.7 flux
+        # centered on the input day. Notice that the online version of NRLMSISE-00 seems to
+        # use a 90-day average instead.
+        F10ₐ = sum(space_index(Val(:F10adj), jd + k) for k in -40:40) / 81
         F10  = space_index(Val(:F10adj), jd - 1)
         ap   = sum(space_index(Val(:Ap), jd)) / 8
 
         verbosity && @debug """
         NRLMSISE00 - Fetched Space Indices
           Daily F10.7           : $(F10) sfu
-          90-day avareged F10.7 : $(F10ₐ) sfu
+          81-day averaged F10.7 : $(F10ₐ) sfu
           Ap                    : $(ap)
         """
     end
