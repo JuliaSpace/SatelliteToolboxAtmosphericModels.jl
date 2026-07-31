@@ -262,7 +262,7 @@ end
 #
 #   F10  = 152.6 sfu
 #   F10ₐ = 159.12345679012347 sfu
-#   Kp   = 2.667
+#   Kp   = 2.0 (3-hour delayed value, i.e. related to the interval 06:00 - 09:00)
 #
 ############################################################################################
 
@@ -276,7 +276,7 @@ end
     λ       = -45 |> deg2rad
     F10     = 152.6
     F10ₐ    = 159.12345679012347
-    Kp      = 2.667
+    Kp      = 2.0
 
     expected = AtmosphericModels.jr1971.(instant, ϕ_gd, λ, h, F10, F10ₐ, Kp)
 
@@ -293,6 +293,28 @@ end
         @test result.He_number_density      ≈ expected[k - 1 + begin].He_number_density
         @test result.H_number_density       ≈ expected[k - 1 + begin].H_number_density
     end
+
+    # == Day Boundary ======================================================================
+    #
+    # At 2023-01-02T01:00:00, the 3-hour delayed instant is 2023-01-01T22:00:00. Hence, the
+    # Kp must be taken from the last 3-hour interval of 2023-01-01 (Kp = 4.0) instead of
+    # the first interval of 2023-01-02. The daily and averaged F10.7 for this instant are
+    # the same as in the previous test.
+
+    instant_boundary = DateTime("2023-01-02T01:00:00")
+    expected_boundary = AtmosphericModels.jr1971(
+        instant_boundary,
+        ϕ_gd,
+        λ,
+        300e3,
+        F10,
+        F10ₐ,
+        4.0
+    )
+    result_boundary = AtmosphericModels.jr1971(instant_boundary, ϕ_gd, λ, 300e3)
+
+    @test result_boundary.total_density ≈ expected_boundary.total_density
+    @test result_boundary.temperature   ≈ expected_boundary.temperature
 end
 
 @testset "Show" begin

@@ -82,12 +82,13 @@ function jr1971(
     instant_3h_delay = instant - Hour(3)
     Kp_vect = space_index(Val(:Kp), instant_3h_delay)
 
-    # Now, we need to obtain the value for the required instant. In this case, we will
+    # Now, we need to obtain the value for the delayed instant. In this case, we will
     # consider the Kp constant inside the 3h-interval provided by the space index vector.
 
-    # Get the number of seconds elapsed since the beginning of the day.
-    day = Date(instant) |> DateTime
-    Δt = Dates.value(instant - day) / 1000
+    # Get the number of seconds elapsed since the beginning of the day of the delayed
+    # instant.
+    day = Date(instant_3h_delay) |> DateTime
+    Δt = Dates.value(instant_3h_delay - day) / 1000
 
     # Get the index and the Kp value.
     id = clamp(floor(Int, Δt / 10_800) + 1, 1, 8)
