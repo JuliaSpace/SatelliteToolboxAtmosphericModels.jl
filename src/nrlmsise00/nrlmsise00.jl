@@ -40,8 +40,40 @@
 export nrlmsise00
 
 """
-    nrlmsise00(instant::DateTime, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output
-    nrlmsise00(jd::Number, h::Number, ϕ_gd::Number, λ::Number[, F10ₐ::Number, F10::Number, ap::Union{Number, AbstractVector}]; kwargs...) -> Nrlmsise00Output
+    nrlmsise00(
+        instant::DateTime,
+        h::Number,
+        ϕ_gd::Number,
+        λ::Number;
+        kwargs...
+    ) -> Nrlmsise00Output
+    nrlmsise00(
+        instant::DateTime,
+        h::Number,
+        ϕ_gd::Number,
+        λ::Number,
+        F10ₐ::Number,
+        F10::Number,
+        ap::Union{Number, AbstractVector};
+        kwargs...
+    ) -> Nrlmsise00Output
+    nrlmsise00(
+        jd::Number,
+        h::Number,
+        ϕ_gd::Number,
+        λ::Number;
+        kwargs...
+    ) -> Nrlmsise00Output
+    nrlmsise00(
+        jd::Number,
+        h::Number,
+        ϕ_gd::Number,
+        λ::Number,
+        F10ₐ::Number,
+        F10::Number,
+        ap::Union{Number, AbstractVector};
+        kwargs...
+    ) -> Nrlmsise00Output
 
 Compute the atmospheric density using the NRLMSISE-00 model.
 
@@ -357,11 +389,22 @@ end
 ############################################################################################
 
 """
-    _densm(h::Number, d₀::Number, xm::Number, g_lat::Number, r_lat::Number, tn2::NTuple{4, Number}, tgn2::NTuple{2, Number}, tn3::NTuple{5, Number}, tgn3::NTuple{2, Number}) -> Number
+    _densm(
+        h::Number,
+        d₀::Number,
+        xm::Number,
+        g_lat::Number,
+        r_lat::Number,
+        tn2::NTuple{4, Number},
+        tgn2::NTuple{2, Number},
+        tn3::NTuple{5, Number},
+        tgn3::NTuple{2, Number}
+    ) -> Number
 
 Compute the temperature and density profiles for the lower atmosphere.
 
 !!! note
+
     This function returns the density if `xm` is not 0, or the temperature otherwise.
 
 # Arguments
@@ -515,12 +558,26 @@ function _densm(
 end
 
 """
-    _densu(h::T, dlb::T, tinf::T, tlb::T, xm::T, α::T, zlb::T, s2::T, g_lat::T, r_lat::T, tn1::NTuple{5, T}, tgn1::NTuple{2, T}) where T<:Number -> T, NTuple{5, T}, NTuple{2, T}
+    _densu(
+        h::T,
+        dlb::T,
+        tinf::T,
+        tlb::T,
+        xm::T,
+        α::T,
+        zlb::T,
+        s2::T,
+        g_lat::T,
+        r_lat::T,
+        tn1::NTuple{5, T},
+        tgn1::NTuple{2, T}
+    ) where T<:Number -> T, NTuple{5, T}, NTuple{2, T}
 
 Compute the density [1 / cm³] or temperature [K] profiles according to the new lower thermo
 polynomial.
 
 !!! note
+
     This function returns the density if `xm` is not 0, or the temperature otherwise.
 
 # Arguments
@@ -673,12 +730,16 @@ function _densu(
 end
 
 """
-    _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) where {T<:Number, V<:Number} -> Nrlmsise00Structure{T}, T
+    _globe7(
+        nrlmsise00d::Nrlmsise00Structure{T},
+        p::AbstractVector{V}
+    ) where {T<:Number, V<:Number} -> Nrlmsise00Structure{T}, T
 
 Compute the function `G(L)` with upper thermosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00`.
 
 !!! note
+
     The variables `apt` and `apdf` inside `nrlmsise00d` can be modified inside this
     function.
 
@@ -964,7 +1025,10 @@ function _globe7(
 end
 
 """
-    _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) where {T<:Number, V<:Number} -> T
+    _glob7s(
+        nrlmsise00d::Nrlmsise00Structure{T},
+        p::AbstractVector{V}
+    ) where {T<:Number, V<:Number} -> T
 
 Compute the function `G(L)` with lower atmosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00d`.
@@ -1136,7 +1200,9 @@ function _glob7s(
 end
 
 """
-    _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
+    _gtd7(
+        nrlmsise00d::Nrlmsise00Structure{T}
+    ) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
 
 Compute the temperatures and densities using the information inside the structure
 `nrlmsise00d` without including the anomalous oxygen in the total density.
@@ -1329,7 +1395,9 @@ function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 end
 
 """
-    _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
+    _gtd7d(
+        nrlmsise00d::Nrlmsise00Structure{T}
+    ) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
 
 Compute the temperatures and densities using the information inside the structure
 `nrlmsise00d` including the anomalous oxygen in the total density.
@@ -1378,7 +1446,9 @@ function _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 end
 
 """
-    _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
+    _gts7(
+        nrlmsise00d::Nrlmsise00Structure{T}
+    ) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
 
 Compute the temperatures and densities using the information inside the structure
 `nrlmsise00d` for altitudes higher than 72.5 km (thermospheric portion of NRLMSISE-00).

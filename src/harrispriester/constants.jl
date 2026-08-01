@@ -1,3 +1,9 @@
+## Description #############################################################################
+#
+# Haris-Priester atmospheric density model constants.
+#
+############################################################################################
+
 # Minimal value for calculating power of cosine.
 const _HARRIS_PRIESTER_MIN_COS = 1e-12
 

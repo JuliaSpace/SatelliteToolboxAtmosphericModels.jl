@@ -1,15 +1,27 @@
+## Description #############################################################################
+#
+# Haris-Priester atmospheric density model.
+#
+############################################################################################
+
 export harrispriester
 
 """
-    harrispriester(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Number
+    harrispriester(
+        instant::DateTime,
+        ϕ_gd::Number,
+        λ::Number,
+        h::Number;
+        kwargs...
+    ) -> Number
     harrispriester(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Number
 
 Compute the atmospheric density [kg / m³] using the Harris-Priester model.
 
 The model is valid only inside the altitude range of the density profile `alt_ρ` (100 km to
-1000 km for the default profile). The function throws an `ArgumentError` if the altitude
-`h` is lower than the minimum altitude in the profile, and returns zero if it is higher
-than the maximum altitude.
+1000 km for the default profile). The function throws an `ArgumentError` if the altitude `h`
+is lower than the minimum altitude in the profile, and returns zero if it is higher than the
+maximum altitude.
 
 # Arguments
 
@@ -121,13 +133,11 @@ function harrispriester(
     ρ_min₂ = alt_ρ[ia + 1, 2]
     ρ_min = ρ_min₁ * (ρ_min₂ / ρ_min₁)^dh
 
-    if abs(cos_pow) < eps(RT)
-        return RT(ρ_min)
-    else
-        # Maximum exponential density interpolation.
-        ρ_max₁ = alt_ρ[ia, 3]
-        ρ_max₂ = alt_ρ[ia + 1, 3]
-        ρ_max = ρ_max₁ * (ρ_max₂ / ρ_max₁)^dh
-        return RT(ρ_min + (ρ_max - ρ_min) * cos_pow)
-    end
+    abs(cos_pow) < eps(RT) && return RT(ρ_min)
+
+    # Maximum exponential density interpolation.
+    ρ_max₁ = alt_ρ[ia, 3]
+    ρ_max₂ = alt_ρ[ia + 1, 3]
+    ρ_max = ρ_max₁ * (ρ_max₂ / ρ_max₁)^dh
+    return RT(ρ_min + (ρ_max - ρ_min) * cos_pow)
 end

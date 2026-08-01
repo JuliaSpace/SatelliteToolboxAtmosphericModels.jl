@@ -9,7 +9,12 @@
 ############################################################################################
 
 """
-    _spline_∫(x::NTuple{N, T}, y::NTuple{N, T}, ∂²y::NTuple{N, T}, xf::Number) where {N, T<:Number} -> float(T)
+    _spline_∫(
+        x::NTuple{N, T},
+        y::NTuple{N, T},
+        ∂²y::NTuple{N, T},
+        xf::Number
+    ) where {N, T<:Number} -> float(T)
 
 Compute the integral of the cubic spline function `y(x)` from `x[1]` to `xf`, where the
 function second derivatives evaluated at `x` are `∂²y`.
@@ -58,16 +63,23 @@ function _spline_∫(
 end
 
 """
-    _spline_∂²(x::NTuple{N, T}, y::NTuple{N, T}, ∂²y₁::T, ∂²yₙ::T) where {N, T<:Number} -> NTuple{N, T}
+    _spline_∂²(
+        x::NTuple{N, T},
+        y::NTuple{N, T},
+        ∂²y₁::T,
+        ∂²yₙ::T
+    ) where {N, T<:Number} -> NTuple{N, T}
 
 Compute the 2nd derivatives of the cubic spline interpolation `y(x)` given the 2nd
 derivatives at `x[1]` (`∂²y₁`) and at `x[N]` (`∂²yₙ`). This functions return a tuple with
 the evaluated 2nd derivatives at each point in `x`.
 
 !!! note
+
     This function was adapted from Numerical Recipes.
 
 !!! note
+
     Values higher than `0.99e30` in the 2nd derivatives at the borders (`∂²y₁` and `∂²yₙ`)
     are interpreted as `0`.
 
@@ -123,11 +135,17 @@ function _spline_∂²(
 end
 
 """
-    _spline(x::NTuple{N, T}, y::NTuple{N, T}, ∂²y::NTuple{N, T}, xᵢ::T) where {N, T<:Number} -> float(T)
+    _spline(
+        x::NTuple{N, T},
+        y::NTuple{N, T},
+        ∂²y::NTuple{N, T},
+        xᵢ::T
+    ) where {N, T<:Number} -> float(T)
 
 Compute the interpolation of the cubic spline `y(x)` with second derivatives `∂²y` at `xᵢ`.
 
 !!! note
+
     This function was adapted from Numerical Recipes.
 
 # Arguments

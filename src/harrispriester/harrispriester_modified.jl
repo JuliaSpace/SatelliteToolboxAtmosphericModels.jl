@@ -1,8 +1,26 @@
+## Description #############################################################################
+#
+# Modified Harris-Priester atmospheric density model.
+#
+############################################################################################
+
 export harrispriester_modified
 
 """
-    harrispriester_modified(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10ₐ::Number]; kwargs...) -> Number
-    harrispriester_modified(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10ₐ::Number]; kwargs...) -> Number
+    harrispriester_modified(
+        instant::DateTime,
+        ϕ_gd::Number,
+        λ::Number,
+        h::Number[, F10ₐ::Number];
+        kwargs...
+    ) -> Number
+    harrispriester_modified(
+        jd::Number,
+        ϕ_gd::Number,
+        λ::Number,
+        h::Number[, F10ₐ::Number];
+        kwargs...
+    ) -> Number
 
 Compute the atmospheric density [kg / m³] using the modified Harris-Priester model.
 
@@ -167,7 +185,8 @@ function harrispriester_modified(
     # Compute the Sun right ascension [rad].
     Ωs = atan(s_i[2], s_i[1])
 
-    # Compute the right ascension of the selected location w.r.t. the inertial reference frame.
+    # Compute the right ascension of the selected location w.r.t. the inertial reference
+    # frame.
     Ωp = λ + jd_to_gmst(jd)
 
     # Compute the cosine of the angle between the diurnal bulge apex and the satellite.

@@ -33,8 +33,40 @@
 export jb2008
 
 """
-    jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, S10::Number, S10ₐ::Number, M10::Number, M10ₐ::Number, Y10::Number, Y10ₐ::Number, DstΔTc::Number]; kwargs...) -> JB2008Output
-    jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number[, F10::Number, F10ₐ::Number, S10::Number, S10ₐ::Number, M10::Number, M10ₐ::Number, Y10::Number, Y10ₐ::Number, DstΔTc::Number]; kwargs...) -> JB2008Output
+    jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> JB2008Output
+    jb2008(
+        instant::DateTime,
+        ϕ_gd::Number,
+        λ::Number,
+        h::Number,
+        F10::Number,
+        F10ₐ::Number,
+        S10::Number,
+        S10ₐ::Number,
+        M10::Number,
+        M10ₐ::Number,
+        Y10::Number,
+        Y10ₐ::Number,
+        DstΔTc::Number;
+        kwargs...
+    ) -> JB2008Output
+    jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> JB2008Output
+    jb2008(
+        jd::Number,
+        ϕ_gd::Number,
+        λ::Number,
+        h::Number,
+        F10::Number,
+        F10ₐ::Number,
+        S10::Number,
+        S10ₐ::Number,
+        M10::Number,
+        M10ₐ::Number,
+        Y10::Number,
+        Y10ₐ::Number,
+        DstΔTc::Number;
+        kwargs...
+    ) -> JB2008Output
 
 Compute the atmospheric density using the Jacchia-Bowman 2008 (JB2008) model.
 
@@ -756,9 +788,9 @@ function _jb2008_∫(
     # For each integration step, use the Newton-Cotes 4th degree formula to integrate
     # (Boole's rule).
     @inbounds for i in 1:convert(Int, n)
-        zi₀ = zi₁             # ............... The beginning of the i-th integration step
-        zi₁ = zr * zi₁        # ..................... The end of the i-th integration step
-        Δz  = (zi₁ - zi₀) / 4 # ....................... Step for the i-th integration step
+        zi₀ = zi₁             # ................. The beginning of the i-th integration step
+        zi₁ = zr * zi₁        # ....................... The end of the i-th integration step
+        Δz  = (zi₁ - zi₀) / 4 # ......................... Step for the i-th integration step
 
         # Compute the Newton-Cotes 4th degree sum.
         zj    = zi₀
