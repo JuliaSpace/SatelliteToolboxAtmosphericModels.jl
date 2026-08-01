@@ -586,28 +586,68 @@ end
 #                                    Private Functions                                     #
 ############################################################################################
 
-# Partial-fraction helper functions from [1, p. 372].
-#
-# Defined at module scope as @inline to avoid closures, which incur a runtime allocation
-# from `jl_has_free_typevars` on Julia 1.12+.
-#
-# The equation for W in [1] was incorrect; the corrected form from [3, 4] is used.
+# The partial-fraction helper functions below are defined at module scope as @inline to
+# avoid closures, which incur a runtime allocation from `jl_has_free_typevars` on Julia
+# 1.12+.
 
+"""
+    _jr1971_U(ν::Number, Ra::Number, x::Number, y::Number, r₁::Number, r₂::Number) -> Number
+
+Compute the partial-fraction helper function `U(ν)` [1, p. 372] given the mean Earth
+radius `Ra` [km], the real roots `r₁` and `r₂` [km], and the real and imaginary parts `x`
+and `y` [km] of the complex root of the quartic polynomial.
+"""
 @inline _jr1971_U(ν, Ra, x, y, r₁, r₂) = (ν + Ra)^2 * (ν^2 - 2x * ν + x^2 + y^2) * (r₁ - r₂)
 
+"""
+    _jr1971_V(ν::Number, x::Number, y::Number, r₁::Number, r₂::Number) -> Number
+
+Compute the partial-fraction helper function `V(ν)` [1, p. 372] given the real roots `r₁`
+and `r₂` [km], and the real and imaginary parts `x` and `y` [km] of the complex root of
+the quartic polynomial.
+"""
 @inline _jr1971_V(ν, x, y, r₁, r₂) = (ν^2 - 2x * ν + x^2 + y^2) * (ν - r₁) * (ν - r₂)
 
+"""
+    _jr1971_W(ν::Number, Ra::Number, x::Number, y::Number, r₁::Number, r₂::Number) -> Number
+
+Compute the partial-fraction helper function `W(ν)` [1, p. 372] given the mean Earth
+radius `Ra` [km], the real roots `r₁` and `r₂` [km], and the real and imaginary parts `x`
+and `y` [km] of the complex root of the quartic polynomial. Notice that the equation for
+`W` in [1] is incorrect and the corrected form from [3, 4] is used.
+"""
 @inline _jr1971_W(ν, Ra, x, y, r₁, r₂) = r₁ * r₂ * Ra * (Ra + ν) * (Ra + (x^2 + y^2) / ν)
 
-# S(z) polynomial, [1, p. 371].
+"""
+    _jr1971_S(
+        z::Number,
+        B₀::Number,
+        B₁::Number,
+        B₂::Number,
+        B₃::Number,
+        B₄::Number,
+        B₅::Number
+    ) -> Number
+
+Compute the `S(z)` polynomial [1, p. 371] at the altitude `z` [km] given its coefficients
+`B₀` to `B₅`.
+"""
 @inline _jr1971_S(z, B₀, B₁, B₂, B₃, B₄, B₅) = @evalpoly(z, B₀, B₁, B₂, B₃, B₄, B₅)
 
 ############################################################################################
 
-#   _jr1971_mean_molecular_mass(z::Number) -> Float64
-#
-# Compute the mean molecular mass at altitude `z` [km] using the empirical profile in eq. 1
-# **[3, 4]**.
+"""
+    _jr1971_mean_molecular_mass(z::Number; kwargs...) -> Number
+
+Compute the mean molecular mass [g / mol] at the altitude `z` [km] using the empirical
+profile in eq. 1 [3, 4], which is valid only between 90 km and 100 km.
+
+# Keywords
+
+- `verbose::Val`: Set to `Val(true)` to emit a warning when the altitude is outside the
+    validity range, or to `Val(false)` to suppress it.
+    (**Default**: `Val(true)`)
+"""
 function _jr1971_mean_molecular_mass(
     z::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
@@ -623,23 +663,30 @@ function _jr1971_mean_molecular_mass(
     return molecular_mass
 end
 
-#     _jr1971_roots(c₀::Number, c₁::Number, c₂::Number, c₃::Number) -> NTuple{4, T}
-#
-# Compute the roots of the monic quartic polynomial:
-#
-#   P(z) = z⁴ + c₃ ⋅ z³ + c₂ ⋅ z² + c₁ ⋅ z + c₀,
-#
-# which is necessary to compute the density below 125 km. The model theory states that this
-# polynomial always has two distinct real roots and one complex conjugate pair [1]. The
-# function returns `r₁` (highest real root), `r₂` (lowest real root), `x` (real part of the
-# complex root), and `y` (positive imaginary part of the complex root).
-#
-# The algorithm uses the Ferrari method: the depressed quartic is split into two quadratic
-# factors whose coefficients are obtained from the largest root of the resolvent cubic,
-# computed by the Cardano method. The real roots are polished with Newton iterations and
-# the complex pair is recovered from the Vieta relations, keeping the accuracy close to the
-# machine precision. Since only closed-form expressions are used, this function does not
-# allocate and is compatible with automatic differentiation.
+"""
+    _jr1971_roots(c₀::Number, c₁::Number, c₂::Number, c₃::Number) -> T, T, T, T
+
+Compute the roots of the monic quartic polynomial:
+
+    P(z) = z⁴ + c₃ ⋅ z³ + c₂ ⋅ z² + c₁ ⋅ z + c₀,
+
+which is necessary to compute the density below 125 km. The model theory states that this
+polynomial always has two distinct real roots and one complex conjugate pair [1].
+
+The algorithm uses the Ferrari method: the depressed quartic is split into two quadratic
+factors whose coefficients are obtained from the largest root of the resolvent cubic,
+computed by the Cardano method. The real roots are polished with Newton iterations and the
+complex pair is recovered from the Vieta relations, keeping the accuracy close to the
+machine precision. Since only closed-form expressions are used, this function does not
+allocate and is compatible with automatic differentiation.
+
+# Returns
+
+- `T`: Highest real root `r₁`, where `T` is the promotion of the input types to float.
+- `T`: Lowest real root `r₂`.
+- `T`: Real part `x` of the complex conjugate pair.
+- `T`: Positive imaginary part `y` of the complex conjugate pair.
+"""
 function _jr1971_roots(c₀::Number, c₁::Number, c₂::Number, c₃::Number)
     c₀, c₁, c₂, c₃ = promote(float(c₀), float(c₁), float(c₂), float(c₃))
     T = typeof(c₀)
@@ -756,13 +803,16 @@ function _jr1971_roots(c₀::Number, c₁::Number, c₂::Number, c₃::Number)
     return r₁, r₂, x, y
 end
 
-#   _jr1971_temperature(z::Number, Tx::Number, T∞::Number) -> Float64
-#
-# Compute the temperature [K] at height `z` [km] according to the theory of the model
-# Jacchia-Roberts 1971 [1, 3, 4] given the temperature `Tx` [K] at the inflection point and
-# the exospheric temperature `T∞` [K].
-#
-# The inflection point is considered to be `z = 125 km`.
+"""
+    _jr1971_temperature(z::Number, Tx::Number, T∞::Number) -> Number
+
+Compute the temperature [K] at height `z` [km] according to the theory of the model
+Jacchia-Roberts 1971 [1, 3, 4] given the temperature `Tx` [K] at the inflection point and
+the exospheric temperature `T∞` [K]. The inflection point is considered to be
+`z = 125 km`.
+
+The function throws an `ArgumentError` if `z` is lower than 90 km or if `T∞` is negative.
+"""
 function _jr1971_temperature(z::Number, Tx::Number, T∞::Number)
     T₁ = _JR1971_CONSTANTS.T₁
     z₁ = _JR1971_CONSTANTS.z₁

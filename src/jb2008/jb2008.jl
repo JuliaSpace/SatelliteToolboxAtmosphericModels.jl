@@ -603,9 +603,11 @@ end
 #                                    Private Functions                                     #
 ############################################################################################
 
-#   _jb2008_gravity(z::Number) -> Number
-#
-# Compute the gravity [m / s²] at altitude `z` [km] according to the model Jacchia 1971 [3].
+"""
+    _jb2008_gravity(z::Number) -> Number
+
+Compute the gravity [m / s²] at altitude `z` [km] according to the model Jacchia 1971 [3].
+"""
 function _jb2008_gravity(z::Number)
     # Mean Earth radius [km].
     Re = 6356.766
@@ -617,13 +619,13 @@ function _jb2008_gravity(z::Number)
     return g₀ / (1 + z / Re)^2
 end
 
-#   _jb2008_high_altitude(h::Number, F10ₐ::Number) -> Float64
-#
-# Compute the high altitude exospheric density correction factor in altitude `h` [km] and
-# the averaged 10.7-cm solar flux `F10ₐ` [sfu], which must be obtained using 81-day centered
-# on input time.
-#
-# This function uses the model in Section 6.2 of [2].
+"""
+    _jb2008_high_altitude(h::Number, F10ₐ::Number) -> Number
+
+Compute the high altitude exospheric density correction factor [-] at the altitude `h`
+[km] given the averaged 10.7-cm solar flux `F10ₐ` [sfu], which must be obtained using an
+81-day window centered on the input time, using the model in Section 6.2 of [2].
+"""
 function _jb2008_high_altitude(h::Number, F10ₐ::Number)
     # Auxiliary variables.
     C = _JB2008_CHT
@@ -655,10 +657,18 @@ function _jb2008_high_altitude(h::Number, F10ₐ::Number)
     return FρH
 end
 
-#   _jb2008_mean_molecular_mass(z::Number; kwargs...) -> Number
-#
-# Compute the mean molecular mass at altitude `z` [km] using the empirical profile in eq. 1
-# [3].
+"""
+    _jb2008_mean_molecular_mass(z::Number; kwargs...) -> Number
+
+Compute the mean molecular mass [g / mol] at the altitude `z` [km] using the empirical
+profile in eq. 1 [3], which is valid only between 90 km and 105 km.
+
+# Keywords
+
+- `verbose::Val`: Set to `Val(true)` to emit a warning when the altitude is outside the
+    validity range, or to `Val(false)` to suppress it.
+    (**Default**: `Val(true)`)
+"""
 function _jb2008_mean_molecular_mass(
     z::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
@@ -680,13 +690,15 @@ function _jb2008_mean_molecular_mass(
     return M
 end
 
-#   _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
-#
-# Compute the temperature [K] at height `z` [km] given the temperature `Tx` [K] at the
-# inflection point, and the exospheric temperature `T∞` [K] according to the theory of the
-# model Jacchia 1971 [3].
-#
-# The inflection point is considered to be `z = 125 km`.
+"""
+    _jb2008_temperature(z::Number, Tx::Number, T∞::Number) -> Number
+
+Compute the temperature [K] at height `z` [km] given the temperature `Tx` [K] at the
+inflection point, and the exospheric temperature `T∞` [K] according to the theory of the
+model Jacchia 1971 [3]. The inflection point is considered to be `z = 125 km`.
+
+The function throws an `ArgumentError` if `z` is lower than 90 km or if `T∞` is negative.
+"""
 function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
     # == Constants =========================================================================
 
@@ -723,9 +735,19 @@ function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
     return T
 end
 
-#   _jb2008_δf1(z::Number, Tx::Number, T∞::Number) -> Float64
-#
-# Auxiliary function to compute the integrand in `_jb2008_∫`.
+"""
+    _jb2008_δf1(z::Number, Tx::Number, T∞::Number; kwargs...) -> Number
+
+Compute the integrand `M̄´ g / T` used by [`_jb2008_∫`](@ref) between 90 km and 105 km at
+the altitude `z` [km] given the temperature `Tx` [K] at the inflection point and the
+exospheric temperature `T∞` [K].
+
+# Keywords
+
+- `verbose::Val`: Set to `Val(true)` to emit warnings from the internal functions, or to
+    `Val(false)` to suppress them.
+    (**Default**: `Val(true)`)
+"""
 function _jb2008_δf1(
     z::Number, Tx::Number, T∞::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
@@ -736,9 +758,19 @@ function _jb2008_δf1(
     return Mb * g / Tl
 end
 
-#   _jb2008_δf2(z, Tx, T∞)
-#
-# Auxiliary function to compute the integrand in `_jb2008_∫`.
+"""
+    _jb2008_δf2(z::Number, Tx::Number, T∞::Number; kwargs...) -> Number
+
+Compute the integrand `g / T` used by [`_jb2008_∫`](@ref) above 105 km at the altitude `z`
+[km] given the temperature `Tx` [K] at the inflection point and the exospheric temperature
+`T∞` [K].
+
+# Keywords
+
+- `verbose::Val`: Set to `Val(true)` to emit warnings from the internal functions, or to
+    `Val(false)` to suppress them.
+    (**Default**: `Val(true)`)
+"""
 function _jb2008_δf2(
     z::Number, Tx::Number, T∞::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
@@ -748,18 +780,33 @@ function _jb2008_δf2(
     return g / Tl
 end
 
-#   _jb2008_∫(z₀::Number, z₁::Number, R::Number, Tx::Number, T∞::Number, δf::Function) -> Float64, Float64
-#
-# Compute the integral of the function `δf` between `z₀` and `z₁` using the Newton-Cotes 4th
-# degree method. `R` is a number that defines the step size, `Tx` is the temperature at the
-# inflection point, and `T∞` is the exospheric temperature.
-#
-# The integrand function `δf` must be `_jb2008_δf1` or `_jb2008_δf2`.
-#
-# # Returns
-#
-# - `Float64`: Value of the integral.
-# - `Float64`: Last value of `z` used in the numerical algorithm.
+"""
+    _jb2008_∫(
+        z₀::Number,
+        z₁::Number,
+        R::Number,
+        Tx::Number,
+        T∞::Number,
+        δf::Function;
+        kwargs...
+    ) -> Number, Number
+
+Compute the integral of the function `δf` between the altitudes `z₀` and `z₁` [km] using
+the Newton-Cotes 4th degree method, where `R` defines the step size [-], `Tx` is the
+temperature at the inflection point [K], and `T∞` is the exospheric temperature [K]. The
+integrand function `δf` must be [`_jb2008_δf1`](@ref) or [`_jb2008_δf2`](@ref).
+
+# Keywords
+
+- `verbose::Val`: Set to `Val(true)` to emit warnings from the internal functions, or to
+    `Val(false)` to suppress them.
+    (**Default**: `Val(true)`)
+
+# Returns
+
+- `Number`: Value of the integral.
+- `Number`: Last value of `z` [km] used in the numerical algorithm.
+"""
 function _jb2008_∫(
     z₀::Number,
     z₁::Number,
@@ -815,25 +862,32 @@ function _jb2008_∫(
     return int, zj
 end
 
-#
-#   _jb2008_semiannual(doy::Number, h::Number, F10ₐ::Number, S10ₐ::Number, M10ₐ::Number)
-#
-# Compute the semiannual density variation considering the JB2008 model [1].
-#
-# # Arguments
-#
-# - `doy::Number`: Day of the year + fraction of the day.
-# - `h::Number`: Height [km].
-# - `F10ₐ::Number`: Averaged 10.7-cm flux, which must use a 81-day window centered on
-#   the input time [10⁻²² W / (M² Hz)].
-# - `S10ₐ`: EUV 81-day averaged centered index.
-# - `M10ₐ`: MG2 81-day averaged centered index.
-#
-# # Returns
-#
-# - `Float64`: Semiannual F(z) height function.
-# - `Float64`: Semiannual G(t) yearly periodic function.
-# - `Float64`: Semiannual variation of the density `Δsalog₁₀ρ`.
+"""
+    _jb2008_semiannual(
+        doy::Number,
+        h::Number,
+        F10ₐ::Number,
+        S10ₐ::Number,
+        M10ₐ::Number
+    ) -> Number, Number, Number
+
+Compute the semiannual density variation considering the JB2008 model [1].
+
+# Arguments
+
+- `doy::Number`: Day of the year plus the fraction of the day [-].
+- `h::Number`: Height [km].
+- `F10ₐ::Number`: Averaged 10.7-cm flux, which must use an 81-day window centered on the
+    input time [sfu].
+- `S10ₐ::Number`: EUV 81-day averaged centered index.
+- `M10ₐ::Number`: MG2 81-day averaged centered index.
+
+# Returns
+
+- `Number`: Semiannual `F(z)` height function, clamped to be equal or higher than 10⁻⁶.
+- `Number`: Semiannual `G(t)` yearly periodic function.
+- `Number`: Semiannual variation of the density `Δsalog₁₀ρ`.
+"""
 function _jb2008_semiannual(
     doy::Number, h::Number, F10ₐ::Number, S10ₐ::Number, M10ₐ::Number
 )
@@ -868,23 +922,22 @@ function _jb2008_semiannual(
     return Fz, Gt, Δsalog₁₀ρ
 end
 
-#   _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
-#
-# Compute the correction in the `Tc` for Jacchia-Bowman model.
-#
-# This correction is mentioned in [2]. However, the equations do not seem to match those in
-# the source-code. The ones implemented here are exactly the same as in the source-code.
-#
-# # Arguments
-#
-# - `F10::Number`: F10.7 flux.
-# - `lst::Number`: Local solar time (0 - 24) [hr].
-# - `ϕ_gd::Number`: Geodetic latitude [rad].
-# - `h::Number`: Altitude [km].
-#
-# # Returns
-#
-# - `Float64`: The correction `ΔTc` [K].
+"""
+    _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number) -> Number
+
+Compute the correction `ΔTc` [K] in the exospheric temperature for the Jacchia-Bowman
+model.
+
+This correction is mentioned in [2]. However, the equations do not seem to match those in
+the source-code. The ones implemented here are exactly the same as in the source-code.
+
+# Arguments
+
+- `F10::Number`: 10.7-cm solar flux [sfu].
+- `lst::Number`: Local solar time (0 - 24) [hr].
+- `ϕ_gd::Number`: Geodetic latitude [rad].
+- `h::Number`: Altitude [km].
+"""
 function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
     # Auxiliary variables according to [2, p.  784].
     B  = _JB2008_B

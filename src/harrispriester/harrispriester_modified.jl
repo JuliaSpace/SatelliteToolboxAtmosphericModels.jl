@@ -222,17 +222,38 @@ function harrispriester_modified(
     return ρ * 1e-12
 end
 
-# Private function to evaluate the cubic polynomial in `F10ₐ` whose coefficients are stored
-# in the columns `c` to `c + 3` of the `i`-th row of `_HARRIS_PRIESTER_MOD_COEFS`. Notice
-# that we build the coefficient tuple explicitly since splatting a runtime view into
-# `@evalpoly` leads to dynamic dispatch and allocations.
+"""
+    _harris_priester_mod_density_poly(F10ₐ::Number, i::Integer, c::Integer) -> Number
+
+Evaluate the cubic polynomial in the flux `F10ₐ` [sfu] whose coefficients are stored in
+the columns `c` to `c + 3` of the `i`-th row of `_HARRIS_PRIESTER_MOD_COEFS`, returning
+the related density [g / km³]. Notice that we build the coefficient tuple explicitly since
+splatting a runtime view into `@evalpoly` leads to dynamic dispatch and allocations.
+"""
 function _harris_priester_mod_density_poly(F10ₐ::Number, i::Integer, c::Integer)
     C = _HARRIS_PRIESTER_MOD_COEFS
     return evalpoly(F10ₐ, (C[i, c], C[i, c + 1], C[i, c + 2], C[i, c + 3]))
 end
 
-# Private function to calculate scale heights via Junkins/Jancaitis weighting method for
-# third-order continuity [1, Section 3.2].
+"""
+    _scale_height_junk(
+        xbar::AbstractVector{<:Number},
+        h::Number,
+        H_ρ_min::AbstractVector{<:Number},
+        H_ρ_max::AbstractVector{<:Number}
+    ) -> Number, Number, Number
+
+Compute the scale heights at the altitude `h` [km] using the Junkins / Jancaitis weighting
+method for third-order continuity [1, Section 3.2], given the abscissas `xbar` [km] of the
+blending interval and the minimum and maximum density scale heights `H_ρ_min` and
+`H_ρ_max` [km] at its borders.
+
+# Returns
+
+- `Number`: Weighting function value [-].
+- `Number`: Blended minimum density scale height [km].
+- `Number`: Blended maximum density scale height [km].
+"""
 function _scale_height_junk(
     xbar::AbstractVector{<:Number},
     h::Number,
