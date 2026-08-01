@@ -24,6 +24,11 @@
 
 export jr1971
 
+# TODO: Remove the unused keyword `roots_container` from all `jr1971` methods in the next
+# breaking release. It is kept only for backward compatibility since the quartic
+# polynomial roots are now computed using a closed-form algorithm that does not require a
+# container.
+
 """
     jr1971(
         instant::DateTime,
