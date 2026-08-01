@@ -64,17 +64,13 @@ function jr1971(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
-    verbose::Val{verbosity} = Val(true)
+    verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     return jr1971(datetime2julian(instant), ϕ_gd, λ, h; verbose = verbose)
 end
 
 function jr1971(
-    jd::Number,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number;
-    verbose::Val{verbosity} = Val(true)
+    jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
     # Get the data in the desired Julian Day.
     F10  = space_index(Val(:F10obs), jd)
@@ -116,17 +112,10 @@ function jr1971(
     F10::Number,
     F10ₐ::Number,
     Kp::Number;
-    verbose::Val{verbosity} = Val(true)
+    verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     return jr1971(
-        datetime2julian(instant),
-        ϕ_gd,
-        λ,
-        h,
-        F10,
-        F10ₐ,
-        Kp;
-        verbose = Val(verbosity)
+        datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp; verbose = Val(verbosity)
     )
 end
 
@@ -138,18 +127,17 @@ function jr1971(
     F10::FT,
     F10ₐ::FT2,
     Kp::KT;
-    verbose::Val{verbosity} = Val(true)
-)   where {
-    JT<:Number,
-    PT<:Number,
-    LT<:Number,
-    HT<:Number,
-    FT<:Number,
-    FT2<:Number,
-    KT<:Number,
-    verbosity
+    verbose::Val{verbosity} = Val(true),
+) where {
+    JT <: Number,
+    PT <: Number,
+    LT <: Number,
+    HT <: Number,
+    FT <: Number,
+    FT2 <: Number,
+    KT <: Number,
+    verbosity,
 }
-
     RT = promote_type(JT, PT, LT, HT, FT, FT2, KT)
 
     # == Constants =========================================================================
@@ -255,10 +243,10 @@ function jr1971(
     # The values at [1, p. 369] are from an old version of Jacchia 1971 model. We will use
     # the new values available at [2].
 
-    a  =  371.6678
-    b  =    0.0518806
+    a  = 371.6678
+    b  = 0.0518806
     c  = -294.3505
-    d  =   -0.00216222
+    d  = -0.00216222
     Tx = a + b * T∞ + c * exp(d * T∞)
 
     # Compute the temperature at desired point.
@@ -286,7 +274,13 @@ function jr1971(
     sin_ϕ_gd = sin(ϕ_gd)
     abs_sin_ϕ_gd = abs(sin_ϕ_gd)
 
-    Δlog₁₀ρ_lt = 0.014 * (h - 90) * exp(-0.0013 * (h - 90)^2) * sin(2π * Φ + 1.72) * sin_ϕ_gd * abs_sin_ϕ_gd
+    Δlog₁₀ρ_lt =
+        0.014 *
+        (h - 90) *
+        exp(-0.0013 * (h - 90)^2) *
+        sin(2π * Φ + 1.72) *
+        sin_ϕ_gd *
+        abs_sin_ϕ_gd
 
     # -- Total Correction, Eq. B-10 [4] ----------------------------------------------------
 
@@ -306,10 +300,10 @@ function jr1971(
             T∞,
             (ρ * μi.N₂) * Av / Mi.N₂ * 1e6,
             (ρ * μi.O₂) * Av / Mi.O₂ * 1e6,
-            (ρ * μi.O)  * Av / Mi.O  * 1e6,
+            (ρ * μi.O) * Av / Mi.O * 1e6,
             (ρ * μi.Ar) * Av / Mi.Ar * 1e6,
             (ρ * μi.He) * Av / Mi.He * 1e6,
-            (ρ * μi.H)  * Av / Mi.H  * 1e6
+            (ρ * μi.H) * Av / Mi.H * 1e6,
         )
 
     elseif z₁ < h <= zx
@@ -354,34 +348,40 @@ function jr1971(
 
             # -- Auxiliary Variables, [1. p. 372] ------------------------------------------
 
-            p₂ =  _jr1971_S(r₁, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_U(r₁, Ra, x, y, r₁, r₂)
+            p₂ = _jr1971_S(r₁, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_U(r₁, Ra, x, y, r₁, r₂)
             p₃ = -_jr1971_S(r₂, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_U(r₂, Ra, x, y, r₁, r₂)
-            p₅ =  _jr1971_S(-Ra, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_V(-Ra, x, y, r₁, r₂)
+            p₅ = _jr1971_S(-Ra, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_V(-Ra, x, y, r₁, r₂)
 
             # There is a typo in the fourth term in [1] that was corrected in [3].
 
             p₄ = (
                 B₀ - r₁ * r₂ * Ra² * (B₄ + (2x + r₁ + r₂ - Ra) * B₅) -
-                r₁ * r₂ * Ra * x²_plus_y² * B₅ + r₁ * r₂ * (Ra² - x²_plus_y²) * p₅ +
-                _jr1971_W(r₁, Ra, x, y, r₁, r₂) * p₂ + _jr1971_W(r₂, Ra, x, y, r₁, r₂) * p₃
+                r₁ * r₂ * Ra * x²_plus_y² * B₅ +
+                r₁ * r₂ * (Ra² - x²_plus_y²) * p₅ +
+                _jr1971_W(r₁, Ra, x, y, r₁, r₂) * p₂ +
+                _jr1971_W(r₂, Ra, x, y, r₁, r₂) * p₃
             )
 
             p₄ = p₄ / X
 
-            p₆ = B₄ + (2x + r₁ + r₂ - Ra ) * B₅ - p₅ - 2(x + Ra) * p₄ - (r₂ + Ra) * p₃ - (r₁ + Ra) * p₂
+            p₆ =
+                B₄ + (2x + r₁ + r₂ - Ra) * B₅ - p₅ - 2(x + Ra) * p₄ - (r₂ + Ra) * p₃ -
+                (r₁ + Ra) * p₂
             p₁ = B₅ - 2p₄ - p₃ - p₂
 
             # -- F₁ and F₂, [1, p. 372-373] ------------------------------------------------
 
-            log_F₁ = p₁ * log((h + Ra) / (z₁ + Ra)) +
-                     p₂ * log((h - r₁) / (z₁ - r₁)) +
-                     p₃ * log((h - r₂) / (z₁ - r₂)) +
-                     p₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₁^2 - 2x * z₁ + x²_plus_y²))
+            log_F₁ =
+                p₁ * log((h + Ra) / (z₁ + Ra)) +
+                p₂ * log((h - r₁) / (z₁ - r₁)) +
+                p₃ * log((h - r₂) / (z₁ - r₂)) +
+                p₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₁^2 - 2x * z₁ + x²_plus_y²))
 
             # This equation in [4] is wrong, since `f` is multiplying `A₆`. We will use the
             # one in [3].
-            F₂ = (h - z₁) * (Aa[7] + p₅ / ((h + Ra) * (z₁ + Ra))) +
-                 p₆ / y * atan(y * (h - z₁) / (y^2 + (h - x) * (z₁ - x)))
+            F₂ =
+                (h - z₁) * (Aa[7] + p₅ / ((h + Ra) * (z₁ + Ra))) +
+                p₆ / y * atan(y * (h - z₁) / (y^2 + (h - x) * (z₁ - x)))
 
             # -- Compute the Density, eq. 13 [1] -------------------------------------------
 
@@ -395,10 +395,10 @@ function jr1971(
                 T∞,
                 (ρ * μi.N₂) * Av / Mi.N₂ * 1e6,
                 (ρ * μi.O₂) * Av / Mi.O₂ * 1e6,
-                (ρ * μi.O)  * Av / Mi.O  * 1e6,
+                (ρ * μi.O) * Av / Mi.O * 1e6,
                 (ρ * μi.Ar) * Av / Mi.Ar * 1e6,
                 (ρ * μi.He) * Av / Mi.He * 1e6,
-                (ρ * μi.H)  * Av / Mi.H  * 1e6,
+                (ρ * μi.H) * Av / Mi.H * 1e6,
             )
         else
 
@@ -422,29 +422,37 @@ function jr1971(
 
             # -- Auxiliary Variables, [1, p. 374] ------------------------------------------
 
-            q₂ =  1 / _jr1971_U(r₁,  Ra, x, y, r₁, r₂)
-            q₃ = -1 / _jr1971_U(r₂,  Ra, x, y, r₁, r₂)
-            q₅ =  1 / _jr1971_V(-Ra, x, y, r₁, r₂)
-            q₄ = (1 + r₁ * r₂ * (Ra² - x²_plus_y²) * q₅ + _jr1971_W(r₁, Ra, x, y, r₁, r₂) * q₂ + _jr1971_W(r₂, Ra, x, y, r₁, r₂) * q₃) / X
+            q₂ = 1 / _jr1971_U(r₁, Ra, x, y, r₁, r₂)
+            q₃ = -1 / _jr1971_U(r₂, Ra, x, y, r₁, r₂)
+            q₅ = 1 / _jr1971_V(-Ra, x, y, r₁, r₂)
+            q₄ =
+                (
+                    1 +
+                    r₁ * r₂ * (Ra² - x²_plus_y²) * q₅ +
+                    _jr1971_W(r₁, Ra, x, y, r₁, r₂) * q₂ +
+                    _jr1971_W(r₂, Ra, x, y, r₁, r₂) * q₃
+                ) / X
             q₆ = -q₅ - 2 * (x + Ra) * q₄ - (r₂ + Ra) * q₃ - (r₁ + Ra) * q₂
             q₁ = -2q₄ - q₃ - q₂
 
             # -- F₃ and F₄, [1, p. 374] ----------------------------------------------------
 
-            log_F₃ = q₁ * log((h + Ra) / (z₂ + Ra)) +
-                     q₂ * log((h - r₁) / (z₂ - r₁)) +
-                     q₃ * log((h - r₂) / (z₂ - r₂)) +
-                     q₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₂^2 - 2x * z₂ + x²_plus_y²))
+            log_F₃ =
+                q₁ * log((h + Ra) / (z₂ + Ra)) +
+                q₂ * log((h - r₁) / (z₂ - r₁)) +
+                q₃ * log((h - r₂) / (z₂ - r₂)) +
+                q₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₂^2 - 2x * z₂ + x²_plus_y²))
 
-            F₄ = q₅ * (h - z₂) / ((h + Ra) * (Ra + z₂)) +
-                 q₆ / y * atan(y * (h - z₂) / (y^2 + (h - x) * (z₂ - x)))
+            F₄ =
+                q₅ * (h - z₂) / ((h + Ra) * (Ra + z₂)) +
+                q₆ / y * atan(y * (h - z₂) / (y^2 + (h - x) * (z₂ - x)))
 
             # -- Compute the Density of Each Specie [3] ------------------------------------
 
             expk = k * f * (log_F₃ + F₄)
             ρN₂  = ρ₁₀₀ * Mi[1] / M₀ * μi[1] * (T₁₀₀ / Tz)^(1 + αi.N₂) * exp(Mi[1] * expk)
             ρO₂  = ρ₁₀₀ * Mi[2] / M₀ * μi[2] * (T₁₀₀ / Tz)^(1 + αi.O₂) * exp(Mi[2] * expk)
-            ρO   = ρ₁₀₀ * Mi[3] / M₀ * μi[3] * (T₁₀₀ / Tz)^(1 + αi.O ) * exp(Mi[3] * expk)
+            ρO   = ρ₁₀₀ * Mi[3] / M₀ * μi[3] * (T₁₀₀ / Tz)^(1 + αi.O) * exp(Mi[3] * expk)
             ρAr  = ρ₁₀₀ * Mi[4] / M₀ * μi[4] * (T₁₀₀ / Tz)^(1 + αi.Ar) * exp(Mi[4] * expk)
             ρHe  = ρ₁₀₀ * Mi[5] / M₀ * μi[5] * (T₁₀₀ / Tz)^(1 + αi.He) * exp(Mi[5] * expk)
 
@@ -458,7 +466,7 @@ function jr1971(
                 T∞,
                 ρN₂ * Av / Mi.N₂ * 1e6,
                 ρO₂ * Av / Mi.O₂ * 1e6,
-                ρO  * Av / Mi.O  * 1e6,
+                ρO * Av / Mi.O * 1e6,
                 ρAr * Av / Mi.Ar * 1e6,
                 ρHe * Av / Mi.He * 1e6,
                 0.0,
@@ -474,11 +482,11 @@ function jr1971(
         # References [3,4] suggest to compute the density using a polynomial fit, so that
         # the computational burden can be reduced:
 
-        ρ₁₂₅_N₂  = Δρ_c * Mi[1] * 10^(@evalpoly(T∞, δij.N₂...)) / Av
-        ρ₁₂₅_O₂  = Δρ_c * Mi[2] * 10^(@evalpoly(T∞, δij.O₂...)) / Av
-        ρ₁₂₅_O   = Δρ_c * Mi[3] * 10^(@evalpoly(T∞, δij.O...))  / Av
-        ρ₁₂₅_Ar  = Δρ_c * Mi[4] * 10^(@evalpoly(T∞, δij.Ar...)) / Av
-        ρ₁₂₅_He  = Δρ_c * Mi[5] * 10^(@evalpoly(T∞, δij.He...)) / Av
+        ρ₁₂₅_N₂ = Δρ_c * Mi[1] * 10^(@evalpoly(T∞, δij.N₂...)) / Av
+        ρ₁₂₅_O₂ = Δρ_c * Mi[2] * 10^(@evalpoly(T∞, δij.O₂...)) / Av
+        ρ₁₂₅_O  = Δρ_c * Mi[3] * 10^(@evalpoly(T∞, δij.O...)) / Av
+        ρ₁₂₅_Ar = Δρ_c * Mi[4] * 10^(@evalpoly(T∞, δij.Ar...)) / Av
+        ρ₁₂₅_He = Δρ_c * Mi[5] * 10^(@evalpoly(T∞, δij.He...)) / Av
 
         # However, it turns out that this approach leads to discontinuity at 125 km. This
         # was also seen by GMAT [5].
@@ -500,17 +508,18 @@ function jr1971(
 
         # -- Eq. 25 [1] --------------------------------------------------------------------
 
-        ρN₂  = ρ₁₂₅_N₂ * (Tx / Tz)^(1 + αi.N₂ + γN₂) * ((T∞ - Tz) / (T∞ - Tx)) ^ γN₂
-        ρO₂  = ρ₁₂₅_O₂ * (Tx / Tz)^(1 + αi.O₂ + γO₂) * ((T∞ - Tz) / (T∞ - Tx)) ^ γO₂
-        ρO   = ρ₁₂₅_O  * (Tx / Tz)^(1 + αi.O  + γO ) * ((T∞ - Tz) / (T∞ - Tx)) ^ γO
-        ρAr  = ρ₁₂₅_Ar * (Tx / Tz)^(1 + αi.Ar + γAr) * ((T∞ - Tz) / (T∞ - Tx)) ^ γAr
-        ρHe  = ρ₁₂₅_He * (Tx / Tz)^(1 + αi.He + γHe) * ((T∞ - Tz) / (T∞ - Tx)) ^ γHe
+        ρN₂ = ρ₁₂₅_N₂ * (Tx / Tz)^(1 + αi.N₂ + γN₂) * ((T∞ - Tz) / (T∞ - Tx)) ^ γN₂
+        ρO₂ = ρ₁₂₅_O₂ * (Tx / Tz)^(1 + αi.O₂ + γO₂) * ((T∞ - Tz) / (T∞ - Tx)) ^ γO₂
+        ρO  = ρ₁₂₅_O * (Tx / Tz)^(1 + αi.O + γO) * ((T∞ - Tz) / (T∞ - Tx)) ^ γO
+        ρAr = ρ₁₂₅_Ar * (Tx / Tz)^(1 + αi.Ar + γAr) * ((T∞ - Tz) / (T∞ - Tx)) ^ γAr
+        ρHe = ρ₁₂₅_He * (Tx / Tz)^(1 + αi.He + γHe) * ((T∞ - Tz) / (T∞ - Tx)) ^ γHe
 
         # -- Correction of Seasonal Variations of Helium by Latitude, Eq. 4-101 [3] --------
 
-        Δlog₁₀ρ_He = 0.65 / deg2rad(23.439291) * abs(δs) * (
-            sin(π / 4 - ϕ_gd * δs / (2abs(δs)))^3 - 0.35355
-        )
+        Δlog₁₀ρ_He =
+            0.65 / deg2rad(23.439291) *
+            abs(δs) *
+            (sin(π / 4 - ϕ_gd * δs / (2abs(δs)))^3 - 0.35355)
 
         ρHe *= 10^(Δlog₁₀ρ_He)
 
@@ -539,10 +548,10 @@ function jr1971(
             T∞,
             ρN₂ * Av / Mi.N₂ * 1e6,
             ρO₂ * Av / Mi.O₂ * 1e6,
-            ρO  * Av / Mi.O  * 1e6,
+            ρO * Av / Mi.O * 1e6,
             ρAr * Av / Mi.Ar * 1e6,
             ρHe * Av / Mi.He * 1e6,
-            ρH  * Av / Mi.H  * 1e6,
+            ρH * Av / Mi.H * 1e6,
         )
     end
 end
@@ -558,18 +567,14 @@ end
 #
 # The equation for W in [1] was incorrect; the corrected form from [3, 4] is used.
 
-@inline _jr1971_U(ν, Ra, x, y, r₁, r₂) =
-    (ν + Ra)^2 * (ν^2 - 2x * ν + x^2 + y^2) * (r₁ - r₂)
+@inline _jr1971_U(ν, Ra, x, y, r₁, r₂) = (ν + Ra)^2 * (ν^2 - 2x * ν + x^2 + y^2) * (r₁ - r₂)
 
-@inline _jr1971_V(ν, x, y, r₁, r₂) =
-    (ν^2 - 2x * ν + x^2 + y^2) * (ν - r₁) * (ν - r₂)
+@inline _jr1971_V(ν, x, y, r₁, r₂) = (ν^2 - 2x * ν + x^2 + y^2) * (ν - r₁) * (ν - r₂)
 
-@inline _jr1971_W(ν, Ra, x, y, r₁, r₂) =
-    r₁ * r₂ * Ra * (Ra + ν) * (Ra + (x^2 + y^2) / ν)
+@inline _jr1971_W(ν, Ra, x, y, r₁, r₂) = r₁ * r₂ * Ra * (Ra + ν) * (Ra + (x^2 + y^2) / ν)
 
 # S(z) polynomial, [1, p. 371].
-@inline _jr1971_S(z, B₀, B₁, B₂, B₃, B₄, B₅) =
-    @evalpoly(z, B₀, B₁, B₂, B₃, B₄, B₅)
+@inline _jr1971_S(z, B₀, B₁, B₂, B₃, B₄, B₅) = @evalpoly(z, B₀, B₁, B₂, B₃, B₄, B₅)
 
 ############################################################################################
 
@@ -578,11 +583,13 @@ end
 # Compute the mean molecular mass at altitude `z` [km] using the empirical profile in eq. 1
 # **[3, 4]**.
 function _jr1971_mean_molecular_mass(
-    z::Number;
-    verbose::Val{verbosity} = Val(true)
+    z::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
-    verbosity && !(90 <= z <= 100) &&
-        @warn("The empirical model for the mean molecular mass is valid only for 90 <= z <= 100 km.")
+    verbosity &&
+        !(90 <= z <= 100) &&
+        @warn(
+            "The empirical model for the mean molecular mass is valid only for 90 <= z <= 100 km."
+        )
 
     Aa = _JR1971_CONSTANTS.Aa
     molecular_mass = @evalpoly(z, Aa[1], Aa[2], Aa[3], Aa[4], Aa[5], Aa[6], Aa[7])
@@ -699,11 +706,11 @@ function _jr1971_roots(c₀::Number, c₁::Number, c₂::Number, c₃::Number)
     for _ in 1:2
         f₁  = @evalpoly(r₁, c₀, c₁, c₂, c₃, one(T))
         f₁′ = @evalpoly(r₁, c₁, 2c₂, 3c₃, 4one(T))
-        r₁ -= f₁ / f₁′
+        r₁  -= f₁ / f₁′
 
         f₂  = @evalpoly(r₂, c₀, c₁, c₂, c₃, one(T))
         f₂′ = @evalpoly(r₂, c₁, 2c₂, 3c₃, 4one(T))
-        r₂ -= f₂ / f₂′
+        r₂  -= f₂ / f₂′
     end
 
     if r₁ < r₂
@@ -716,9 +723,9 @@ function _jr1971_roots(c₀::Number, c₁::Number, c₂::Number, c₃::Number)
     #
     #   r₁ + r₂ + 2x = -c₃    and    r₁ ⋅ r₂ ⋅ (x² + y²) = c₀ .
 
-    x  = -(c₃ + r₁ + r₂) / 2
+    x = -(c₃ + r₁ + r₂) / 2
     x²_plus_y² = c₀ / (r₁ * r₂)
-    y  = √(max(x²_plus_y² - x * x, zero(T)))
+    y = √(max(x²_plus_y² - x * x, zero(T)))
 
     return r₁, r₂, x, y
 end
@@ -737,8 +744,8 @@ function _jr1971_temperature(z::Number, Tx::Number, T∞::Number)
 
     # == Check the Parameters ==============================================================
 
-    (z  < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
-    (T∞ < 0 ) && throw(ArgumentError("The exospheric temperature must be positive."))
+    (z < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
+    (T∞ < 0) && throw(ArgumentError("The exospheric temperature must be positive."))
 
     # == Compute the Temperature at Desired Altitude ========================================
 
@@ -753,9 +760,10 @@ function _jr1971_temperature(z::Number, Tx::Number, T∞::Number)
 
         l = @evalpoly(T∞, la[1], la[2], la[3], la[4], la[5])
 
-        T = T∞ - (T∞ - Tx) * exp(
-            -l * ((Tx - T₁) / (T∞ - Tx)) * ((z - zx) / (zx - z₁)) / (Ra + z)
-        )
+        T =
+            T∞ -
+            (T∞ - Tx) *
+            exp(-l * ((Tx - T₁) / (T∞ - Tx)) * ((z - zx) / (zx - z₁)) / (Ra + z))
     end
 
     return T

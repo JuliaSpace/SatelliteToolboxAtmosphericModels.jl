@@ -42,7 +42,7 @@ const _EXPONENTIAL_ATMOSPHERE_H₀ = [
     700,
     800,
     900,
-    1000
+    1000,
 ]
 
 """
@@ -78,7 +78,7 @@ const _EXPONENTIAL_ATMOSPHERE_ρ₀ = [
     3.614e-14,
     1.170e-14,
     5.245e-15,
-    3.019e-15
+    3.019e-15,
 ]
 
 """
@@ -114,5 +114,5 @@ const _EXPONENTIAL_ATMOSPHERE_H = [
     88.667,
     124.64,
     181.05,
-    268.00
+    268.00,
 ]

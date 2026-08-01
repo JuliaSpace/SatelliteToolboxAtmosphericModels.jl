@@ -40,7 +40,7 @@ function harrispriester(
     λ::Number,
     h::Number;
     n::Int = 4,
-    alt_ρ::AbstractMatrix{<:Number} = _HARRIS_PRIESTER_ALT_RHO
+    alt_ρ::AbstractMatrix{<:Number} = _HARRIS_PRIESTER_ALT_RHO,
 )
     return harrispriester(datetime2julian(instant), ϕ_gd, λ, h; n = n, alt_ρ = alt_ρ)
 end
@@ -51,9 +51,8 @@ function harrispriester(
     λ::LT,
     h::HT;
     n::Int = 4,
-    alt_ρ::AbstractMatrix{DT} = _HARRIS_PRIESTER_ALT_RHO
-) where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, DT<:Number}
-
+    alt_ρ::AbstractMatrix{DT} = _HARRIS_PRIESTER_ALT_RHO,
+) where {JT <: Number, PT <: Number, LT <: Number, HT <: Number, DT <: Number}
     @assert 2 <= n <= 6 "The cosine exponent must be between 2 and 6."
 
     RT = promote_type(JT, PT, LT, HT, DT)
@@ -62,7 +61,11 @@ function harrispriester(
     max_alt = alt_ρ[end, 1]
 
     if h < min_alt
-        throw(ArgumentError("The altitude is lower than the minimum altitude in the density profile."))
+        throw(
+            ArgumentError(
+                "The altitude is lower than the minimum altitude in the density profile."
+            ),
+        )
     elseif h > max_alt
         return RT(0)
     end

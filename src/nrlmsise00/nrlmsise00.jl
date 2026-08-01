@@ -166,7 +166,7 @@ function nrlmsise00(
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, AbstractMatrix} = nothing,
     verbose::Val{verbosity} = Val(true),
-) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, verbosity}
+) where {JT <: Number, HT <: Number, PT <: Number, LT <: Number, verbosity}
 
     # Fetch the space indices.
     #
@@ -210,7 +210,7 @@ function nrlmsise00(
         ap;
         flags = flags,
         include_anomalous_oxygen = include_anomalous_oxygen,
-        P = P
+        P = P,
     )
 end
 
@@ -224,7 +224,7 @@ function nrlmsise00(
     ap::Union{Number, AbstractVector};
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, AbstractMatrix} = nothing
+    P::Union{Nothing, AbstractMatrix} = nothing,
 )
     return nrlmsise00(
         datetime2julian(instant),
@@ -236,7 +236,7 @@ function nrlmsise00(
         ap;
         flags = flags,
         include_anomalous_oxygen = include_anomalous_oxygen,
-        P = P
+        P = P,
     )
 end
 
@@ -250,9 +250,16 @@ function nrlmsise00(
     ap::T_AP;
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, AbstractMatrix} = nothing
-) where {JT<:Number, HT<:Number, PT<:Number, LT<:Number, FT<:Number, FT2<:Number, T_AP<:Union{Number, AbstractVector}}
-
+    P::Union{Nothing, AbstractMatrix} = nothing,
+) where {
+    JT <: Number,
+    HT <: Number,
+    PT <: Number,
+    LT <: Number,
+    FT <: Number,
+    FT2 <: Number,
+    T_AP <: Union{Number, AbstractVector},
+}
     RT = promote_type(JT, HT, PT, LT, FT, FT2)
 
     # == Compute Auxiliary Variables =======================================================
@@ -272,10 +279,10 @@ function nrlmsise00(
     # Equation of Time. However, the online version of NRLMSISE-00 does not use this.
     lst = Δds / 3600 + λ * 12 / π
 
-    df  = F10  - F10ₐ
+    df  = F10 - F10ₐ
     dfa = F10ₐ - 150
 
-    stloc,  ctloc  = sincos(1 * _HOUR_TO_RAD * lst)
+    stloc, ctloc   = sincos(1 * _HOUR_TO_RAD * lst)
     s2tloc, c2tloc = sincos(2 * _HOUR_TO_RAD * lst)
     s3tloc, c3tloc = sincos(3 * _HOUR_TO_RAD * lst)
 
@@ -336,13 +343,11 @@ function nrlmsise00(
         0,
         0,
         0,
-        0
+        0,
     )
 
     # Call the NRLMSISE-00 model.
-    _, nrlmsise00_out = include_anomalous_oxygen ?
-        _gtd7d(nrlmsise00d) :
-        _gtd7(nrlmsise00d)
+    _, nrlmsise00_out = include_anomalous_oxygen ? _gtd7d(nrlmsise00d) : _gtd7(nrlmsise00d)
 
     return nrlmsise00_out
 end
@@ -386,8 +391,17 @@ function _densm(
     tgn2::NTuple{2, TGT},
     tn3::NTuple{5, TNT2},
     tgn3::NTuple{2, TGT2},
-) where {HT<:Number, DT<:Number, XT<:Number, GT<:Number, RLT<:Number, TNT<:Number, TGT<:Number, TNT2<:Number, TGT2<:Number}
-
+) where {
+    HT <: Number,
+    DT <: Number,
+    XT <: Number,
+    GT <: Number,
+    RLT <: Number,
+    TNT <: Number,
+    TGT <: Number,
+    TNT2 <: Number,
+    TGT2 <: Number,
+}
     RT = promote_type(HT, DT, XT, GT, RLT, TNT, TGT, TNT2, TGT2)
 
     # == Initialization of Variables =======================================================
@@ -416,7 +430,7 @@ function _densm(
     end
 
     ∂²y₁ = -tgn2[begin] / (t1 * t1) * zgdif
-    ∂²yₙ = -tgn2[end]   / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
+    ∂²yₙ = -tgn2[end] / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
 
     # Calculate spline coefficients.
     ∂²y = _spline_∂²(xs2, ys2, RT(∂²y₁), RT(∂²yₙ))
@@ -436,7 +450,7 @@ function _densm(
         γ = xm * g_h * zgdif / RT(_RGAS)
 
         # Integrate temperature profile.
-        expl = min(γ * _spline_∫(xs2, ys2, ∂²y, x), RT(50));
+        expl = min(γ * _spline_∫(xs2, ys2, ∂²y, x), RT(50))
 
         # Density at altitude.
         density *= (t1 / tz) * exp(-expl)
@@ -471,7 +485,7 @@ function _densm(
     end
 
     ∂²y₁ = -tgn3[begin] / (t1 * t1) * zgdif
-    ∂²yₙ = -tgn3[end]   / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
+    ∂²yₙ = -tgn3[end] / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
 
     # Calculate spline coefficients.
     ∂²y = _spline_∂²(xs3, ys3, RT(∂²y₁), RT(∂²yₙ))
@@ -486,10 +500,10 @@ function _densm(
         g_h = g_lat / (1 + z1 / r_lat)^2
 
         # Calculate tropospheric / stratosphere density.
-        γ = xm * g_h * zgdif / RT(_RGAS);
+        γ = xm * g_h * zgdif / RT(_RGAS)
 
         # Integrate temperature profile.
-        expl = min(γ * _spline_∫(xs3, ys3, ∂²y, x) , RT(50))
+        expl = min(γ * _spline_∫(xs3, ys3, ∂²y, x), RT(50))
 
         # Density at altitude.
         density *= (t1 / tz) * exp(-expl)
@@ -542,22 +556,21 @@ function _densu(
     g_lat::GLT,
     r_lat::RLT,
     tn1::NTuple{5, TNT},
-    tgn1::NTuple{2, TGT}
+    tgn1::NTuple{2, TGT},
 ) where {
-    HT<:Number,
-    DT<:Number,
-    TinfT<:Number,
-    TT<:Number,
-    XT<:Number,
-    AT<:Number,
-    ZT<:Number,
-    ST<:Number,
-    GLT<:Number,
-    RLT<:Number,
-    TNT<:Number,
-    TGT<:Number
+    HT <: Number,
+    DT <: Number,
+    TinfT <: Number,
+    TT <: Number,
+    XT <: Number,
+    AT <: Number,
+    ZT <: Number,
+    ST <: Number,
+    GLT <: Number,
+    RLT <: Number,
+    TNT <: Number,
+    TGT <: Number,
 }
-
     RT = promote_type(HT, DT, TinfT, TT, XT, AT, ZT, ST, GLT, RLT, TNT, TGT)
 
     # Promote the temperature tuples so that every `@reset` below keeps them homogeneous.
@@ -591,14 +604,14 @@ function _densu(
 
         @reset tgn1[begin] = RT(dta)
         @reset tn1[begin]  = RT(ta)
-        z  = (h > _ZN1[end]) ? h : _ZN1[end]
-        z1 = RT(_ZN1[begin])
-        z2 = RT(_ZN1[end])
-        t1 = tn1[begin]
-        t2 = tn1[end]
+        z                  = (h > _ZN1[end]) ? h : _ZN1[end]
+        z1                 = RT(_ZN1[begin])
+        z2                 = RT(_ZN1[end])
+        t1                 = tn1[begin]
+        t2                 = tn1[end]
 
         # Geopotential difference from z1.
-        zg    = RT(_ζ(r_lat,  z, z1))
+        zg    = RT(_ζ(r_lat, z, z1))
         zgdif = RT(_ζ(r_lat, z2, z1))
 
         # Set up spline nodes.
@@ -609,7 +622,7 @@ function _densu(
 
         # End node derivatives.
         ∂²y₁ = -tgn1[begin] / (t1 * t1) * zgdif
-        ∂²yₙ = -tgn1[end]   / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
+        ∂²yₙ = -tgn1[end] / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
 
         # Compute spline coefficients.
         @reset ∂²y = _spline_∂²(xs, ys, ∂²y₁, ∂²yₙ)
@@ -674,7 +687,9 @@ structure `nrlmsise00`.
 - `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
 - `T`: Result of `G(L)`.
 """
-function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) where {T<:Number, V<:Number}
+function _globe7(
+    nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}
+) where {T <: Number, V <: Number}
     # == Unpack NRLMSISE00 Structure =======================================================
 
     ap     = nrlmsise00d.ap
@@ -725,14 +740,18 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
 
     # == F10.7 Effect ======================================================================
 
-    t₁ = p[20] * df *(1 + p[60] * dfa) + p[21] * df^2 + p[22] * dfa + p[30] * dfa^2
+    t₁ = p[20] * df * (1 + p[60] * dfa) + p[21] * df^2 + p[22] * dfa + p[30] * dfa^2
     f1 = 1 + (p[48] * dfa + p[20] * df + p[21] * df^2) * flags.F10_Mean
     f2 = 1 + (p[50] * dfa + p[20] * df + p[21] * df^2) * flags.F10_Mean
 
     # == Time Independent ==================================================================
 
-    t₂ = p[2]  * plg[1, 3] + p[3] * plg[1, 5] + p[23] * plg[1, 7] + p[27] * plg[1, 2] +
-         p[15] * plg[1, 3] * dfa * flags.F10_Mean
+    t₂ =
+        p[2] * plg[1, 3] +
+        p[3] * plg[1, 5] +
+        p[23] * plg[1, 7] +
+        p[27] * plg[1, 2] +
+        p[15] * plg[1, 3] * dfa * flags.F10_Mean
 
     # == Symmetrical Annual ================================================================
 
@@ -756,10 +775,11 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
         t71 = (p[12] * plg[2, 3]) * cd14 * flags.asym_annual
         t72 = (p[13] * plg[2, 3]) * cd14 * flags.asym_annual
 
-        t₇ = f2 * (
-            (p[4] * plg[2, 2] + p[5] * plg[2, 4] + p[28] * plg[2, 6] + t71) * ctloc +
-            (p[7] * plg[2, 2] + p[8] * plg[2, 4] + p[29] * plg[2, 6] + t72) * stloc
-        )
+        t₇ =
+            f2 * (
+                (p[4] * plg[2, 2] + p[5] * plg[2, 4] + p[28] * plg[2, 6] + t71) * ctloc +
+                (p[7] * plg[2, 2] + p[8] * plg[2, 4] + p[29] * plg[2, 6] + t72) * stloc
+            )
     end
 
     # == Semidiurnal =======================================================================
@@ -768,10 +788,11 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
         t81 = (p[24] * plg[3, 4] + p[36] * plg[3, 6]) * cd14 * flags.asym_annual
         t82 = (p[34] * plg[3, 4] + p[37] * plg[3, 6]) * cd14 * flags.asym_annual
 
-        t₈ = f2 * (
-            (p[6] * plg[3, 3] + p[42] * plg[3, 5] + t81) * c2tloc +
-            (p[9] * plg[3, 3] + p[43] * plg[3, 5] + t82) * s2tloc
-        )
+        t₈ =
+            f2 * (
+                (p[6] * plg[3, 3] + p[42] * plg[3, 5] + t81) * c2tloc +
+                (p[9] * plg[3, 3] + p[43] * plg[3, 5] + t82) * s2tloc
+            )
     end
 
     # == Terdiurnal ========================================================================
@@ -797,11 +818,16 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
             apt = _sg₀(exp1, ap, abs(p25), p[26])
             aux = cos(_HOUR_TO_RAD * (tloc - p[132]))
 
-            t₉ = apt * (
-                (p[51] + p[97] * plg[1, 3] + p[55] * plg[1, 5]) +
-                (p[126] * plg[1, 2] + p[127] * plg[1, 4] + p[128] * plg[1, 6]) * cd14 * flags.asym_annual +
-                (p[129] * plg[2, 2] + p[130] * plg[2, 4] + p[131] * plg[2, 6]) * aux * flags.diurnal
-            )
+            t₉ =
+                apt * (
+                    (p[51] + p[97] * plg[1, 3] + p[55] * plg[1, 5]) +
+                    (p[126] * plg[1, 2] + p[127] * plg[1, 4] + p[128] * plg[1, 6]) *
+                    cd14 *
+                    flags.asym_annual +
+                    (p[129] * plg[2, 2] + p[130] * plg[2, 4] + p[131] * plg[2, 6]) *
+                    aux *
+                    flags.diurnal
+                )
         end
 
     else
@@ -818,11 +844,16 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
         if flags.daily_ap
             aux = cos(_HOUR_TO_RAD * (tloc - p[125]))
 
-            t₉ = apdf * (
-                (p[33] + p[46] * plg[1, 3] + p[35] * plg[1, 5]) +
-                (p[101] * plg[1, 2] + p[102] * plg[1, 4] + p[103] * plg[1, 6]) * cd14 * flags.asym_annual +
-                (p[122] * plg[2, 2] + p[123] * plg[2, 4] + p[124] * plg[2, 6]) * aux * flags.diurnal
-            )
+            t₉ =
+                apdf * (
+                    (p[33] + p[46] * plg[1, 3] + p[35] * plg[1, 5]) +
+                    (p[101] * plg[1, 2] + p[102] * plg[1, 4] + p[103] * plg[1, 6]) *
+                    cd14 *
+                    flags.asym_annual +
+                    (p[122] * plg[2, 2] + p[123] * plg[2, 4] + p[124] * plg[2, 6]) *
+                    aux *
+                    flags.diurnal
+                )
         end
     end
 
@@ -833,24 +864,34 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
         if flags.longitudinal
             sin_g_long, cos_g_long = sincos(_DEG_TO_RAD * λ)
 
-            k₁ = p[65]  * plg[2, 3] + p[66]  * plg[2, 5] + p[67]  * plg[2, 7] +
-                 p[104] * plg[2, 2] + p[105] * plg[2, 4] + p[106] * plg[2, 6]
+            k₁ =
+                p[65] * plg[2, 3] +
+                p[66] * plg[2, 5] +
+                p[67] * plg[2, 7] +
+                p[104] * plg[2, 2] +
+                p[105] * plg[2, 4] +
+                p[106] * plg[2, 6]
             k₂ = p[110] * plg[2, 2] + p[111] * plg[2, 4] + p[112] * plg[2, 6]
-            k₃ = p[91]  * plg[2, 3] + p[92]  * plg[2, 5] + p[93]  * plg[2, 7] +
-                 p[107] * plg[2, 2] + p[108] * plg[2, 4] + p[109] * plg[2, 6]
+            k₃ =
+                p[91] * plg[2, 3] +
+                p[92] * plg[2, 5] +
+                p[93] * plg[2, 7] +
+                p[107] * plg[2, 2] +
+                p[108] * plg[2, 4] +
+                p[109] * plg[2, 6]
             k₄ = p[113] * plg[2, 2] + p[114] * plg[2, 4] + p[115] * plg[2, 6]
 
-            t₁₁ = (1 + p[81] * dfa * flags.F10_Mean) * (
-                (k₁ + flags.asym_annual * k₂ * cd14) * cos_g_long +
-                (k₃ + flags.asym_annual * k₄ * cd14) * sin_g_long
-            )
+            t₁₁ =
+                (1 + p[81] * dfa * flags.F10_Mean) * (
+                    (k₁ + flags.asym_annual * k₂ * cd14) * cos_g_long +
+                    (k₃ + flags.asym_annual * k₄ * cd14) * sin_g_long
+                )
         end
 
         # == UT and Mixed UT, Longitude ====================================================
 
         if flags.ut_mixed_ut_long
-
-            k₁ = (1 +  p[96] * plg[1, 2]) * (1 + p[82] * dfa * flags.F10_Mean)
+            k₁ = (1 + p[96] * plg[1, 2]) * (1 + p[82] * dfa * flags.F10_Mean)
             k₂ = 1 + p[120] * plg[1, 2] * flags.asym_annual * cd14
             k₃ = p[69] * plg[1, 2] + p[70] * plg[1, 4] + p[71] * plg[1, 6]
             k₄ = 1 + p[138] * dfa * flags.F10_Mean
@@ -859,7 +900,7 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
             aux₁ = cos(_SEC_TO_RAD * (sec - p[72]))
             aux₂ = cos(_SEC_TO_RAD * (sec - p[80]) + 2 * _DEG_TO_RAD * λ)
 
-            t₁₂ =  k₁ * k₂ * k₃ * aux₁ + flags.longitudinal * k₄ * k₅ * aux₂
+            t₁₂ = k₁ * k₂ * k₃ * aux₁ + flags.longitudinal * k₄ * k₅ * aux₂
         end
 
         # == UT, Longitude Magnetic Activity ===============================================
@@ -867,31 +908,32 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
         if flags.mixed_ap_ut_long
             if ap isa AbstractVector
                 if p[52] != 0
-
-                    k₁ = p[53]  * plg[2, 3] + p[99]  * plg[2, 5] + p[68]  * plg[2, 7]
+                    k₁ = p[53] * plg[2, 3] + p[99] * plg[2, 5] + p[68] * plg[2, 7]
                     k₂ = p[134] * plg[2, 2] + p[135] * plg[2, 4] + p[136] * plg[2, 6]
-                    k₃ = p[56]  * plg[1, 2] + p[57]  * plg[1, 4] + p[58]  * plg[1, 6]
+                    k₃ = p[56] * plg[1, 2] + p[57] * plg[1, 4] + p[58] * plg[1, 6]
 
                     aux₁ = cos(_DEG_TO_RAD * (λ - p[98]))
                     aux₂ = cos(_DEG_TO_RAD * (λ - p[137]))
                     aux₃ = cos(_SEC_TO_RAD * (sec - p[59]))
 
-                    t₁₃ = apt * flags.longitudinal * (1 + p[133] * plg[1, 2]) * k₁ * aux₁ +
-                          apt * flags.longitudinal * flags.asym_annual * k₂ * cd14 * aux₂ +
-                          apt * flags.ut_mixed_ut_long * k₃ * aux₃
+                    t₁₃ =
+                        apt * flags.longitudinal * (1 + p[133] * plg[1, 2]) * k₁ * aux₁ +
+                        apt * flags.longitudinal * flags.asym_annual * k₂ * cd14 * aux₂ +
+                        apt * flags.ut_mixed_ut_long * k₃ * aux₃
                 end
             else
-                k₁ = p[61]  * plg[2, 3] + p[62]  * plg[2, 5] + p[63]  * plg[2, 7]
+                k₁ = p[61] * plg[2, 3] + p[62] * plg[2, 5] + p[63] * plg[2, 7]
                 k₂ = p[116] * plg[2, 2] + p[117] * plg[2, 4] + p[118] * plg[2, 6]
-                k₃ = p[84]  * plg[1, 2] + p[85]  * plg[1, 4] + p[86]  * plg[1, 6]
+                k₃ = p[84] * plg[1, 2] + p[85] * plg[1, 4] + p[86] * plg[1, 6]
 
                 aux₁ = cos(_DEG_TO_RAD * (λ - p[64]))
                 aux₂ = cos(_DEG_TO_RAD * (λ - p[119]))
                 aux₃ = cos(_SEC_TO_RAD * (sec - p[76]))
 
-                t₁₃ = apdf * flags.longitudinal * (1 + p[121] * plg[1,2]) * k₁ * aux₁ +
-                      apdf * flags.longitudinal * flags.asym_annual * k₂ * cd14 * aux₂ +
-                      apdf * flags.ut_mixed_ut_long * k₃ * aux₃
+                t₁₃ =
+                    apdf * flags.longitudinal * (1 + p[121] * plg[1, 2]) * k₁ * aux₁ +
+                    apdf * flags.longitudinal * flags.asym_annual * k₂ * cd14 * aux₂ +
+                    apdf * flags.ut_mixed_ut_long * k₃ * aux₃
             end
         end
     end
@@ -901,21 +943,22 @@ function _globe7(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
     @reset nrlmsise00d.apdf = T(apdf)
 
     # Parameters not used: 82, 89, 99, 139-149.
-    tinf = p[31] +
-           flags.F10_Mean            * t₁  +
-           flags.time_independent    * t₂  +
-           flags.sym_annual          * t₃  +
-           flags.sym_semiannual      * t₄  +
-           flags.asym_annual         * t₅  +
-           flags.asym_semiannual     * t₆  +
-           flags.diurnal             * t₇  +
-           flags.semidiurnal         * t₈  +
-           flags.daily_ap            * t₉  +
-           flags.all_ut_long_effects * t₁₀ +
-           flags.longitudinal        * t₁₁ +
-           flags.ut_mixed_ut_long    * t₁₂ +
-           flags.mixed_ap_ut_long    * t₁₃ +
-           flags.terdiurnal          * t₁₄
+    tinf =
+        p[31] +
+        flags.F10_Mean * t₁ +
+        flags.time_independent * t₂ +
+        flags.sym_annual * t₃ +
+        flags.sym_semiannual * t₄ +
+        flags.asym_annual * t₅ +
+        flags.asym_semiannual * t₆ +
+        flags.diurnal * t₇ +
+        flags.semidiurnal * t₈ +
+        flags.daily_ap * t₉ +
+        flags.all_ut_long_effects * t₁₀ +
+        flags.longitudinal * t₁₁ +
+        flags.ut_mixed_ut_long * t₁₂ +
+        flags.mixed_ap_ut_long * t₁₃ +
+        flags.terdiurnal * t₁₄
 
     return nrlmsise00d, tinf
 end
@@ -926,7 +969,9 @@ end
 Compute the function `G(L)` with lower atmosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00d`.
 """
-function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) where {T<:Number, V<:Number}
+function _glob7s(
+    nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}
+) where {T <: Number, V <: Number}
 
     # == Unpack NRLMSISE00 Structure =======================================================
 
@@ -983,8 +1028,13 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
 
     # == Time Independent ==================================================================
 
-    t₂ = p[2]  * plg[1, 3] + p[3]  * plg[1, 5] + p[23] * plg[1, 7] + p[27] * plg[1, 2] +
-         p[15] * plg[1, 4] + p[60] * plg[1, 6]
+    t₂ =
+        p[2] * plg[1, 3] +
+        p[3] * plg[1, 5] +
+        p[23] * plg[1, 7] +
+        p[27] * plg[1, 2] +
+        p[15] * plg[1, 4] +
+        p[60] * plg[1, 6]
 
     # == Symmetrical Annual ================================================================
 
@@ -1007,8 +1057,7 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
     if flags.diurnal
         t71 = p[12] * plg[2, 3] * cd14 * flags.asym_annual
         t72 = p[13] * plg[2, 3] * cd14 * flags.asym_annual
-        t₇  = (p[4] * plg[2, 2] + p[5] * plg[2, 4] + t71) * ctloc +
-              (p[7] * plg[2, 2] + p[8] * plg[2, 4] + t72) * stloc
+        t₇  = (p[4] * plg[2, 2] + p[5] * plg[2, 4] + t71) * ctloc + (p[7] * plg[2, 2] + p[8] * plg[2, 4] + t72) * stloc
     end
 
     # == Semidiurnal =======================================================================
@@ -1016,8 +1065,7 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
     if flags.semidiurnal
         t81 = (p[24] * plg[3, 4] + p[36] * plg[3, 6]) * cd14 * flags.asym_annual
         t82 = (p[34] * plg[3, 4] + p[37] * plg[3, 6]) * cd14 * flags.asym_annual
-        t₈  = (p[6] * plg[3, 3] + p[42] * plg[3, 5] + t81) * c2tloc +
-              (p[9] * plg[3, 3] + p[43] * plg[3, 5] + t82) * s2tloc
+        t₈  = (p[6] * plg[3, 3] + p[42] * plg[3, 5] + t81) * c2tloc + (p[9] * plg[3, 3] + p[43] * plg[3, 5] + t82) * s2tloc
     end
 
     # == Terdiurnal ========================================================================
@@ -1029,7 +1077,7 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
     # == Magnetic Activity =================================================================
 
     if flags.daily_ap
-            t₉ = p[51] * apt + p[97] * plg[1, 3] * apt * flags.time_independent
+        t₉ = p[51] * apt + p[97] * plg[1, 3] * apt * flags.time_independent
         if ap isa AbstractVector
         else
             t₉ = apdf * (p[33] + p[46] * plg[1, 3] * flags.time_independent)
@@ -1041,34 +1089,48 @@ function _glob7s(nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}) wher
     if !(!flags.all_ut_long_effects || !flags.longitudinal || (λ <= -1000.0))
         sin_g_long, cos_g_long = sincos(_DEG_TO_RAD * λ)
 
-        k₁ = p[65] * plg[2, 3] + p[66] * plg[2, 5] + p[67] * plg[2, 7] + p[75] * plg[2, 2] +
-             p[76] * plg[2, 4] + p[77] * plg[2, 6]
-        k₂ = p[91] * plg[2, 3] + p[92] * plg[2, 5] + p[93] * plg[2, 7] + p[78] * plg[2, 2] +
-             p[79] * plg[2, 4] + p[80] * plg[2, 6]
+        k₁ =
+            p[65] * plg[2, 3] +
+            p[66] * plg[2, 5] +
+            p[67] * plg[2, 7] +
+            p[75] * plg[2, 2] +
+            p[76] * plg[2, 4] +
+            p[77] * plg[2, 6]
+        k₂ =
+            p[91] * plg[2, 3] +
+            p[92] * plg[2, 5] +
+            p[93] * plg[2, 7] +
+            p[78] * plg[2, 2] +
+            p[79] * plg[2, 4] +
+            p[80] * plg[2, 6]
 
-        t₁₁ = (k₁ * cos_g_long + k₂ * sin_g_long) * (
-            1 + plg[1,2] * (
-                p[81] * cos(1 * _DAY_TO_RAD * (doy - p[82])) * flags.asym_annual +
-                p[86] * cos(2 * _DAY_TO_RAD * (doy - p[87])) * flags.asym_semiannual
-            ) + p[84] * cos(1 * _DAY_TO_RAD * (doy - p[85])) * flags.sym_annual +
+        t₁₁ =
+            (k₁ * cos_g_long + k₂ * sin_g_long) * (
+                1 +
+                plg[1, 2] * (
+                    p[81] * cos(1 * _DAY_TO_RAD * (doy - p[82])) * flags.asym_annual +
+                    p[86] * cos(2 * _DAY_TO_RAD * (doy - p[87])) * flags.asym_semiannual
+                ) +
+                p[84] * cos(1 * _DAY_TO_RAD * (doy - p[85])) * flags.sym_annual +
                 p[88] * cos(2 * _DAY_TO_RAD * (doy - p[89])) * flags.sym_semiannual
-        )
+            )
     end
 
-    tinf = flags.F10_Mean            * t₁  +
-           flags.time_independent    * t₂  +
-           flags.sym_annual          * t₃  +
-           flags.sym_semiannual      * t₄  +
-           flags.asym_annual         * t₅  +
-           flags.asym_semiannual     * t₆  +
-           flags.diurnal             * t₇  +
-           flags.semidiurnal         * t₈  +
-           flags.daily_ap            * t₉  +
-           flags.all_ut_long_effects * t₁₀ +
-           flags.longitudinal        * t₁₁ +
-           flags.ut_mixed_ut_long    * t₁₂ +
-           flags.mixed_ap_ut_long    * t₁₃ +
-           flags.terdiurnal          * t₁₄
+    tinf =
+        flags.F10_Mean * t₁ +
+        flags.time_independent * t₂ +
+        flags.sym_annual * t₃ +
+        flags.sym_semiannual * t₄ +
+        flags.asym_annual * t₅ +
+        flags.asym_semiannual * t₆ +
+        flags.diurnal * t₇ +
+        flags.semidiurnal * t₈ +
+        flags.daily_ap * t₉ +
+        flags.all_ut_long_effects * t₁₀ +
+        flags.longitudinal * t₁₁ +
+        flags.ut_mixed_ut_long * t₁₂ +
+        flags.mixed_ap_ut_long * t₁₃ +
+        flags.terdiurnal * t₁₄
 
     return tinf
 end
@@ -1084,7 +1146,7 @@ Compute the temperatures and densities using the information inside the structur
 - `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
 - `Nrlmsise00Output{T}`: Structure with the output information.
 """
-function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
+function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == Constants =========================================================================
 
@@ -1165,9 +1227,12 @@ function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     @reset meso_tn2[4]  = T(pma_3[1] * pavgm[3] / (1 - flags.all_tn2_var * flags.all_tn3_var * _glob7s(nrlmsise00d, pma_3)))
     @reset meso_tn3[1]  = meso_tn2[4]
 
-    @reset meso_tgn2[2] = T(pavgm[9] * pma_10[1] * (
-        1 + flags.all_tn2_var * flags.all_tn3_var * _glob7s(nrlmsise00d, pma_10)
-    ) * meso_tn2[4]^2 / (pma_3[1] * pavgm[3])^2)
+    @reset meso_tgn2[2] = T(
+        pavgm[9] *
+        pma_10[1] *
+        (1 + flags.all_tn2_var * flags.all_tn3_var * _glob7s(nrlmsise00d, pma_10)) *
+        meso_tn2[4]^2 / (pma_3[1] * pavgm[3])^2,
+    )
 
     # == Lower Stratosphere and Troposphere (below `zn3[1]`) ===============================
 
@@ -1177,9 +1242,7 @@ function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         @reset meso_tn3[3]  = T(pma_5[1] * pavgm[5] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_5)))
         @reset meso_tn3[4]  = T(pma_6[1] * pavgm[6] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_6)))
         @reset meso_tn3[5]  = T(pma_7[1] * pavgm[7] / (1 - flags.all_tn3_var * _glob7s(nrlmsise00d, pma_7)))
-        @reset meso_tgn3[2] = T(pma_8[1] * pavgm[8] * (
-            1 + flags.all_tn3_var * _glob7s(nrlmsise00d, pma_8)
-        ) * meso_tn3[5] * meso_tn3[5] / (pma_7[1] * pavgm[7])^2)
+        @reset meso_tgn3[2] = T(pma_8[1] * pavgm[8] * (1 + flags.all_tn3_var * _glob7s(nrlmsise00d, pma_8)) * meso_tn3[5] * meso_tn3[5] / (pma_7[1] * pavgm[7])^2)
     end
 
     # == Linear Transition to Full Mixing Below `_ZN2[1]` ==================================
@@ -1192,15 +1255,7 @@ function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     dmr = N2_number_density / dm28m - 1
 
     N2_number_density = _densm(
-        h,
-        dm28m,
-        xmm,
-        g_lat,
-        r_lat,
-        meso_tn2,
-        meso_tgn2,
-        meso_tn3,
-        meso_tgn3
+        h, dm28m, xmm, g_lat, r_lat, meso_tn2, meso_tgn2, meso_tn3, meso_tgn3
     )
 
     N2_number_density *= 1 + dmr * dmc
@@ -1235,15 +1290,16 @@ function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # == Total Mass Density ================================================================
 
-    total_density = 1.66e-24 * (
-        4  * He_number_density +
-        16 * O_number_density  +
-        28 * N2_number_density +
-        32 * O2_number_density +
-        40 * Ar_number_density +
-        1  * H_number_density  +
-        14 * N_number_density
-    )
+    total_density =
+        1.66e-24 * (
+            4 * He_number_density +
+            16 * O_number_density +
+            28 * N2_number_density +
+            32 * O2_number_density +
+            40 * Ar_number_density +
+            1 * H_number_density +
+            14 * N_number_density
+        )
 
     # Convert the units to SI.
     total_density /= 1000
@@ -1251,15 +1307,7 @@ function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == Temperature at Selected Altitude ==================================================
 
     temperature = _densm(
-        h,
-        T(1),
-        T(0),
-        g_lat,
-        r_lat,
-        meso_tn2,
-        meso_tgn2,
-        meso_tn3,
-        meso_tgn3
+        h, T(1), T(0), g_lat, r_lat, meso_tn2, meso_tgn2, meso_tn3, meso_tgn3
     )
 
     # Create output structure and return.
@@ -1274,7 +1322,7 @@ function _gtd7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         O2_number_density,
         H_number_density,
         He_number_density,
-        Ar_number_density
+        Ar_number_density,
     )
 
     return nrlmsise00d, nrlmsise00_out
@@ -1291,21 +1339,22 @@ Compute the temperatures and densities using the information inside the structur
 - `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
 - `Nrlmsise00Output{T}`: Structure with the output information.
 """
-function _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
+function _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
     # Call `_gtd7` to compute the NRLMSISE-00 outputs.
     nrlmsise00d, out = _gtd7(nrlmsise00d)
 
     # Update the computation of the total mass density.
-    total_density = 1.66e-24 * (
-        4  * out.He_number_density +
-        16 * out.O_number_density  +
-        28 * out.N2_number_density +
-        32 * out.O2_number_density +
-        40 * out.Ar_number_density +
-        1  * out.H_number_density  +
-        14 * out.N_number_density  +
-        16 * out.aO_number_density
-    )
+    total_density =
+        1.66e-24 * (
+            4 * out.He_number_density +
+            16 * out.O_number_density +
+            28 * out.N2_number_density +
+            32 * out.O2_number_density +
+            40 * out.Ar_number_density +
+            1 * out.H_number_density +
+            14 * out.N_number_density +
+            16 * out.aO_number_density
+        )
 
     # Convert the unit to SI.
     total_density /= 1000
@@ -1322,7 +1371,7 @@ function _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         out.O2_number_density,
         out.H_number_density,
         out.He_number_density,
-        out.Ar_number_density
+        out.Ar_number_density,
     )
 
     return nrlmsise00d, nrlmsise00_out
@@ -1340,7 +1389,7 @@ Notice that the anomalous oxygen is **not** included in the total density.
 - `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
 - `Nrlmsise00Output{T}`: Structure with the output information.
 """
-function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
+function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == Constants =========================================================================
 
@@ -1392,7 +1441,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == Initialization of Variables =======================================================
 
     temperature = T(0)
-    meso_tn1  = ntuple(_ -> T(0), 5)
+    meso_tn1 = ntuple(_ -> T(0), 5)
     meso_tgn1 = ntuple(_ -> T(0), 2)
 
     # == Tinf variations not important below `za` or `zn1[1]` ==============================
@@ -1417,7 +1466,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_TLB)
     tlb = ptm[2] * (1 + flags.all_tlb_var * G_L) * pd_TLB[1]
-    s   = g0 / (tinf - tlb)
+    s = g0 / (tinf - tlb)
 
     # Lower thermosphere temperature variations not significant for density above 300 km.
 
@@ -1426,9 +1475,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         @reset meso_tn1[3]  = T(ptm[3] * ptl_2[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_2)))
         @reset meso_tn1[4]  = T(ptm[8] * ptl_3[1] / (1 - flags.all_tn1_var * _glob7s(nrlmsise00d, ptl_3)))
         @reset meso_tn1[5]  = T(ptm[5] * ptl_4[1] / (1 - flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, ptl_4)))
-        @reset meso_tgn1[2] = T(ptm[9] * pma_9[1] * (
-            1 + flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, pma_9)
-        ) * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2)
+        @reset meso_tgn1[2] = T(ptm[9] * pma_9[1] * (1 + flags.all_tn1_var * flags.all_tn2_var * _glob7s(nrlmsise00d, pma_9)) * meso_tn1[5]^2 / (ptm[5] * ptl_4[1])^2)
     else
         @reset meso_tn1[2]  = T(ptm[7] * ptl_1[1])
         @reset meso_tn1[3]  = T(ptm[3] * ptl_2[1])
@@ -1443,9 +1490,14 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # == Variation of Turbopause Height ====================================================
 
-    zhf = pdl_2[25] * (
-        1 + flags.asym_annual * pdl_1[25] * sin(_DEG_TO_RAD * ϕ_gd) * cos(_DAY_TO_RAD * (doy - pt[14]))
-    )
+    zhf =
+        pdl_2[25] * (
+            1 +
+            flags.asym_annual *
+            pdl_1[25] *
+            sin(_DEG_TO_RAD * ϕ_gd) *
+            cos(_DAY_TO_RAD * (doy - pt[14]))
+        )
     xmm = pdm_3[5]
 
     # == N₂ Density ========================================================================
@@ -1455,18 +1507,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # Diffusive density at desired altitude.
     N2_number_density, meso_tn1, meso_tgn1 = _densu(
-        h,
-        db28,
-        tinf,
-        tlb,
-        T(28),
-        α[3],
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        h, db28, tinf, tlb, T(28), α[3], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     # Turbopause.
@@ -1476,35 +1517,13 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # Mixed density at Zlb.
     b28, meso_tn1, meso_tgn1 = _densu(
-        zh28,
-        db28,
-        tinf,
-        tlb,
-        xmd,
-        α[3] - 1,
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        zh28, db28, tinf, tlb, xmd, α[3] - 1, ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     if flags.departures_from_eq && (h <= altl[3])
         # Mixed density at desired altitude.
         dm28, meso_tn1, meso_tgn1 = _densu(
-            h,
-            b28,
-            tinf,
-            tlb,
-            xmm,
-            α[3],
-            ptm[6],
-            s,
-            g_lat,
-            r_lat,
-            meso_tn1,
-            meso_tgn1
+            h, b28, tinf, tlb, xmm, α[3], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
         )
 
         # Net density at desired altitude.
@@ -1522,18 +1541,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # Diffusive density at desired altitude.
     He_number_density, meso_tn1, meso_tgn1 = _densu(
-        h,
-        db04,
-        tinf,
-        tlb,
-        T(4),
-        α[1],
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        h, db04, tinf, tlb, T(4), α[1], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     if flags.departures_from_eq && (h < altl[1])
@@ -1553,23 +1561,12 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
             g_lat,
             r_lat,
             meso_tn1,
-            meso_tgn1
+            meso_tgn1,
         )
 
         # Mixed density at desired altitude.
         dm04, meso_tn1, meso_tgn1 = _densu(
-            h,
-            b04,
-            tinf,
-            tlb,
-            xmm,
-            T(0),
-            ptm[6],
-            s,
-            g_lat,
-            r_lat,
-            meso_tn1,
-            meso_tgn1
+            h, b04, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
         )
 
         zhm04 = zhm28
@@ -1597,18 +1594,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # Diffusive density at desired altitude.
     O_number_density, meso_tn1, meso_tgn1 = _densu(
-        h,
-        db16,
-        tinf,
-        tlb,
-        T(16),
-        α[2],
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        h, db16, tinf, tlb, T(16), α[2], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     if flags.departures_from_eq && (h <= altl[2])
@@ -1628,33 +1614,22 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
             g_lat,
             r_lat,
             meso_tn1,
-            meso_tgn1
+            meso_tgn1,
         )
 
         # Mixed density at desired altitude.
         dm16, meso_tn1, meso_tgn1 = _densu(
-            h,
-            b16,
-            tinf,
-            tlb,
-            xmm,
-            T(0),
-            ptm[6],
-            s,
-            g_lat,
-            r_lat,
-            meso_tn1,
-            meso_tgn1
+            h, b16, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
         )
 
         zhm16 = zhm28
 
         # Net density at desired altitude.
-        O_number_density  = _dnet(O_number_density, dm16, zhm16, xmm, T(16))
-        rl     = pdm_2[2] * pdl_2[17] * (1 + flags.F10_Mean * pdl_1[24] * dfa)
-        hc16   = pdm_2[6] * pdl_2[4]
-        zc16   = pdm_2[5] * pdl_2[3]
-        hc216  = pdm_2[6] * pdl_2[5]
+        O_number_density = _dnet(O_number_density, dm16, zhm16, xmm, T(16))
+        rl = pdm_2[2] * pdl_2[17] * (1 + flags.F10_Mean * pdl_1[24] * dfa)
+        hc16 = pdm_2[6] * pdl_2[4]
+        zc16 = pdm_2[5] * pdl_2[3]
+        hc216 = pdm_2[6] * pdl_2[5]
         O_number_density *= _ccor2(h, rl, hc16, zc16, hc216)
 
         # Chemistry correction.
@@ -1677,18 +1652,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # Diffusive density at desired altitude.
     O2_number_density, meso_tn1, meso_tgn1 = _densu(
-        h,
-        db32,
-        tinf,
-        tlb,
-        T(32),
-        α[4],
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        h, db32, tinf, tlb, T(32), α[4], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     if flags.departures_from_eq
@@ -1709,23 +1673,12 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
                 g_lat,
                 r_lat,
                 meso_tn1,
-                meso_tgn1
+                meso_tgn1,
             )
 
             # Mixed density at desired altitude.
             dm32, meso_tn1, meso_tgn1 = _densu(
-                h,
-                b32,
-                tinf,
-                tlb,
-                xmm,
-                T(0),
-                ptm[6],
-                s,
-                g_lat,
-                r_lat,
-                meso_tn1,
-                meso_tgn1
+                h, b32, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
             )
 
             zhm32 = zhm28
@@ -1734,9 +1687,9 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
             O2_number_density = _dnet(O2_number_density, dm32, zhm32, xmm, T(32))
 
             # Correction to specified mixing ratio at ground.
-            rl      = log(b28 * pdm_4[2] / b32)
-            hc32    = pdm_4[6] * pdl_2[8]
-            zc32    = pdm_4[5] * pdl_2[7]
+            rl = log(b28 * pdm_4[2] / b32)
+            hc32 = pdm_4[6] * pdl_2[8]
+            zc32 = pdm_4[5] * pdl_2[7]
             O2_number_density *= _ccor(h, rl, hc32, zc32)
         end
 
@@ -1760,19 +1713,8 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     db40 = pdm_5[1] * exp(g40) * pd_Ar[1]
 
     # Diffusive density at desired altitude.
-    Ar_number_density, meso_tn1, meso_tgn1= _densu(
-        h,
-        db40,
-        tinf,
-        tlb,
-        T(40),
-        α[5],
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+    Ar_number_density, meso_tn1, meso_tgn1 = _densu(
+        h, db40, tinf, tlb, T(40), α[5], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     if flags.departures_from_eq && (h <= altl[5])
@@ -1792,23 +1734,12 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
             g_lat,
             r_lat,
             meso_tn1,
-            meso_tgn1
+            meso_tgn1,
         )
 
         # Mixed density at desired altitude.
         dm40, meso_tn1, meso_tgn1 = _densu(
-            h,
-            b40,
-            tinf,
-            tlb,
-            xmm,
-            T(0),
-            ptm[6],
-            s,
-            g_lat,
-            r_lat,
-            meso_tn1,
-            meso_tgn1
+            h, b40, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
         )
 
         zhm40 = zhm28
@@ -1836,18 +1767,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # Diffusive density at desired altitude.
     H_number_density, meso_tn1, meso_tgn1 = _densu(
-        h,
-        db01,
-        tinf,
-        tlb,
-        T(1),
-        α[7],
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        h, db01, tinf, tlb, T(1), α[7], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     if flags.departures_from_eq && (h <= altl[7])
@@ -1867,23 +1787,12 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
             g_lat,
             r_lat,
             meso_tn1,
-            meso_tgn1
+            meso_tgn1,
         )
 
         # Mixed density at desired altitude.
         dm01, meso_tn1, meso_tgn1 = _densu(
-            h,
-            b01,
-            tinf,
-            tlb,
-            xmm,
-            T(0),
-            ptm[6],
-            s,
-            g_lat,
-            r_lat,
-            meso_tn1,
-            meso_tgn1
+            h, b01, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
         )
 
         zhm01 = zhm28
@@ -1892,9 +1801,9 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         H_number_density = _dnet(H_number_density, dm01, zhm01, xmm, T(1))
 
         # Correction to specified mixing ratio at ground.
-        rl     = log(b28 * pdm_6[2] * abs(pdl_2[18]) / b01)
-        hc01   = pdm_6[6] * pdl_2[12]
-        zc01   = pdm_6[5] * pdl_2[11]
+        rl = log(b28 * pdm_6[2] * abs(pdl_2[18]) / b01)
+        hc01 = pdm_6[6] * pdl_2[12]
+        zc01 = pdm_6[5] * pdl_2[11]
         H_number_density *= _ccor(h, rl, hc01, zc01)
 
         # Chemistry correction.
@@ -1917,18 +1826,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # Diffusive density at desired altitude.
     N_number_density, meso_tn1, meso_tgn1 = _densu(
-        h,
-        db14,
-        tinf,
-        tlb,
-        T(14),
-        α[8],
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        h, db14, tinf, tlb, T(14), α[8], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     if flags.departures_from_eq && (h <= altl[8])
@@ -1948,23 +1846,12 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
             g_lat,
             r_lat,
             meso_tn1,
-            meso_tgn1
+            meso_tgn1,
         )
 
         #  Mixed density at desired altitude.
         dm14, meso_tn1, meso_tgn1 = _densu(
-            h,
-            b14,
-            tinf,
-            tlb,
-            xmm,
-            T(0),
-            ptm[6],
-            s,
-            g_lat,
-            r_lat,
-            meso_tn1,
-            meso_tgn1
+            h, b14, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
         )
 
         zhm14 = zhm28
@@ -1973,9 +1860,9 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         N_number_density = _dnet(N_number_density, dm14, zhm14, xmm, T(14))
 
         # Correction to specified mixing ratio at ground.
-        rl     = log(b28 * pdm_7[2] * abs(pdl_1[3]) / b14)
-        hc14   = pdm_7[6] * pdl_1[2]
-        zc14   = pdm_7[5] * pdl_1[1]
+        rl = log(b28 * pdm_7[2] * abs(pdl_1[3]) / b14)
+        hc14 = pdm_7[6] * pdl_1[2]
+        zc14 = pdm_7[5] * pdl_1[1]
         N_number_density *= _ccor(h, rl, hc14, zc14)
 
         # Chemistry correction.
@@ -1990,23 +1877,12 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
     # == Anomalous O Density ===============================================================
 
     nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_hotO)
-    g16h  = flags.all_nlb_var * G_L
+    g16h = flags.all_nlb_var * G_L
     db16h = pdm_8[1] * exp(g16h) * pd_hotO[1]
-    tho   = pdm_8[10] * pdl_1[7]
+    tho = pdm_8[10] * pdl_1[7]
 
     aO_number_density, meso_tn1, meso_tgn1 = _densu(
-        h,
-        db16h,
-        tho,
-        tho,
-        T(16),
-        α[9],
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        h, db16h, tho, tho, T(16), α[9], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     zsht = pdm_8[6]
@@ -2017,31 +1893,21 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
 
     # == Total Mass Density ================================================================
 
-    total_density = 1.66e-24 * (
-        4  * He_number_density +
-        16 * O_number_density  +
-        28 * N2_number_density +
-        32 * O2_number_density +
-        40 * Ar_number_density +
-        1  * H_number_density  +
-        14 * N_number_density
-    )
+    total_density =
+        1.66e-24 * (
+            4 * He_number_density +
+            16 * O_number_density +
+            28 * N2_number_density +
+            32 * O2_number_density +
+            40 * Ar_number_density +
+            1 * H_number_density +
+            14 * N_number_density
+        )
 
     # == Temperature at Selected Altitude ==================================================
 
     temperature, meso_tn1, meso_tgn1 = _densu(
-        abs(h),
-        T(1),
-        tinf,
-        tlb,
-        T(0),
-        T(0),
-        ptm[6],
-        s,
-        g_lat,
-        r_lat,
-        meso_tn1,
-        meso_tgn1
+        abs(h), T(1), tinf, tlb, T(0), T(0), ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
     # == Output ============================================================================
@@ -2074,7 +1940,7 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where T<:Number
         O2_number_density,
         H_number_density,
         He_number_density,
-        Ar_number_density
+        Ar_number_density,
     )
 
     return nrlmsise00d, nrlmsise00_out

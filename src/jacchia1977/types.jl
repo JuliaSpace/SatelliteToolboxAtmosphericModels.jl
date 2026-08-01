@@ -24,7 +24,7 @@ Output of the atmospheric model Jacchia 1977.
 - `He_number_density::T`: Number density of He [1 / m³].
 - `H_number_density::T`: Number density of H [1 / m³].
 """
-struct Jacchia1977Output{T<:Number}
+struct Jacchia1977Output{T <: Number}
     total_density::T
     temperature::T
     exospheric_temperature::T

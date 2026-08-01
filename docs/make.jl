@@ -1,9 +1,9 @@
 using Documenter
 using SatelliteToolboxAtmosphericModels
 
-makedocs(
+makedocs(;
     modules = [SatelliteToolboxAtmosphericModels],
-    format = Documenter.HTML(
+    format = Documenter.HTML(;
         prettyurls = !("local" in ARGS),
         canonical = "https://juliaspace.github.io/SatelliteToolboxAtmosphericModels.jl/stable/",
     ),
@@ -17,13 +17,13 @@ makedocs(
             "Jacchia 1977" => "man/jacchia1977.md",
             "Jacchia-Roberts 1971" => "man/jr1971.md",
             "Jacchia-Bowman 2008" => "man/jb2008.md",
-            "NRLMSISE-00" => "man/nrlmsise00.md"
+            "NRLMSISE-00" => "man/nrlmsise00.md",
         ],
         "Library" => "lib/library.md",
     ],
 )
 
-deploydocs(
+deploydocs(;
     repo = "github.com/JuliaSpace/SatelliteToolboxAtmosphericModels.jl.git",
     target = "build",
 )

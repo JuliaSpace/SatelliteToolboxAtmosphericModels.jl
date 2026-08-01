@@ -89,7 +89,7 @@
 
 @testset "Providing All Space Indices" begin
     # Common inputs to all scenarios.
-    jd      = date_to_jd(2017,1,1,0,0,0)
+    jd      = date_to_jd(2017, 1, 1, 0, 0, 0)
     instant = julian2datetime(jd)
     ϕ_gd    = 45 |> deg2rad
     λ       = 0.0
@@ -102,17 +102,18 @@
     Kp = 4
 
     # Results in [kg/m³].
-    results = [
-        3.87506e-09
-        3.96585e-09
-        6.83540e-10
-        1.21240e-10
-        1.60849e-11
-        1.58997e-11
-        1.30609e-14
-        1.34785e-17
-        4.00464e-19
-    ] * 1000
+    results =
+        [
+            3.87506e-09
+            3.96585e-09
+            6.83540e-10
+            1.21240e-10
+            1.60849e-11
+            1.58997e-11
+            1.30609e-14
+            1.34785e-17
+            4.00464e-19
+        ] * 1000
 
     for i in 1:length(h)
         ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
@@ -124,17 +125,18 @@
     Kp = 1
 
     # Results in [kg/m³].
-    results = [
-        3.56187e-09
-        3.65299e-09
-        6.28941e-10
-        1.11456e-10
-        1.46126e-11
-        1.44428e-11
-        9.08858e-15
-        8.51674e-18
-        2.86915e-19
-    ] * 1000
+    results =
+        [
+            3.56187e-09
+            3.65299e-09
+            6.28941e-10
+            1.11456e-10
+            1.46126e-11
+            1.44428e-11
+            9.08858e-15
+            8.51674e-18
+            2.86915e-19
+        ] * 1000
 
     for i in 1:length(h)
         ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
@@ -146,17 +148,18 @@
     Kp = 9
 
     # Results in [kg/m³].
-    results = [
-        5.55597e-09
-        5.63386e-09
-        9.75634e-10
-        1.73699e-10
-        2.41828e-11
-        2.39097e-11
-        3.52129e-14
-        1.28622e-16
-        1.97775e-18
-    ] * 1000
+    results =
+        [
+            5.55597e-09
+            5.63386e-09
+            9.75634e-10
+            1.73699e-10
+            2.41828e-11
+            2.39097e-11
+            3.52129e-14
+            1.28622e-16
+            1.97775e-18
+        ] * 1000
 
     for i in 1:length(h)
         ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
@@ -210,7 +213,7 @@ end
 
     for i in 1:length(h)
         ret = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[i - 1 + begin], F10, F10ₐ, Kp)
-        @test ret.total_density          ≈ expected_ρ[i - 1 + begin]  rtol = 1e-6
+        @test ret.total_density ≈ expected_ρ[i - 1 + begin] rtol = 1e-6
         @test ret.exospheric_temperature ≈ expected_T∞[i - 1 + begin] rtol = 1e-6
     end
 end
@@ -248,15 +251,15 @@ end
     for k in 1:length(h)
         result = AtmosphericModels.jr1971(instant, ϕ_gd, λ, h[k - 1 + begin])
 
-        @test result.total_density          ≈ expected[k - 1 + begin].total_density
-        @test result.temperature            ≈ expected[k - 1 + begin].temperature
+        @test result.total_density ≈ expected[k - 1 + begin].total_density
+        @test result.temperature ≈ expected[k - 1 + begin].temperature
         @test result.exospheric_temperature ≈ expected[k - 1 + begin].exospheric_temperature
-        @test result.N2_number_density      ≈ expected[k - 1 + begin].N2_number_density
-        @test result.O2_number_density      ≈ expected[k - 1 + begin].O2_number_density
-        @test result.O_number_density       ≈ expected[k - 1 + begin].O_number_density
-        @test result.Ar_number_density      ≈ expected[k - 1 + begin].Ar_number_density
-        @test result.He_number_density      ≈ expected[k - 1 + begin].He_number_density
-        @test result.H_number_density       ≈ expected[k - 1 + begin].H_number_density
+        @test result.N2_number_density ≈ expected[k - 1 + begin].N2_number_density
+        @test result.O2_number_density ≈ expected[k - 1 + begin].O2_number_density
+        @test result.O_number_density ≈ expected[k - 1 + begin].O_number_density
+        @test result.Ar_number_density ≈ expected[k - 1 + begin].Ar_number_density
+        @test result.He_number_density ≈ expected[k - 1 + begin].He_number_density
+        @test result.H_number_density ≈ expected[k - 1 + begin].H_number_density
     end
 
     # == Day Boundary ======================================================================
@@ -268,29 +271,17 @@ end
 
     instant_boundary = DateTime("2023-01-02T01:00:00")
     expected_boundary = AtmosphericModels.jr1971(
-        instant_boundary,
-        ϕ_gd,
-        λ,
-        300e3,
-        F10,
-        F10ₐ,
-        4.0
+        instant_boundary, ϕ_gd, λ, 300e3, F10, F10ₐ, 4.0
     )
     result_boundary = AtmosphericModels.jr1971(instant_boundary, ϕ_gd, λ, 300e3)
 
     @test result_boundary.total_density ≈ expected_boundary.total_density
-    @test result_boundary.temperature   ≈ expected_boundary.temperature
+    @test result_boundary.temperature ≈ expected_boundary.temperature
 end
 
 @testset "Show" begin
     result = AtmosphericModels.jr1971(
-        DateTime("2023-01-01T10:00:00"),
-        0,
-        0,
-        500e3,
-        100,
-        100,
-        3
+        DateTime("2023-01-01T10:00:00"), 0, 0, 500e3, 100, 100, 3
     )
 
     expected = "JR1971 output (ρ = 5.51927e-14 kg / m³)"

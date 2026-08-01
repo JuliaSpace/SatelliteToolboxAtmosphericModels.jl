@@ -82,17 +82,13 @@ function jb2008(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
-    verbose::Val{verbosity} = Val(true)
+    verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     return jb2008(datetime2julian(instant), ϕ_gd, λ, h; verbose = Val(verbosity))
 end
 
 function jb2008(
-    jd::Number,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number;
-    verbose::Val{verbosity} = Val(true)
+    jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
     # Get the data in the desired Julian Day considering the tabular time of the model.
     F10    = space_index(Val(:F10obs), jd - 1)
@@ -132,7 +128,7 @@ function jb2008(
         Y10,
         Y10ₐ,
         DstΔTc;
-        verbose = Val(verbosity)
+        verbose = Val(verbosity),
     )
 end
 
@@ -150,7 +146,7 @@ function jb2008(
     Y10::Number,
     Y10ₐ::Number,
     DstΔTc::Number;
-    verbose::Val{verbosity} = Val(true)
+    verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     jd = datetime2julian(instant)
     return jb2008(
@@ -167,7 +163,7 @@ function jb2008(
         Y10,
         Y10ₐ,
         DstΔTc;
-        verbose = Val(verbosity)
+        verbose = Val(verbosity),
     )
 end
 
@@ -185,24 +181,23 @@ function jb2008(
     Y10::YT,
     Y10ₐ::YT2,
     DstΔTc::DT;
-    verbose::Val{verbosity} = Val(true)
+    verbose::Val{verbosity} = Val(true),
 ) where {
-    JT<:Number,
-    PT<:Number,
-    LT<:Number,
-    HT<:Number,
-    FT<:Number,
-    FT2<:Number,
-    ST<:Number,
-    ST2<:Number,
-    MT<:Number,
-    MT2<:Number,
-    YT<:Number,
-    YT2<:Number,
-    DT<:Number,
-    verbosity
+    JT <: Number,
+    PT <: Number,
+    LT <: Number,
+    HT <: Number,
+    FT <: Number,
+    FT2 <: Number,
+    ST <: Number,
+    ST2 <: Number,
+    MT <: Number,
+    MT2 <: Number,
+    YT <: Number,
+    YT2 <: Number,
+    DT <: Number,
+    verbosity,
 }
-
     RT = promote_type(JT, PT, LT, HT, FT, FT2, ST, ST2, MT, MT2, YT, YT2, DT)
 
     ########################################################################################
@@ -228,16 +223,16 @@ function jb2008(
     MO₂ = 31.9988
     MO  = 15.9994
     MAr = 39.9480
-    MHe =  4.0026
-    MH  =  1.00797
+    MHe = 4.0026
+    MH  = 1.00797
 
     # Thermal diffusion coefficient for each specie.
-    α_N₂ =  0.0
-    α_O₂ =  0.0
-    α_O  =  0.0
-    α_Ar =  0.0
+    α_N₂ = 0.0
+    α_O₂ = 0.0
+    α_O  = 0.0
+    α_Ar = 0.0
     α_He = -0.38
-    α_H  =  0.0
+    α_H  = 0.0
 
     # Values used to establish height step sizes in the integration process between 90 km and
     # 105 km, 105 km to 500 km, and above 500 km.
@@ -324,10 +319,10 @@ function jb2008(
     # == Eq. 9 [3] =========================================================================
     #
     # Temperature at the inflection point `z = 125 km`.
-    a  =  444.3807
-    b  =    0.02385
+    a  = 444.3807
+    b  = 0.02385
     c  = -392.8292
-    k  =   -0.0021357
+    k  = -0.0021357
     Tx = a + b * T∞ + c * exp(k * T∞)
 
     # == Eq. 5 [3] =========================================================================
@@ -410,8 +405,8 @@ function jb2008(
         #        │            │      R* T
         #        └            ┘
         #
-        # where `n` is number density for the i-th specie. These equations must be integrated
-        # for each specie we are considering.
+        # where `n` is number density for the i-th specie. These equations must be
+        # integrated for each specie we are considering.
         #
         # Here, we will compute the following integral:
         #
@@ -446,13 +441,7 @@ function jb2008(
         z₄ = max(h, 500.0)
 
         int₂, z₄ = _jb2008_∫(
-            z₃,
-            z₄,
-            (h <= 500) ? R2 : R3,
-            Tx,
-            T∞,
-            _jb2008_δf2;
-            verbose = Val(verbosity)
+            z₃, z₄, (h <= 500) ? R2 : R3, Tx, T∞, _jb2008_δf2; verbose = Val(verbosity)
         )
 
         Tl₄ = _jb2008_temperature(z₄, Tx, T∞)
@@ -479,7 +468,7 @@ function jb2008(
 
         log_nN₂ += -(1 + α_N₂) * log_TfoTi - goRT * MN₂
         log_nO₂ += -(1 + α_O₂) * log_TfoTi - goRT * MO₂
-        log_nO  += -(1 + α_O ) * log_TfoTi - goRT * MO
+        log_nO  += -(1 + α_O) * log_TfoTi - goRT * MO
         log_nAr += -(1 + α_Ar) * log_TfoTi - goRT * MAr
         log_nHe += -(1 + α_He) * log_TfoTi - goRT * MHe
 
@@ -504,9 +493,15 @@ function jb2008(
     # [3]. This must be verified.
 
     #       | Modified jd  |
-    Φ = mod((jd - 2400000.5 - 36204 ) / 365.2422, 1)
+    Φ = mod((jd - 2400000.5 - 36204) / 365.2422, 1)
 
-    Δlog₁₀ρ = 0.02 * (h - 90) * sign(ϕ_gd) * exp(-0.045(h - 90)) * sin(ϕ_gd)^2 * sin(2π * Φ + 1.72 )
+    Δlog₁₀ρ =
+        0.02 *
+        (h - 90) *
+        sign(ϕ_gd) *
+        exp(-0.045(h - 90)) *
+        sin(ϕ_gd)^2 *
+        sin(2π * Φ + 1.72)
 
     # Convert from `log10` to `log`.
     Δlogρ = log(10) * Δlog₁₀ρ
@@ -549,13 +544,13 @@ function jb2008(
     #
     # TODO: Verify if this is reasonable.
 
-    log_FρH  = log(_jb2008_high_altitude(h, F10ₐ))
+    log_FρH = log(_jb2008_high_altitude(h, F10ₐ))
     log_nN₂ += log_FρH
     log_nO₂ += log_FρH
-    log_nO  += log_FρH
+    log_nO += log_FρH
     log_nAr += log_FρH
     log_nHe += log_FρH
-    log_nH  += log_FρH
+    log_nH += log_FρH
 
     # Compute the number densities and the mass density.
     nN₂ = exp(log_nN₂)
@@ -569,17 +564,7 @@ function jb2008(
     ρ      = sum_mn / A
 
     # Create and return the output structure.
-    return JB2008Output{RT}(
-        ρ,
-        Tz,
-        T_exo,
-        nN₂,
-        nO₂,
-        nO,
-        nAr,
-        nHe,
-        nH,
-    )
+    return JB2008Output{RT}(ρ, Tz, T_exo, nN₂, nO₂, nO, nAr, nHe, nH)
 end
 
 ############################################################################################
@@ -633,7 +618,6 @@ function _jb2008_high_altitude(h::Number, F10ₐ::Number)
 
     elseif h > 1500
         FρH = C[1] + C[2] * F10ₐ + C[3] * h + C[4] * h * F10ₐ
-
     end
 
     return FρH
@@ -644,21 +628,21 @@ end
 # Compute the mean molecular mass at altitude `z` [km] using the empirical profile in eq. 1
 # [3].
 function _jb2008_mean_molecular_mass(
-    z::Number;
-    verbose::Val{verbosity} = Val(true)
+    z::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
-    verbosity && !(90 <= z < 105.1) &&
+    verbosity &&
+        !(90 <= z < 105.1) &&
         @warn "The empirical model for the mean molecular mass is valid only for 90 <= z <= 105 km."
 
     M = @evalpoly(
         z - 100,
         +28.15204,
-         -0.085586,
-         +1.2840e-4,
-         -1.0056e-5,
-         -1.0210e-5,
-         +1.5044e-6,
-         +9.9826e-8
+        -0.085586,
+        +1.2840e-4,
+        -1.0056e-5,
+        -1.0210e-5,
+        +1.5044e-6,
+        +9.9826e-8
     )
 
     return M
@@ -681,8 +665,8 @@ function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
 
     # == Check the Parameters ==============================================================
 
-    (z  < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
-    (T∞ < 0)  && throw(ArgumentError("The exospheric temperature must be positive."))
+    (z < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
+    (T∞ < 0) && throw(ArgumentError("The exospheric temperature must be positive."))
 
     # Compute the temperature gradient at the inflection point.
     Gx = 1.9 * (Tx - T₁) / (zx - z₁)
@@ -694,28 +678,24 @@ function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
     if z <= zx
         c₁ = Gx
         c₂ = 0
-        c₃ =-5.1 / (5.7 * Δz₁^2) * Gx
+        c₃ = -5.1 / (5.7 * Δz₁^2) * Gx
         c₄ = 0.8 / (1.9 * Δz₁^3) * Gx
         T  = @evalpoly(Δz, Tx, c₁, c₂, c₃, c₄)
     else
         # Notice that `Δz > 0` in this branch, so we can compute `Δz^2.5` as `Δz² √Δz`,
         # which is faster than the generic power.
-        A  = 2 * (T∞ - Tx) / π
-        T  = Tx + A * atan(Gx / A * Δz * (1 + 4.5e-6 * Δz^2 * √Δz))
+        A = 2 * (T∞ - Tx) / π
+        T = Tx + A * atan(Gx / A * Δz * (1 + 4.5e-6 * Δz^2 * √Δz))
     end
 
     return T
 end
 
-
 #   _jb2008_δf1(z::Number, Tx::Number, T∞::Number) -> Float64
 #
 # Auxiliary function to compute the integrand in `_jb2008_∫`.
 function _jb2008_δf1(
-    z::Number,
-    Tx::Number,
-    T∞::Number;
-    verbose::Val{verbosity} = Val(true)
+    z::Number, Tx::Number, T∞::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
     Mb = _jb2008_mean_molecular_mass(z; verbose = Val(verbosity))
     Tl = _jb2008_temperature(z, Tx, T∞)
@@ -728,10 +708,7 @@ end
 #
 # Auxiliary function to compute the integrand in `_jb2008_∫`.
 function _jb2008_δf2(
-    z::Number,
-    Tx::Number,
-    T∞::Number;
-    verbose::Val{verbosity} = Val(true)
+    z::Number, Tx::Number, T∞::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
     Tl = _jb2008_temperature(z, Tx, T∞)
     g  = _jb2008_gravity(z)
@@ -758,7 +735,7 @@ function _jb2008_∫(
     Tx::Number,
     T∞::Number,
     δf::Function;
-    verbose::Val{verbosity} = Val(true)
+    verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     # Compute the number of integration steps.
     #
@@ -779,13 +756,13 @@ function _jb2008_∫(
     # For each integration step, use the Newton-Cotes 4th degree formula to integrate
     # (Boole's rule).
     @inbounds for i in 1:convert(Int, n)
-        zi₀   = zi₁             # ............... The beginning of the i-th integration step
-        zi₁   = zr * zi₁        # ..................... The end of the i-th integration step
-        Δz    = (zi₁ - zi₀) / 4 # ....................... Step for the i-th integration step
+        zi₀ = zi₁             # ............... The beginning of the i-th integration step
+        zi₁ = zr * zi₁        # ..................... The end of the i-th integration step
+        Δz  = (zi₁ - zi₀) / 4 # ....................... Step for the i-th integration step
 
         # Compute the Newton-Cotes 4th degree sum.
-        zj     = zi₀
-        int_i  = 14 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
+        zj    = zi₀
+        int_i = 14 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
 
         zj    += Δz
         int_i += 64 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
@@ -800,7 +777,7 @@ function _jb2008_∫(
         int_i += 14 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
 
         # Accumulate the sum.
-        int   += int_i * Δz
+        int += int_i * Δz
     end
 
     return int, zj
@@ -826,11 +803,7 @@ end
 # - `Float64`: Semiannual G(t) yearly periodic function.
 # - `Float64`: Semiannual variation of the density `Δsalog₁₀ρ`.
 function _jb2008_semiannual(
-    doy::Number,
-    h::Number,
-    F10ₐ::Number,
-    S10ₐ::Number,
-    M10ₐ::Number
+    doy::Number, h::Number, F10ₐ::Number, S10ₐ::Number, M10ₐ::Number
 )
     # Auxiliary variables.
     B = _JB2008_FZM
@@ -849,11 +822,12 @@ function _jb2008_semiannual(
 
     # Compute the semiannual G(t) yearly periodic function according to eq. 7
     # [1].
-    sω,  cω  = sincos(1ω)
+    sω, cω   = sincos(1ω)
     s2ω, c2ω = sincos(2ω)
 
-    Gt = (C[1] + C[2] * sω + C[3] * cω + C[4] * s2ω + C[5]  * c2ω) +
-         (C[6] + C[7] * sω + C[8] * cω + C[9] * s2ω + C[10] * c2ω) * Fsmₐ
+    Gt =
+        (C[1] + C[2] * sω + C[3] * cω + C[4] * s2ω + C[5] * c2ω) +
+        (C[6] + C[7] * sω + C[8] * cω + C[9] * s2ω + C[10] * c2ω) * Fsmₐ
 
     Fz = max(Fz, 1e-6)
 
@@ -895,32 +869,34 @@ function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
 
     # Compute the temperature variation given the altitude.
     @inbounds if 120 <= h <= 200
-        ΔTc200 = C[17] +
-                 C[18] * θ  * cϕ +
-                 C[19] * θ² * cϕ +
-                 C[20] * θ³ * cϕ +
-                 C[21] * F  * cϕ +
-                 C[22] * θ  * F * cϕ +
-                 C[23] * θ² * F * cϕ
+        ΔTc200 =
+            C[17] +
+            C[18] * θ * cϕ +
+            C[19] * θ² * cϕ +
+            C[20] * θ³ * cϕ +
+            C[21] * F * cϕ +
+            C[22] * θ * F * cϕ +
+            C[23] * θ² * F * cϕ
 
         # Notice that the source-code uses `B[2]` in the following expression, even though
         # all other coefficients come from `C`. Both values are numerically identical.
-        ΔTc200Δz = C[ 1] +
-                   B[ 2] * F +
-                   C[ 3] * θ  * F +
-                   C[ 4] * θ² * F +
-                   C[ 5] * θ³ * F +
-                   C[ 6] * θ⁴ * F +
-                   C[ 7] * θ⁵ * F +
-                   C[ 8] * θ  * cϕ +
-                   C[ 9] * θ² * cϕ +
-                   C[10] * θ³ * cϕ +
-                   C[11] * θ⁴ * cϕ +
-                   C[12] * θ⁵ * cϕ +
-                   C[13] * cϕ +
-                   C[14] * F  * cϕ +
-                   C[15] * θ  * F * cϕ +
-                   C[16] * θ² * F * cϕ
+        ΔTc200Δz =
+            C[1] +
+            B[2] * F +
+            C[3] * θ * F +
+            C[4] * θ² * F +
+            C[5] * θ³ * F +
+            C[6] * θ⁴ * F +
+            C[7] * θ⁵ * F +
+            C[8] * θ * cϕ +
+            C[9] * θ² * cϕ +
+            C[10] * θ³ * cϕ +
+            C[11] * θ⁴ * cϕ +
+            C[12] * θ⁵ * cϕ +
+            C[13] * cϕ +
+            C[14] * F * cϕ +
+            C[15] * θ * F * cϕ +
+            C[16] * θ² * F * cϕ
 
         zp  = (h - 120) / 80
         ΔTc = (3ΔTc200 - ΔTc200Δz) * zp^2 + (ΔTc200Δz - 2ΔTc200) * zp^3
@@ -928,102 +904,107 @@ function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
     elseif 200 < h <= 240
         H = (h - 200) / 50
 
-        ΔTc = C[ 1] * H +
-              B[ 2] * F  * H +
-              C[ 3] * θ  * F  * H +
-              C[ 4] * θ² * F  * H +
-              C[ 5] * θ³ * F  * H +
-              C[ 6] * θ⁴ * F  * H +
-              C[ 7] * θ⁵ * F  * H +
-              C[ 8] * θ  * cϕ * H +
-              C[ 9] * θ² * cϕ * H +
-              C[10] * θ³ * cϕ * H +
-              C[11] * θ⁴ * cϕ * H +
-              C[12] * θ⁵ * cϕ * H +
-              C[13] * cϕ * H +
-              C[14] * F  * cϕ * H +
-              C[15] * θ  * F  * cϕ * H +
-              C[16] * θ² * F  * cϕ * H +
-              C[17] +
-              C[18] * θ  * cϕ +
-              C[19] * θ² * cϕ +
-              C[20] * θ³ * cϕ +
-              C[21] * F  * cϕ +
-              C[22] * θ  * F  * cϕ +
-              C[23] * θ² * F  * cϕ
+        ΔTc =
+            C[1] * H +
+            B[2] * F * H +
+            C[3] * θ * F * H +
+            C[4] * θ² * F * H +
+            C[5] * θ³ * F * H +
+            C[6] * θ⁴ * F * H +
+            C[7] * θ⁵ * F * H +
+            C[8] * θ * cϕ * H +
+            C[9] * θ² * cϕ * H +
+            C[10] * θ³ * cϕ * H +
+            C[11] * θ⁴ * cϕ * H +
+            C[12] * θ⁵ * cϕ * H +
+            C[13] * cϕ * H +
+            C[14] * F * cϕ * H +
+            C[15] * θ * F * cϕ * H +
+            C[16] * θ² * F * cϕ * H +
+            C[17] +
+            C[18] * θ * cϕ +
+            C[19] * θ² * cϕ +
+            C[20] * θ³ * cϕ +
+            C[21] * F * cϕ +
+            C[22] * θ * F * cϕ +
+            C[23] * θ² * F * cϕ
 
     elseif 240 < h <= 300
         H = 40 / 50
 
-        aux1 = C[ 1] * H +
-               B[ 2] * F  * H +
-               C[ 3] * θ  * F  * H +
-               C[ 4] * θ² * F  * H +
-               C[ 5] * θ³ * F  * H +
-               C[ 6] * θ⁴ * F  * H +
-               C[ 7] * θ⁵ * F  * H +
-               C[ 8] * θ  * cϕ * H +
-               C[ 9] * θ² * cϕ * H +
-               C[10] * θ³ * cϕ * H +
-               C[11] * θ⁴ * cϕ * H +
-               C[12] * θ⁵ * cϕ * H +
-               C[13] * cϕ * H +
-               C[14] * F  * cϕ * H +
-               C[15] * θ  * F  * cϕ * H +
-               C[16] * θ² * F  * cϕ * H +
-               C[17] +
-               C[18] * θ  * cϕ +
-               C[19] * θ² * cϕ +
-               C[20] * θ³ * cϕ +
-               C[21] * F  * cϕ +
-               C[22] * θ  * F  * cϕ +
-               C[23] * θ² * F  * cϕ
+        aux1 =
+            C[1] * H +
+            B[2] * F * H +
+            C[3] * θ * F * H +
+            C[4] * θ² * F * H +
+            C[5] * θ³ * F * H +
+            C[6] * θ⁴ * F * H +
+            C[7] * θ⁵ * F * H +
+            C[8] * θ * cϕ * H +
+            C[9] * θ² * cϕ * H +
+            C[10] * θ³ * cϕ * H +
+            C[11] * θ⁴ * cϕ * H +
+            C[12] * θ⁵ * cϕ * H +
+            C[13] * cϕ * H +
+            C[14] * F * cϕ * H +
+            C[15] * θ * F * cϕ * H +
+            C[16] * θ² * F * cϕ * H +
+            C[17] +
+            C[18] * θ * cϕ +
+            C[19] * θ² * cϕ +
+            C[20] * θ³ * cϕ +
+            C[21] * F * cϕ +
+            C[22] * θ * F * cϕ +
+            C[23] * θ² * F * cϕ
 
-        aux2 = C[ 1] +
-               B[ 2] * F +
-               C[ 3] * θ  * F +
-               C[ 4] * θ² * F +
-               C[ 5] * θ³ * F +
-               C[ 6] * θ⁴ * F +
-               C[ 7] * θ⁵ * F +
-               C[ 8] * θ  * cϕ +
-               C[ 9] * θ² * cϕ +
-               C[10] * θ³ * cϕ +
-               C[11] * θ⁴ * cϕ +
-               C[12] * θ⁵ * cϕ +
-               C[13] * cϕ +
-               C[14] * F  * cϕ +
-               C[15] * θ  * F * cϕ +
-               C[16] * θ² * F * cϕ
+        aux2 =
+            C[1] +
+            B[2] * F +
+            C[3] * θ * F +
+            C[4] * θ² * F +
+            C[5] * θ³ * F +
+            C[6] * θ⁴ * F +
+            C[7] * θ⁵ * F +
+            C[8] * θ * cϕ +
+            C[9] * θ² * cϕ +
+            C[10] * θ³ * cϕ +
+            C[11] * θ⁴ * cϕ +
+            C[12] * θ⁵ * cϕ +
+            C[13] * cϕ +
+            C[14] * F * cϕ +
+            C[15] * θ * F * cϕ +
+            C[16] * θ² * F * cϕ
 
         H = 300 / 100
 
-        ΔTc300 = B[ 1] +
-                 B[ 2] * F +
-                 B[ 3] * θ  * F +
-                 B[ 4] * θ² * F +
-                 B[ 5] * θ³ * F +
-                 B[ 6] * θ⁴ * F +
-                 B[ 7] * θ⁵ * F +
-                 B[ 8] * θ  * cϕ +
-                 B[ 9] * θ² * cϕ +
-                 B[10] * θ³ * cϕ +
-                 B[11] * θ⁴ * cϕ +
-                 B[12] * θ⁵ * cϕ +
-                 B[13] * H  * cϕ +
-                 B[14] * θ  * H * cϕ +
-                 B[15] * θ² * H * cϕ +
-                 B[16] * θ³ * H * cϕ +
-                 B[17] * θ⁴ * H * cϕ +
-                 B[18] * θ⁵ * H * cϕ +
-                 B[19] * cϕ
+        ΔTc300 =
+            B[1] +
+            B[2] * F +
+            B[3] * θ * F +
+            B[4] * θ² * F +
+            B[5] * θ³ * F +
+            B[6] * θ⁴ * F +
+            B[7] * θ⁵ * F +
+            B[8] * θ * cϕ +
+            B[9] * θ² * cϕ +
+            B[10] * θ³ * cϕ +
+            B[11] * θ⁴ * cϕ +
+            B[12] * θ⁵ * cϕ +
+            B[13] * H * cϕ +
+            B[14] * θ * H * cϕ +
+            B[15] * θ² * H * cϕ +
+            B[16] * θ³ * H * cϕ +
+            B[17] * θ⁴ * H * cϕ +
+            B[18] * θ⁵ * H * cϕ +
+            B[19] * cϕ
 
-        ΔTc300Δz = B[13] * cϕ +
-                   B[14] * θ  * cϕ +
-                   B[15] * θ² * cϕ +
-                   B[16] * θ³ * cϕ +
-                   B[17] * θ⁴ * cϕ +
-                   B[18] * θ⁵ * cϕ
+        ΔTc300Δz =
+            B[13] * cϕ +
+            B[14] * θ * cϕ +
+            B[15] * θ² * cϕ +
+            B[16] * θ³ * cϕ +
+            B[17] * θ⁴ * cϕ +
+            B[18] * θ⁵ * cϕ
 
         aux3 = 3ΔTc300 - ΔTc300Δz - 3aux1 - 2aux2
         aux4 = ΔTc300 - aux1 - aux2 - aux3
@@ -1031,61 +1012,64 @@ function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
         ΔTc  = @evalpoly(zp, aux1, aux2, aux3, aux4)
 
     elseif 300 < h <= 600
-         H  = h / 100
+        H = h / 100
 
-        ΔTc = B[ 1] +
-              B[ 2] * F +
-              B[ 3] * θ  * F +
-              B[ 4] * θ² * F +
-              B[ 5] * θ³ * F +
-              B[ 6] * θ⁴ * F +
-              B[ 7] * θ⁵ * F +
-              B[ 8] * θ  * cϕ +
-              B[ 9] * θ² * cϕ +
-              B[10] * θ³ * cϕ +
-              B[11] * θ⁴ * cϕ +
-              B[12] * θ⁵ * cϕ +
-              B[13] * H  * cϕ +
-              B[14] * θ  * H * cϕ +
-              B[15] * θ² * H * cϕ +
-              B[16] * θ³ * H * cϕ +
-              B[17] * θ⁴ * H * cϕ +
-              B[18] * θ⁵ * H * cϕ +
-              B[19] * cϕ
+        ΔTc =
+            B[1] +
+            B[2] * F +
+            B[3] * θ * F +
+            B[4] * θ² * F +
+            B[5] * θ³ * F +
+            B[6] * θ⁴ * F +
+            B[7] * θ⁵ * F +
+            B[8] * θ * cϕ +
+            B[9] * θ² * cϕ +
+            B[10] * θ³ * cϕ +
+            B[11] * θ⁴ * cϕ +
+            B[12] * θ⁵ * cϕ +
+            B[13] * H * cϕ +
+            B[14] * θ * H * cϕ +
+            B[15] * θ² * H * cϕ +
+            B[16] * θ³ * H * cϕ +
+            B[17] * θ⁴ * H * cϕ +
+            B[18] * θ⁵ * H * cϕ +
+            B[19] * cϕ
 
     elseif 600 < h <= 800
-        zp   = (h - 600) / 100
-        hp   = 600 / 100
+        zp = (h - 600) / 100
+        hp = 600 / 100
 
-        aux1 = B[ 1] +
-               B[ 2] * F +
-               B[ 3] * θ  * F +
-               B[ 4] * θ² * F +
-               B[ 5] * θ³ * F +
-               B[ 6] * θ⁴ * F +
-               B[ 7] * θ⁵ * F +
-               B[ 8] * θ  * cϕ +
-               B[ 9] * θ² * cϕ +
-               B[10] * θ³ * cϕ +
-               B[11] * θ⁴ * cϕ +
-               B[12] * θ⁵ * cϕ +
-               B[13] * hp * cϕ +
-               B[14] * θ  * hp * cϕ +
-               B[15] * θ² * hp * cϕ +
-               B[16] * θ³ * hp * cϕ +
-               B[17] * θ⁴ * hp * cϕ +
-               B[18] * θ⁵ * hp * cϕ +
-               B[19] * cϕ
+        aux1 =
+            B[1] +
+            B[2] * F +
+            B[3] * θ * F +
+            B[4] * θ² * F +
+            B[5] * θ³ * F +
+            B[6] * θ⁴ * F +
+            B[7] * θ⁵ * F +
+            B[8] * θ * cϕ +
+            B[9] * θ² * cϕ +
+            B[10] * θ³ * cϕ +
+            B[11] * θ⁴ * cϕ +
+            B[12] * θ⁵ * cϕ +
+            B[13] * hp * cϕ +
+            B[14] * θ * hp * cϕ +
+            B[15] * θ² * hp * cϕ +
+            B[16] * θ³ * hp * cϕ +
+            B[17] * θ⁴ * hp * cϕ +
+            B[18] * θ⁵ * hp * cϕ +
+            B[19] * cϕ
 
-        aux2 = B[13] * cϕ +
-               B[14] * θ  * cϕ +
-               B[15] * θ² * cϕ +
-               B[16] * θ³ * cϕ +
-               B[17] * θ⁴ * cϕ +
-               B[18] * θ⁵ * cϕ
+        aux2 =
+            B[13] * cϕ +
+            B[14] * θ * cϕ +
+            B[15] * θ² * cϕ +
+            B[16] * θ³ * cϕ +
+            B[17] * θ⁴ * cϕ +
+            B[18] * θ⁵ * cϕ
 
         aux3 = -(3aux1 + 4aux2) / 4
-        aux4 =  ( aux1 +  aux2) / 4
+        aux4 = (aux1 + aux2) / 4
         ΔTc  = @evalpoly(zp, aux1, aux2, aux3, aux4)
     end
 

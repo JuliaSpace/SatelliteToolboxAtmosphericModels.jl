@@ -5,14 +5,22 @@
 ############################################################################################
 
 @testset "Aqua.jl" begin
-    Aqua.test_all(SatelliteToolboxAtmosphericModels; ambiguities=(recursive = false), deps_compat=(check_extras = false))
+    Aqua.test_all(
+        SatelliteToolboxAtmosphericModels;
+        ambiguities = (recursive = false),
+        deps_compat = (check_extras = false),
+    )
 end
 
 if VERSION >= v"1.12"
     @warn "JET.jl test skipped on Julia 1.12+ due to MethodTableView incompatibility"
 else
     @testset "JET Testing" begin
-        rep = JET.test_package(SatelliteToolboxAtmosphericModels; toplevel_logger=nothing, target_modules=(SatelliteToolboxAtmosphericModels,))
+        rep = JET.test_package(
+            SatelliteToolboxAtmosphericModels;
+            toplevel_logger = nothing,
+            target_modules = (SatelliteToolboxAtmosphericModels,),
+        )
     end
 end
 
@@ -32,8 +40,8 @@ else
                 (x1, x2, x3, x4) -> begin
                     AtmosphericModels.jr1971(x1, x2, x3, x4; verbose = Val(false))
                 end,
-                (DateTime, Float64, Float64, Float64)
-            )
+                (DateTime, Float64, Float64, Float64),
+            ),
         ) == 0
 
         @test length(
@@ -41,8 +49,8 @@ else
                 (x1, x2, x3, x4, x5, x6, x7) -> begin
                     AtmosphericModels.jacchia1977(x1, x2, x3, x4, x5, x6, x7)
                 end,
-                (DateTime, Float64, Float64, Float64, Float64, Float64, Float64)
-            )
+                (DateTime, Float64, Float64, Float64, Float64, Float64, Float64),
+            ),
         ) == 0
 
         @test length(
@@ -50,8 +58,8 @@ else
                 (x1, x2, x3, x4) -> begin
                     AtmosphericModels.jb2008(x1, x2, x3, x4; verbose = Val(false))
                 end,
-                (DateTime, Float64, Float64, Float64)
-            )
+                (DateTime, Float64, Float64, Float64),
+            ),
         ) == 0
 
         @test length(
@@ -59,8 +67,8 @@ else
                 (x1, x2, x3, x4, P) -> begin
                     AtmosphericModels.nrlmsise00(x1, x2, x3, x4; P = P, verbose = Val(false))
                 end,
-                (DateTime, Float64, Float64, Float64, Matrix{Float64})
-            )
+                (DateTime, Float64, Float64, Float64, Matrix{Float64}),
+            ),
         ) == 0
 
         @test length(
@@ -68,8 +76,8 @@ else
                 (x1, x2, x3, x4) -> begin
                     AtmosphericModels.harrispriester(x1, x2, x3, x4)
                 end,
-                (DateTime, Float64, Float64, Float64)
-            )
+                (DateTime, Float64, Float64, Float64),
+            ),
         ) == 0
 
         @test length(
@@ -77,8 +85,8 @@ else
                 (x1, x2, x3, x4, x5) -> begin
                     AtmosphericModels.harrispriester_modified(x1, x2, x3, x4, x5)
                 end,
-                (DateTime, Float64, Float64, Float64, Float64)
-            )
+                (DateTime, Float64, Float64, Float64, Float64),
+            ),
         ) == 0
     end
 end

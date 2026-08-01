@@ -46,32 +46,19 @@ package. In this case, the initialization of the space indices package with
     Research*, 59(2), 571-586.
 """
 function harrispriester_modified(
-    instant::DateTime,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number,
-    F10ₐ::Number;
-    n::Number = 4
+    instant::DateTime, ϕ_gd::Number, λ::Number, h::Number, F10ₐ::Number; n::Number = 4
 )
     return harrispriester_modified(datetime2julian(instant), ϕ_gd, λ, h, F10ₐ; n = n)
 end
 
 function harrispriester_modified(
-    instant::DateTime,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number;
-    n::Number = 4
+    instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; n::Number = 4
 )
     return harrispriester_modified(datetime2julian(instant), ϕ_gd, λ, h; n = n)
 end
 
 function harrispriester_modified(
-    jd::Number,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number;
-    n::Number = 4
+    jd::Number, ϕ_gd::Number, λ::Number, h::Number; n::Number = 4
 )
     # Fetch the 81-day centered average of F10.7 solar flux.
     F10ₐ = sum(space_index(Val(:F10obs), jd + k) for k in -40:40) / 81
@@ -85,14 +72,8 @@ function harrispriester_modified(
 end
 
 function harrispriester_modified(
-    jd::JT,
-    ϕ_gd::PT,
-    λ::LT,
-    h::HT,
-    F10ₐ::FT;
-    n::Number = 4
-) where {JT<:Number, PT<:Number, LT<:Number, HT<:Number, FT<:Number}
-
+    jd::JT, ϕ_gd::PT, λ::LT, h::HT, F10ₐ::FT; n::Number = 4
+) where {JT <: Number, PT <: Number, LT <: Number, HT <: Number, FT <: Number}
     RT = promote_type(JT, PT, LT, HT, FT, typeof(n))
 
     # Convert inputs to kilometers for consistency with the original Fortran model.
@@ -106,21 +87,21 @@ function harrispriester_modified(
     else
         i = searchsortedlast(_HARRIS_PRIESTER_MOD_HVEC, h_km)
     end
-    
+
     if i < length(_HARRIS_PRIESTER_MOD_HVEC)
         ρ_maxᵢ   = _harris_priester_mod_density_poly(F10ₐ, i, 1)
         ρ_minᵢ   = _harris_priester_mod_density_poly(F10ₐ, i, 5)
         ρ_maxᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i + 1, 1)
         ρ_minᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i + 1, 5)
-        hᵢ         = _HARRIS_PRIESTER_MOD_HVEC[i]
-        hᵢ₊₁       = _HARRIS_PRIESTER_MOD_HVEC[i + 1]
+        hᵢ       = _HARRIS_PRIESTER_MOD_HVEC[i]
+        hᵢ₊₁     = _HARRIS_PRIESTER_MOD_HVEC[i + 1]
     else # Above nominal altitude max
         ρ_maxᵢ   = _harris_priester_mod_density_poly(F10ₐ, i - 1, 1)
         ρ_minᵢ   = _harris_priester_mod_density_poly(F10ₐ, i - 1, 5)
         ρ_maxᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i, 1)
         ρ_minᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i, 5)
-        hᵢ         = _HARRIS_PRIESTER_MOD_HVEC[i-1]
-        hᵢ₊₁       = _HARRIS_PRIESTER_MOD_HVEC[i]
+        hᵢ       = _HARRIS_PRIESTER_MOD_HVEC[i - 1]
+        hᵢ₊₁     = _HARRIS_PRIESTER_MOD_HVEC[i]
     end
 
     Δhᵢ = hᵢ₊₁ - hᵢ
@@ -135,12 +116,12 @@ function harrispriester_modified(
     α = _HARRIS_PRIESTER_MOD_α
 
     if (h_km <= hᵢ + α) && (i > 1) # Near lower boundary
-        hᵢ₋₁       = _HARRIS_PRIESTER_MOD_HVEC[i-1]
+        hᵢ₋₁ = _HARRIS_PRIESTER_MOD_HVEC[i - 1]
         ρ_maxᵢ₋₁ = _harris_priester_mod_density_poly(F10ₐ, i - 1, 1)
         ρ_minᵢ₋₁ = _harris_priester_mod_density_poly(F10ₐ, i - 1, 5)
 
         Δhᵢ₋₁ = hᵢ - hᵢ₋₁
-        xbar     = SVector{2}(hᵢ - α, hᵢ + α)
+        xbar = SVector{2}(hᵢ - α, hᵢ + α)
 
         H_ρ_minᵢ₋₁ = -Δhᵢ₋₁ / log(ρ_minᵢ / ρ_minᵢ₋₁)
         H_ρ_maxᵢ₋₁ = -Δhᵢ₋₁ / log(ρ_maxᵢ / ρ_maxᵢ₋₁)
@@ -148,19 +129,18 @@ function harrispriester_modified(
         H_ρ_min_vec = SVector{2}(H_ρ_minᵢ₋₁, H_ρ_minᵢ)
         H_ρ_max_vec = SVector{2}(H_ρ_maxᵢ₋₁, H_ρ_maxᵢ)
 
-        _, H_ρ_min′ᵢ, H_ρ_max′ᵢ =
-            _scale_height_junk(xbar, h_km, H_ρ_min_vec, H_ρ_max_vec)
+        _, H_ρ_min′ᵢ, H_ρ_max′ᵢ = _scale_height_junk(xbar, h_km, H_ρ_min_vec, H_ρ_max_vec)
 
         ρ_min_h = ρ_minᵢ * exp((hᵢ - h_km) / H_ρ_min′ᵢ)
         ρ_max_h = ρ_maxᵢ * exp((hᵢ - h_km) / H_ρ_max′ᵢ)
 
     elseif (h_km >= hᵢ₊₁ - α) && (i < length(_HARRIS_PRIESTER_MOD_HVEC) - 1) # Near upper boundary
-        hᵢ₊₂       = _HARRIS_PRIESTER_MOD_HVEC[i+2]
+        hᵢ₊₂ = _HARRIS_PRIESTER_MOD_HVEC[i + 2]
         ρ_maxᵢ₊₂ = _harris_priester_mod_density_poly(F10ₐ, i + 2, 1)
         ρ_minᵢ₊₂ = _harris_priester_mod_density_poly(F10ₐ, i + 2, 5)
 
         Δhᵢ₊₁ = hᵢ₊₂ - hᵢ₊₁
-        xbar       = SVector{2}(hᵢ₊₁ - α, hᵢ₊₁ + α)
+        xbar = SVector{2}(hᵢ₊₁ - α, hᵢ₊₁ + α)
 
         H_ρ_minᵢ₊₁ = -Δhᵢ₊₁ / log(ρ_minᵢ₊₂ / ρ_minᵢ₊₁)
         H_ρ_maxᵢ₊₁ = -Δhᵢ₊₁ / log(ρ_maxᵢ₊₂ / ρ_maxᵢ₊₁)
@@ -168,8 +148,7 @@ function harrispriester_modified(
         H_ρ_min_vec = SVector{2}(H_ρ_minᵢ, H_ρ_minᵢ₊₁)
         H_ρ_max_vec = SVector{2}(H_ρ_maxᵢ, H_ρ_maxᵢ₊₁)
 
-        _, H_ρ_min′ᵢ, H_ρ_max′ᵢ =
-            _scale_height_junk(xbar, h_km, H_ρ_min_vec, H_ρ_max_vec)
+        _, H_ρ_min′ᵢ, H_ρ_max′ᵢ = _scale_height_junk(xbar, h_km, H_ρ_min_vec, H_ρ_max_vec)
 
         ρ_min_h = ρ_minᵢ₊₁ * exp((hᵢ₊₁ - h_km) / H_ρ_min′ᵢ)
         ρ_max_h = ρ_maxᵢ₊₁ * exp((hᵢ₊₁ - h_km) / H_ρ_max′ᵢ)
@@ -239,7 +218,7 @@ function _scale_height_junk(
     xbar::AbstractVector{<:Number},
     h::Number,
     H_ρ_min::AbstractVector{<:Number},
-    H_ρ_max::AbstractVector{<:Number}
+    H_ρ_max::AbstractVector{<:Number},
 )
     xbardiff = xbar[2] - xbar[1]
     ξ = (h - xbar[1]) / xbardiff

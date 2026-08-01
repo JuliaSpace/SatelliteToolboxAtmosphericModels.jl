@@ -70,7 +70,7 @@ Structure with the configuration parameters for NRLMSISE-00 model. `T` is the
 floating-number type and `T_AP` is the type of the AP information, which can be a `Number`
 or `AbstractVector`.
 """
-struct Nrlmsise00Structure{T<:Number, T_AP<:Union{Number, AbstractVector}}
+struct Nrlmsise00Structure{T <: Number, T_AP <: Union{Number, AbstractVector}}
     # == Inputs ============================================================================
 
     year::Int
@@ -137,7 +137,7 @@ on satellites and debris. We group these species under the term **Anomalous Oxyg
 their individual variations are not presently separable with the drag data used to define
 this model component.
 """
-struct Nrlmsise00Output{T<:Number}
+struct Nrlmsise00Output{T <: Number}
     total_density::T
     temperature::T
     exospheric_temperature::T

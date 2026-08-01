@@ -185,7 +185,7 @@
     ]
 
     for i in eachindex(h)
-        ret = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, h[i]; n=2)
+        ret = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, h[i]; n = 2)
         @test ret ≈ results_n2[i] rtol=5e-4
     end
 
@@ -205,30 +205,21 @@
     ]
 
     for i in eachindex(h)
-        ret = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, h[i]; n=6)
+        ret = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, h[i]; n = 6)
         @test ret ≈ results_n6[i] rtol=5e-4
     end
 end
 
 @testset "Latitude Variation" begin
-    jd   = date_to_jd(2003, 3, 21, 1, 0, 0)
-    λ    = 0.0
-    h    = 500e3
+    jd = date_to_jd(2003, 3, 21, 1, 0, 0)
+    λ  = 0.0
+    h  = 500e3
 
     # Results from Orekit [kg/m³].
     # Wider tolerance needed because latitude affects the Sun position angle calculation and
     # Orekit uses a different Sun ephemeris than SatelliteToolboxCelestialBodies.
     lats_deg = [0, 15, 30, 45, 60, 75, -30, -60]
-    results  = [
-        3.9236341695759752e-13
-        3.9393220819088735e-13
-        4.0350599682163622e-13
-        4.3415897821552519e-13
-        5.0285484446420926e-13
-        6.2424630627311681e-13
-        4.0350008559554109e-13
-        5.0282346210873605e-13
-    ]
+    results  = [3.9236341695759752e-13 3.9393220819088735e-13 4.0350599682163622e-13 4.3415897821552519e-13 5.0285484446420926e-13 6.2424630627311681e-13 4.0350008559554109e-13 5.0282346210873605e-13]
 
     for i in eachindex(lats_deg)
         ϕ_gd = deg2rad(lats_deg[i])
@@ -244,20 +235,7 @@ end
 
     # Results from Orekit [kg/m³].
     lons_deg = collect(0:30:330)
-    results  = [
-        3.9236341695759752e-13
-        3.9188232351247705e-13
-        4.2173248147961520e-13
-        5.9951186530463867e-13
-        1.0130114879877873e-12
-        1.5612650147206855e-12
-        1.9717720556009100e-12
-        1.9991107252102569e-12
-        1.6261250939445796e-12
-        1.0783526606567886e-12
-        6.3799546180942567e-13
-        4.3287740837505535e-13
-    ]
+    results  = [3.9236341695759752e-13 3.9188232351247705e-13 4.2173248147961520e-13 5.9951186530463867e-13 1.0130114879877873e-12 1.5612650147206855e-12 1.9717720556009100e-12 1.9991107252102569e-12 1.6261250939445796e-12 1.0783526606567886e-12 6.3799546180942567e-13 4.3287740837505535e-13]
 
     for i in eachindex(lons_deg)
         λ = deg2rad(lons_deg[i])
@@ -311,74 +289,74 @@ end
     λ    = 0.0
 
     user_tab = [
-        100000.   4.974e+02  4.974e+02;
-        110000.   7.800e+01  7.800e+01;
-        120000.   2.490e+01  2.400e+01;
-        130000.   8.377e+00  8.710e+00;
-        140000.   3.899e+00  4.059e+00;
-        150000.   2.122e+00  2.215e+00;
-        160000.   1.263e+00  1.344e+00;
-        170000.   8.008e-01  8.758e-01;
-        180000.   5.283e-01  6.010e-01;
-        190000.   3.618e-01  4.297e-01;
-        200000.   2.557e-01  3.162e-01;
-        210000.   1.839e-01  2.396e-01;
-        220000.   1.341e-01  1.853e-01;
-        230000.   9.949e-02  1.455e-01;
-        240000.   7.488e-02  1.157e-01;
-        250000.   5.709e-02  9.308e-02;
-        260000.   4.403e-02  7.555e-02;
-        270000.   3.430e-02  6.182e-02;
-        280000.   2.697e-02  5.095e-02;
-        290000.   2.139e-02  4.226e-02;
-        300000.   1.708e-02  3.526e-02;
-        320000.   1.099e-02  2.511e-02;
-        340000.   7.214e-03  1.819e-02;
-        360000.   4.824e-03  1.337e-02;
-        380000.   3.274e-03  9.955e-03;
-        400000.   2.249e-03  7.492e-03;
-        420000.   1.558e-03  5.684e-03;
-        440000.   1.091e-03  4.355e-03;
-        460000.   7.701e-04  3.362e-03;
-        480000.   5.474e-04  2.612e-03;
-        500000.   3.916e-04  2.042e-03;
-        520000.   2.819e-04  1.605e-03;
-        540000.   2.042e-04  1.267e-03;
-        560000.   1.488e-04  1.005e-03;
-        580000.   1.092e-04  7.997e-04;
-        600000.   8.070e-05  6.390e-04;
-        620000.   6.012e-05  5.123e-04;
-        640000.   4.519e-05  4.121e-04;
-        660000.   3.430e-05  3.325e-04;
-        680000.   2.632e-05  2.691e-04;
-        700000.   2.043e-05  2.185e-04;
-        720000.   1.607e-05  1.779e-04;
-        740000.   1.281e-05  1.452e-04;
-        760000.   1.036e-05  1.190e-04;
-        780000.   8.496e-06  9.776e-05;
-        800000.   7.069e-06  8.059e-05;
-        850000.   4.800e-06  5.500e-05;
-        900000.   3.300e-06  3.700e-05;
-        950000.   2.450e-06  2.400e-05;
-        1000000.  1.900e-06  1.700e-05;
-        1100000.  1.180e-06  8.700e-06;
-        1200000.  7.500e-07  4.800e-06;
-        1300000.  5.300e-07  3.200e-06;
-        1400000.  4.100e-07  2.000e-06;
-        1500000.  2.900e-07  1.350e-06;
-        1600000.  2.000e-07  9.500e-07;
-        1700000.  1.600e-07  7.700e-07;
-        1800000.  1.200e-07  6.300e-07;
-        1900000.  9.600e-08  5.200e-07;
-        2000000.  7.300e-08  4.400e-07
+        100000.0  4.974e+02  4.974e+02;
+        110000.0  7.800e+01  7.800e+01;
+        120000.0  2.490e+01  2.400e+01;
+        130000.0  8.377e+00  8.710e+00;
+        140000.0  3.899e+00  4.059e+00;
+        150000.0  2.122e+00  2.215e+00;
+        160000.0  1.263e+00  1.344e+00;
+        170000.0  8.008e-01  8.758e-01;
+        180000.0  5.283e-01  6.010e-01;
+        190000.0  3.618e-01  4.297e-01;
+        200000.0  2.557e-01  3.162e-01;
+        210000.0  1.839e-01  2.396e-01;
+        220000.0  1.341e-01  1.853e-01;
+        230000.0  9.949e-02  1.455e-01;
+        240000.0  7.488e-02  1.157e-01;
+        250000.0  5.709e-02  9.308e-02;
+        260000.0  4.403e-02  7.555e-02;
+        270000.0  3.430e-02  6.182e-02;
+        280000.0  2.697e-02  5.095e-02;
+        290000.0  2.139e-02  4.226e-02;
+        300000.0  1.708e-02  3.526e-02;
+        320000.0  1.099e-02  2.511e-02;
+        340000.0  7.214e-03  1.819e-02;
+        360000.0  4.824e-03  1.337e-02;
+        380000.0  3.274e-03  9.955e-03;
+        400000.0  2.249e-03  7.492e-03;
+        420000.0  1.558e-03  5.684e-03;
+        440000.0  1.091e-03  4.355e-03;
+        460000.0  7.701e-04  3.362e-03;
+        480000.0  5.474e-04  2.612e-03;
+        500000.0  3.916e-04  2.042e-03;
+        520000.0  2.819e-04  1.605e-03;
+        540000.0  2.042e-04  1.267e-03;
+        560000.0  1.488e-04  1.005e-03;
+        580000.0  1.092e-04  7.997e-04;
+        600000.0  8.070e-05  6.390e-04;
+        620000.0  6.012e-05  5.123e-04;
+        640000.0  4.519e-05  4.121e-04;
+        660000.0  3.430e-05  3.325e-04;
+        680000.0  2.632e-05  2.691e-04;
+        700000.0  2.043e-05  2.185e-04;
+        720000.0  1.607e-05  1.779e-04;
+        740000.0  1.281e-05  1.452e-04;
+        760000.0  1.036e-05  1.190e-04;
+        780000.0  8.496e-06  9.776e-05;
+        800000.0  7.069e-06  8.059e-05;
+        850000.0  4.800e-06  5.500e-05;
+        900000.0  3.300e-06  3.700e-05;
+        950000.0  2.450e-06  2.400e-05;
+        1000000.0 1.900e-06  1.700e-05;
+        1100000.0 1.180e-06  8.700e-06;
+        1200000.0 7.500e-07  4.800e-06;
+        1300000.0 5.300e-07  3.200e-06;
+        1400000.0 4.100e-07  2.000e-06;
+        1500000.0 2.900e-07  1.350e-06;
+        1600000.0 2.000e-07  9.500e-07;
+        1700000.0 1.600e-07  7.700e-07;
+        1800000.0 1.200e-07  6.300e-07;
+        1900000.0 9.600e-08  5.200e-07;
+        2000000.0 7.300e-08  4.400e-07
     ]
 
     # With the user table, 1500 km is within range (max is 2000 km) and should return > 0.
-    rho = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 1500e3; alt_ρ=user_tab)
+    rho = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 1500e3; alt_ρ = user_tab)
     @test rho > 0
 
     # Above max altitude (2000 km) should return 0.
-    rho_above = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 2500e3; alt_ρ=user_tab)
+    rho_above = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 2500e3; alt_ρ = user_tab)
     @test rho_above == 0.0
 end
 
@@ -448,10 +426,14 @@ end
     ]
 
     for i in eachindex(h)
-        ret = AtmosphericModels.harrispriester_modified(instant, ϕ_gd, λ, h[i], 75.0; n=n_eq)
+        ret = AtmosphericModels.harrispriester_modified(
+            instant, ϕ_gd, λ, h[i], 75.0; n = n_eq
+        )
         @test ret ≈ results_f75[i] rtol=2e-2
 
-        ret_jd = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, h[i], 75.0; n=n_eq)
+        ret_jd = AtmosphericModels.harrispriester_modified(
+            jd, ϕ_gd, λ, h[i], 75.0; n = n_eq
+        )
         @test ret_jd ≈ results_f75[i] rtol=2e-2
     end
 
@@ -471,7 +453,9 @@ end
     ]
 
     for i in eachindex(h)
-        ret = AtmosphericModels.harrispriester_modified(instant, ϕ_gd, λ, h[i], 150.0; n=n_eq)
+        ret = AtmosphericModels.harrispriester_modified(
+            instant, ϕ_gd, λ, h[i], 150.0; n = n_eq
+        )
         @test ret ≈ results_f150[i] rtol=2e-2
     end
 
@@ -491,7 +475,9 @@ end
     ]
 
     for i in eachindex(h)
-        ret = AtmosphericModels.harrispriester_modified(instant, ϕ_gd, λ, h[i], 250.0; n=n_eq)
+        ret = AtmosphericModels.harrispriester_modified(
+            instant, ϕ_gd, λ, h[i], 250.0; n = n_eq
+        )
         @test ret ≈ results_f250[i] rtol=2e-2
     end
 end
@@ -515,36 +501,23 @@ end
     # Symmetric latitudes should give similar (not necessarily identical) densities due
     # to the Sun's declination at vernal equinox (~0°).
     rho_n30 = AtmosphericModels.harrispriester_modified(jd, deg2rad(-30.0), 0.0, h, F10ₐ)
-    rho_p30 = AtmosphericModels.harrispriester_modified(jd, deg2rad(30.0),  0.0, h, F10ₐ)
+    rho_p30 = AtmosphericModels.harrispriester_modified(jd, deg2rad(30.0), 0.0, h, F10ₐ)
     @test rho_n30 ≈ rho_p30 rtol=0.1
 end
 
 @testset "Diurnal Bulge (Modified)" begin
-    jd    = date_to_jd(2003, 3, 21, 1, 0, 0)
-    h     = 500e3
-    F10ₐ  = 150.0
-    n_eq  = 2.001
+    jd   = date_to_jd(2003, 3, 21, 1, 0, 0)
+    h    = 500e3
+    F10ₐ = 150.0
+    n_eq = 2.001
 
     # FORTRAN reference values for longitude variation.
     lons_deg = collect(0:30:330)
-    results  = [
-        5.2608287456757322e-13
-        5.1865112512137276e-13
-        6.3206225678180850e-13
-        8.3606594213847372e-13
-        1.0760098841637155e-12
-        1.2875733594800382e-12
-        1.4140326704576779e-12
-        1.4214794839272383e-12
-        1.3079169964396878e-12
-        1.1037955771451819e-12
-        8.6384427868740631e-13
-        6.5238797658846279e-13
-    ]
+    results  = [5.2608287456757322e-13 5.1865112512137276e-13 6.3206225678180850e-13 8.3606594213847372e-13 1.0760098841637155e-12 1.2875733594800382e-12 1.4140326704576779e-12 1.4214794839272383e-12 1.3079169964396878e-12 1.1037955771451819e-12 8.6384427868740631e-13 6.5238797658846279e-13]
 
     for i in eachindex(lons_deg)
         λ = deg2rad(lons_deg[i])
-        ret = AtmosphericModels.harrispriester_modified(jd, 0.0, λ, h, F10ₐ; n=n_eq)
+        ret = AtmosphericModels.harrispriester_modified(jd, 0.0, λ, h, F10ₐ; n = n_eq)
         @test ret ≈ results[i] rtol=2e-2
     end
 end
@@ -572,7 +545,7 @@ end
     ]
 
     for i in eachindex(h)
-        ret = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, h[i], F10ₐ; n=n_eq)
+        ret = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, h[i], F10ₐ; n = n_eq)
         @test ret ≈ results[i] rtol=2e-2
     end
 end
@@ -604,20 +577,22 @@ end
     n_eq = 2.001
 
     # Density must decrease with altitude.
-    rho_200 = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 200e3, 150.0; n=n_eq)
-    rho_500 = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 500e3, 150.0; n=n_eq)
-    rho_800 = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 800e3, 150.0; n=n_eq)
+    rho_200 = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 200e3, 150.0; n = n_eq)
+    rho_500 = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 500e3, 150.0; n = n_eq)
+    rho_800 = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 800e3, 150.0; n = n_eq)
     @test rho_200 > rho_500 > rho_800
 
     # Higher solar activity produces higher density.
-    rho_low  = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 500e3, 75.0;  n=n_eq)
-    rho_med  = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 500e3, 150.0; n=n_eq)
-    rho_high = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 500e3, 250.0; n=n_eq)
+    rho_low  = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 500e3, 75.0; n = n_eq)
+    rho_med  = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 500e3, 150.0; n = n_eq)
+    rho_high = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 500e3, 250.0; n = n_eq)
     @test rho_low < rho_med < rho_high
 
     # All densities must be positive.
     for h_km in [120, 200, 400, 600, 800, 1000]
-        @test AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, h_km * 1e3, 150.0; n=n_eq) > 0
+        @test AtmosphericModels.harrispriester_modified(
+            jd, ϕ_gd, λ, h_km * 1e3, 150.0; n = n_eq
+        ) > 0
     end
 end
 
@@ -630,10 +605,30 @@ end
 
     # FORTRAN reference values near the 300 km layer boundary (±1 km, 0.1 km steps).
     # The Junkins/Jancaitis weighting ensures C³ continuity across boundaries.
-    boundary_alts = [
-        299.0, 299.1, 299.2, 299.3, 299.4, 299.5, 299.6, 299.7, 299.8, 299.9,
-        300.0, 300.1, 300.2, 300.3, 300.4, 300.5, 300.6, 300.7, 300.8, 300.9, 301.0
-    ] * 1000
+    boundary_alts =
+        [
+            299.0,
+            299.1,
+            299.2,
+            299.3,
+            299.4,
+            299.5,
+            299.6,
+            299.7,
+            299.8,
+            299.9,
+            300.0,
+            300.1,
+            300.2,
+            300.3,
+            300.4,
+            300.5,
+            300.6,
+            300.7,
+            300.8,
+            300.9,
+            301.0,
+        ] * 1000
 
     boundary_rhos = [
         2.2255981257424839e-11
@@ -660,11 +655,16 @@ end
     ]
 
     for i in eachindex(boundary_alts)
-        ret = AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, boundary_alts[i], F10ₐ; n=n_eq)
+        ret = AtmosphericModels.harrispriester_modified(
+            jd, ϕ_gd, λ, boundary_alts[i], F10ₐ; n = n_eq
+        )
         @test ret ≈ boundary_rhos[i] rtol=2e-2
     end
 
     # Verify monotonic decrease across the boundary.
-    rhos = [AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, h, F10ₐ; n=n_eq) for h in boundary_alts]
-    @test issorted(rhos; rev=true)
+    rhos = [
+        AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, h, F10ₐ; n = n_eq) for
+        h in boundary_alts
+    ]
+    @test issorted(rhos; rev = true)
 end

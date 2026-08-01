@@ -153,20 +153,20 @@
             F10ₐ,
             F10,
             ap;
-            include_anomalous_oxygen = false
+            include_anomalous_oxygen = false,
         )
 
-        @test out.total_density           ≈ (expected[i,  5] * 1e3) rtol = 1e-3
-        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
-        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
-        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.total_density ≈ (expected[i, 5] * 1e3) rtol = 1e-3
+        @test out.temperature ≈ (expected[i, 6]) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature ≈ (expected[i, 7]) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density ≈ (expected[i, 2] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N2_number_density ≈ (expected[i, 3] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.O2_number_density ≈ (expected[i, 4] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.He_number_density ≈ (expected[i, 8] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.Ar_number_density ≈ (expected[i, 9] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.H_number_density ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N_number_density ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.aO_number_density ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
 
         # Test the version that calls `gtd7d` instead of `gtd7`.
         out = AtmosphericModels.nrlmsise00(
@@ -177,19 +177,19 @@
             F10ₐ,
             F10,
             ap;
-            include_anomalous_oxygen = true
+            include_anomalous_oxygen = true,
         )
 
-        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
-        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
-        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.temperature ≈ (expected[i, 6]) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature ≈ (expected[i, 7]) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density ≈ (expected[i, 2] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N2_number_density ≈ (expected[i, 3] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.O2_number_density ≈ (expected[i, 4] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.He_number_density ≈ (expected[i, 8] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.Ar_number_density ≈ (expected[i, 9] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.H_number_density ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N_number_density ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.aO_number_density ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
 
         expected_total_density = expected[i, 5] + 1.66e-24 * 16 * expected[i, 12]
         @test out.total_density ≈ (expected_total_density * 1e3) rtol = 1e-3
@@ -254,20 +254,20 @@
             F10ₐ,
             F10,
             ap_a;
-            include_anomalous_oxygen = false
+            include_anomalous_oxygen = false,
         )
 
-        @test out.total_density           ≈ (expected[i,  5] * 1e3) rtol = 5e-2
-        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
-        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
-        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 9e-2 atol = 1e-9
+        @test out.total_density ≈ (expected[i, 5] * 1e3) rtol = 5e-2
+        @test out.temperature ≈ (expected[i, 6]) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature ≈ (expected[i, 7]) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density ≈ (expected[i, 2] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.N2_number_density ≈ (expected[i, 3] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.O2_number_density ≈ (expected[i, 4] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.He_number_density ≈ (expected[i, 8] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.Ar_number_density ≈ (expected[i, 9] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.H_number_density ≈ (expected[i, 10] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.N_number_density ≈ (expected[i, 11] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.aO_number_density ≈ (expected[i, 12] * 1e6) rtol = 9e-2 atol = 1e-9
 
         # Test the version that calls `gtd7d` instead of `gtd7`.
         out = AtmosphericModels.nrlmsise00(
@@ -278,19 +278,19 @@
             F10ₐ,
             F10,
             ap_a;
-            include_anomalous_oxygen = true
+            include_anomalous_oxygen = true,
         )
 
-        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
-        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
-        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 5e-2 atol = 1e-9
-        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 9e-2 atol = 1e-9
+        @test out.temperature ≈ (expected[i, 6]) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature ≈ (expected[i, 7]) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density ≈ (expected[i, 2] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.N2_number_density ≈ (expected[i, 3] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.O2_number_density ≈ (expected[i, 4] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.He_number_density ≈ (expected[i, 8] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.Ar_number_density ≈ (expected[i, 9] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.H_number_density ≈ (expected[i, 10] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.N_number_density ≈ (expected[i, 11] * 1e6) rtol = 5e-2 atol = 1e-9
+        @test out.aO_number_density ≈ (expected[i, 12] * 1e6) rtol = 9e-2 atol = 1e-9
 
         expected_total_density = expected[i, 5] + 1.66e-24 * 16 * expected[i, 12]
         @test out.total_density ≈ (expected_total_density * 1e3) rtol = 5e-2
@@ -404,20 +404,20 @@ end
             153.6,
             159.5,
             13.75;
-            include_anomalous_oxygen = false
+            include_anomalous_oxygen = false,
         )
 
-        @test out.total_density           ≈ (expected[i,  5] * 1e3) rtol = 3e-3
-        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
-        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
-        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 3e-3 atol = 1e-9
-        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 3e-3 atol = 1e-9
-        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 2e-3 atol = 1e-9
-        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 3e-3 atol = 1e-9
-        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.total_density ≈ (expected[i, 5] * 1e3) rtol = 3e-3
+        @test out.temperature ≈ (expected[i, 6]) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature ≈ (expected[i, 7]) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density ≈ (expected[i, 2] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N2_number_density ≈ (expected[i, 3] * 1e6) rtol = 3e-3 atol = 1e-9
+        @test out.O2_number_density ≈ (expected[i, 4] * 1e6) rtol = 3e-3 atol = 1e-9
+        @test out.He_number_density ≈ (expected[i, 8] * 1e6) rtol = 2e-3 atol = 1e-9
+        @test out.Ar_number_density ≈ (expected[i, 9] * 1e6) rtol = 3e-3 atol = 1e-9
+        @test out.H_number_density ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N_number_density ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.aO_number_density ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
     end
 
     # Now, we check the automatic space index fetching by comparing the result against a
@@ -431,57 +431,45 @@ end
         -45 |> deg2rad,
         154.2407407407407,
         159.5,
-        13.75
+        13.75,
     )
 
     result_fetch = AtmosphericModels.nrlmsise00(
-        DateTime("2023-01-01T10:00:00"),
-        400e3,
-        -23 |> deg2rad,
-        -45 |> deg2rad
+        DateTime("2023-01-01T10:00:00"), 400e3, -23 |> deg2rad, -45 |> deg2rad
     )
 
-    @test result_fetch.total_density          ≈ expected_fetch.total_density
-    @test result_fetch.temperature            ≈ expected_fetch.temperature
+    @test result_fetch.total_density ≈ expected_fetch.total_density
+    @test result_fetch.temperature ≈ expected_fetch.temperature
     @test result_fetch.exospheric_temperature ≈ expected_fetch.exospheric_temperature
-    @test result_fetch.O_number_density       ≈ expected_fetch.O_number_density
-    @test result_fetch.N2_number_density      ≈ expected_fetch.N2_number_density
-    @test result_fetch.O2_number_density      ≈ expected_fetch.O2_number_density
-    @test result_fetch.He_number_density      ≈ expected_fetch.He_number_density
-    @test result_fetch.Ar_number_density      ≈ expected_fetch.Ar_number_density
-    @test result_fetch.H_number_density       ≈ expected_fetch.H_number_density
-    @test result_fetch.N_number_density       ≈ expected_fetch.N_number_density
-    @test result_fetch.aO_number_density      ≈ expected_fetch.aO_number_density
+    @test result_fetch.O_number_density ≈ expected_fetch.O_number_density
+    @test result_fetch.N2_number_density ≈ expected_fetch.N2_number_density
+    @test result_fetch.O2_number_density ≈ expected_fetch.O2_number_density
+    @test result_fetch.He_number_density ≈ expected_fetch.He_number_density
+    @test result_fetch.Ar_number_density ≈ expected_fetch.Ar_number_density
+    @test result_fetch.H_number_density ≈ expected_fetch.H_number_density
+    @test result_fetch.N_number_density ≈ expected_fetch.N_number_density
+    @test result_fetch.aO_number_density ≈ expected_fetch.aO_number_density
 
     # For altitudes lower than 80 km, we use default space indices.
     expected = AtmosphericModels.nrlmsise00(
-        DateTime("2023-01-01T10:00:00"),
-        79e3,
-        -23 |> deg2rad,
-        -45 |> deg2rad,
-        150,
-        150,
-        4
+        DateTime("2023-01-01T10:00:00"), 79e3, -23 |> deg2rad, -45 |> deg2rad, 150, 150, 4
     )
 
     result = AtmosphericModels.nrlmsise00(
-        DateTime("2023-01-01T10:00:00"),
-        79e3,
-        -23 |> deg2rad,
-        -45 |> deg2rad
+        DateTime("2023-01-01T10:00:00"), 79e3, -23 |> deg2rad, -45 |> deg2rad
     )
 
-    @test result.total_density           ≈ expected.total_density
-    @test result.temperature             ≈ expected.temperature
-    @test result.exospheric_temperature  ≈ expected.exospheric_temperature
-    @test result.O_number_density        ≈ expected.O_number_density
-    @test result.N2_number_density       ≈ expected.N2_number_density
-    @test result.O2_number_density       ≈ expected.O2_number_density
-    @test result.He_number_density       ≈ expected.He_number_density
-    @test result.Ar_number_density       ≈ expected.Ar_number_density
-    @test result.H_number_density        ≈ expected.H_number_density
-    @test result.N_number_density        ≈ expected.N_number_density
-    @test result.aO_number_density       ≈ expected.aO_number_density
+    @test result.total_density ≈ expected.total_density
+    @test result.temperature ≈ expected.temperature
+    @test result.exospheric_temperature ≈ expected.exospheric_temperature
+    @test result.O_number_density ≈ expected.O_number_density
+    @test result.N2_number_density ≈ expected.N2_number_density
+    @test result.O2_number_density ≈ expected.O2_number_density
+    @test result.He_number_density ≈ expected.He_number_density
+    @test result.Ar_number_density ≈ expected.Ar_number_density
+    @test result.H_number_density ≈ expected.H_number_density
+    @test result.N_number_density ≈ expected.N_number_density
+    @test result.aO_number_density ≈ expected.aO_number_density
 end
 
 @testset "Pre-allocating the Legendre Matrix" begin
@@ -531,20 +519,20 @@ end
             F10,
             ap;
             include_anomalous_oxygen = false,
-            P = P
+            P = P,
         )
 
-        @test out.total_density           ≈ (expected[i,  5] * 1e3) rtol = 1e-3
-        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
-        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
-        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.total_density ≈ (expected[i, 5] * 1e3) rtol = 1e-3
+        @test out.temperature ≈ (expected[i, 6]) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature ≈ (expected[i, 7]) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density ≈ (expected[i, 2] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N2_number_density ≈ (expected[i, 3] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.O2_number_density ≈ (expected[i, 4] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.He_number_density ≈ (expected[i, 8] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.Ar_number_density ≈ (expected[i, 9] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.H_number_density ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N_number_density ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.aO_number_density ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
 
         # Check that P was used.
         @test abs(sum(P)) > 0
@@ -562,26 +550,25 @@ end
             F10,
             ap;
             include_anomalous_oxygen = true,
-            P = P
+            P = P,
         )
 
-        @test out.temperature             ≈ (expected[i,  6]      ) rtol = 1e-1 atol = 1e-9
-        @test out.exospheric_temperature  ≈ (expected[i,  7]      ) rtol = 1e-1 atol = 1e-9
-        @test out.O_number_density        ≈ (expected[i,  2] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N2_number_density       ≈ (expected[i,  3] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.O2_number_density       ≈ (expected[i,  4] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.He_number_density       ≈ (expected[i,  8] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.Ar_number_density       ≈ (expected[i,  9] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.H_number_density        ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.N_number_density        ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
-        @test out.aO_number_density       ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.temperature ≈ (expected[i, 6]) rtol = 1e-1 atol = 1e-9
+        @test out.exospheric_temperature ≈ (expected[i, 7]) rtol = 1e-1 atol = 1e-9
+        @test out.O_number_density ≈ (expected[i, 2] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N2_number_density ≈ (expected[i, 3] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.O2_number_density ≈ (expected[i, 4] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.He_number_density ≈ (expected[i, 8] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.Ar_number_density ≈ (expected[i, 9] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.H_number_density ≈ (expected[i, 10] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.N_number_density ≈ (expected[i, 11] * 1e6) rtol = 1e-3 atol = 1e-9
+        @test out.aO_number_density ≈ (expected[i, 12] * 1e6) rtol = 1e-3 atol = 1e-9
 
         expected_total_density = expected[i, 5] + 1.66e-24 * 16 * expected[i, 12]
         @test out.total_density ≈ (expected_total_density * 1e3) rtol = 1e-3
 
         # Check that P was used.
         @test abs(sum(P)) > 0
-
     end
 end
 
@@ -605,50 +592,23 @@ end
 
     P = zeros(8, 3)
     @test_throws ArgumentError AtmosphericModels.nrlmsise00(
-        now() |> datetime2julian,
-        100e3,
-        0,
-        0,
-        100,
-        100,
-        20;
-        P = P
+        now() |> datetime2julian, 100e3, 0, 0, 100, 100, 20; P = P
     )
 
     P = zeros(7, 4)
     @test_throws ArgumentError AtmosphericModels.nrlmsise00(
-        now() |> datetime2julian,
-        100e3,
-        0,
-        0,
-        100,
-        100,
-        20;
-        P = P
+        now() |> datetime2julian, 100e3, 0, 0, 100, 100, 20; P = P
     )
 
     P = zeros(7, 3)
     @test_throws ArgumentError AtmosphericModels.nrlmsise00(
-        now() |> datetime2julian,
-        100e3,
-        0,
-        0,
-        100,
-        100,
-        20;
-        P = P
+        now() |> datetime2julian, 100e3, 0, 0, 100, 100, 20; P = P
     )
 end
 
 @testset "Show" begin
     result = AtmosphericModels.nrlmsise00(
-        DateTime("2023-01-01T10:00:00"),
-        500e3,
-        0,
-        0,
-        100,
-        100,
-        3
+        DateTime("2023-01-01T10:00:00"), 500e3, 0, 0, 100, 100, 3
     )
 
     expected = "NRLMSISE-00 output (ρ = 2.5893e-13 kg / m³)"

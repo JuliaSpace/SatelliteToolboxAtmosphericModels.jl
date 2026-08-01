@@ -16,8 +16,9 @@ Compute the chemistry / dissociation correction for MSIS models.
 - `h₁::Number`: Transition scale length.
 - `zh::Number`: Altitude of `1/2 r`.
 """
-function _ccor(h::HT, r::T, h₁::HT2, zh::ZT) where {HT<:Number, T<:Number, HT2<:Number, ZT<:Number}
-
+function _ccor(
+    h::HT, r::T, h₁::HT2, zh::ZT
+) where {HT <: Number, T <: Number, HT2 <: Number, ZT <: Number}
     RT = promote_type(HT, T, HT2, ZT)
 
     e = (h - zh) / h₁
@@ -41,8 +42,9 @@ Compute the O and O₂ chemistry / dissociation correction for MSIS models.
 - `zh::Number`: Altitude of `1/2 r`.
 - `h₂::Number`: Transition scale length 2.
 """
-function _ccor2(h::HT, r::T, h₁::HT2, zh::ZT, h₂::HT3) where {HT<:Number, T<:Number, HT2<:Number, ZT<:Number, HT3<:Number}
-
+function _ccor2(
+    h::HT, r::T, h₁::HT2, zh::ZT, h₂::HT3
+) where {HT <: Number, T <: Number, HT2 <: Number, ZT <: Number, HT3 <: Number}
     RT = promote_type(HT, T, HT2, ZT, HT3)
 
     e1 = (h - zh) / h₁
@@ -67,11 +69,12 @@ Compute the turbopause correction for MSIS models, returning the combined densit
 - `xmm::Number`: Full mixed molecular weight.
 - `xm::Number`: Species molecular weight.
 """
-function _dnet(dd::DT, dm::DT2, zhm::ZT, xmm::XT, xm::XT2) where {DT<:Number, DT2<:Number, ZT<:Number, XT<:Number, XT2<:Number}
-
+function _dnet(
+    dd::DT, dm::DT2, zhm::ZT, xmm::XT, xm::XT2
+) where {DT <: Number, DT2 <: Number, ZT <: Number, XT <: Number, XT2 <: Number}
     RT = promote_type(DT, DT2, ZT, XT, XT2)
 
-    a  = zhm / (xmm - xm)
+    a = zhm / (xmm - xm)
 
     if !((dm > 0) && (dd > 0))
         ((dd == 0) && (dm == 0)) && return one(RT)
@@ -93,15 +96,15 @@ end
 
 Compute the gravity [cm / s²] and effective radius [km] at the geodetic latitude `ϕ_gd` [°].
 """
-function _gravity_and_effective_radius(ϕ_gd::T) where T<:Number
+function _gravity_and_effective_radius(ϕ_gd::T) where {T <: Number}
     # Auxiliary variable to reduce computational burden.
-    c_2ϕ  = cos(2 * T(_DEG_TO_RAD) * ϕ_gd)
+    c_2ϕ = cos(2 * T(_DEG_TO_RAD) * ϕ_gd)
 
     # Compute the gravity at the selected latitude.
     g_lat = T(_REFERENCE_GRAVITY) * (1 - T(0.0026373) * c_2ϕ)
 
     # Compute the effective radius at the selected latitude.
-    r_lat  = 2 * g_lat / (T(3.085462e-6) + T(2.27e-9) * c_2ϕ) * T(1e-5)
+    r_lat = 2 * g_lat / (T(3.085462e-6) + T(2.27e-9) * c_2ϕ) * T(1e-5)
 
     return g_lat, r_lat
 end
@@ -119,8 +122,9 @@ Compute the scale height.
 - `g_lat::Number`: Reference gravity at desired latitude [cm / s²].
 - `r_lat::Number`: Reference radius at desired latitude [km].
 """
-function _scale_height(h::HT, xm::XT, temp::TT, g_lat::GT, r_lat::RLT) where {HT<:Number, XT<:Number, TT<:Number, GT<:Number, RLT<:Number}
-
+function _scale_height(
+    h::HT, xm::XT, temp::TT, g_lat::GT, r_lat::RLT
+) where {HT <: Number, XT <: Number, TT <: Number, GT <: Number, RLT <: Number}
     RT = promote_type(HT, XT, TT, GT, RLT)
 
     # Compute the gravity at the selected altitude.
@@ -161,11 +165,11 @@ function _sg₀(ex::Number, ap::AbstractVector, abs_p25::Number, p26::Number)
     g₆ = _g₀(ap[6], abs_p25, p26)
     g₇ = _g₀(ap[7], abs_p25, p26)
 
-    ex²  = ex   * ex
-    ex³  = ex²  * ex
-    ex⁴  = ex²  * ex²
-    ex⁸  = ex⁴  * ex⁴
-    ex¹² = ex⁸  * ex⁴
+    ex²  = ex * ex
+    ex³  = ex² * ex
+    ex⁴  = ex² * ex²
+    ex⁸  = ex⁴ * ex⁴
+    ex¹² = ex⁸ * ex⁴
     ex¹⁹ = ex¹² * ex⁴ * ex³
 
     sumex = 1 + (1 - ex¹⁹) / (1 - ex) * √ex

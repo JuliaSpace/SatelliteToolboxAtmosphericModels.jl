@@ -33,10 +33,7 @@
     # == Scenario 01 =======================================================================
 
     # Files with the test results.
-    test_list = [
-        "JB2008_AUTO_OUTPUT_01.DAT",
-        "JB2008_AUTO_OUTPUT_02.DAT",
-    ]
+    test_list = ["JB2008_AUTO_OUTPUT_01.DAT", "JB2008_AUTO_OUTPUT_02.DAT"]
 
     # Execute the tests.
     for filename in test_list
@@ -62,10 +59,10 @@
                     # time.
                     tokens = split(line)
 
-                    year = parse(Int,     tokens[1])
-                    doy  = parse(Int,     tokens[2])
-                    hour = parse(Int,     tokens[3])
-                    min  = parse(Int,     tokens[4])
+                    year = parse(Int, tokens[1])
+                    doy  = parse(Int, tokens[2])
+                    hour = parse(Int, tokens[3])
+                    min  = parse(Int, tokens[4])
                     sec  = parse(Float64, tokens[5])
                 else
                     tokens = split(line)
@@ -81,12 +78,13 @@
                     total_density = parse(Float64, tokens[6])
 
                     # Run the model.
-                    jd  = date_to_jd(year, 1, 1, hour, min, sec) - 1 + doy
+                    jd = date_to_jd(year, 1, 1, hour, min, sec) - 1 + doy
                     instant = julian2datetime(jd)
                     result = AtmosphericModels.jb2008(instant, ϕ_gd, λ, h)
 
                     # Compare the results.
-                    @test result.exospheric_temperature ≈ exospheric_temperature atol = 0.6 rtol = 0.0
+                    @test result.exospheric_temperature ≈ exospheric_temperature atol = 0.6 rtol =
+                        0.0
                     @test result.temperature ≈ temperature atol = 0.6 rtol = 0.0
                     @test result.total_density ≈ total_density atol = 0.0 rtol = 5e-3
                 end
@@ -112,7 +110,7 @@ end
         100,
         100,
         100,
-        85
+        85,
     )
 
     @test result.H_number_density ≈ result.He_number_density * exp(-25)
@@ -133,7 +131,7 @@ end
         100,
         100,
         100,
-        85
+        85,
     )
 
     expected = "JB2008 output (ρ = 3.52089e-13 kg / m³)"
@@ -157,18 +155,6 @@ end
 
 @testset "Errors" begin
     @test_throws ArgumentError AtmosphericModels.jb2008(
-        now(),
-        0,
-        0,
-        89.9e3,
-        100,
-        100,
-        100,
-        100,
-        100,
-        100,
-        100,
-        100,
-        85
+        now(), 0, 0, 89.9e3, 100, 100, 100, 100, 100, 100, 100, 100, 85
     )
 end

@@ -90,17 +90,13 @@ function jacchia1977(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
-    verbose::Val{verbosity} = Val(true)
+    verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     return jacchia1977(datetime2julian(instant), ϕ_gd, λ, h; verbose = verbose)
 end
 
 function jacchia1977(
-    jd::Number,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number;
-    verbose::Val{verbosity} = Val(true)
+    jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
     # == Daily F10.7 With the Solar Hour Angle Dependent Lag, Eq. 23 [1] ===================
 
@@ -130,7 +126,7 @@ function jacchia1977(
     Σw_F = 0.0
 
     for k in -213:213
-        w     = exp(-(k / 71)^2)
+        w    = exp(-(k / 71)^2)
         Σw   += w
         Σw_F += w * space_index(Val(:F10obs), jd + k)
     end
@@ -173,29 +169,22 @@ function jacchia1977(
     h::Number,
     F10::Number,
     F10ₐ::Number,
-    Kp::Number
+    Kp::Number,
 )
     return jacchia1977(datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp)
 end
 
 function jacchia1977(
-    jd::JT,
-    ϕ_gd::PT,
-    λ::LT,
-    h::HT,
-    F10::FT,
-    F10ₐ::FT2,
-    Kp::KT
+    jd::JT, ϕ_gd::PT, λ::LT, h::HT, F10::FT, F10ₐ::FT2, Kp::KT
 ) where {
-    JT<:Number,
-    PT<:Number,
-    LT<:Number,
-    HT<:Number,
-    FT<:Number,
-    FT2<:Number,
-    KT<:Number
+    JT <: Number,
+    PT <: Number,
+    LT <: Number,
+    HT <: Number,
+    FT <: Number,
+    FT2 <: Number,
+    KT <: Number,
 }
-
     RT = float(promote_type(JT, PT, LT, HT, FT, FT2, KT))
 
     # == Preliminaries =====================================================================
@@ -274,7 +263,7 @@ function _jacchia1977_dynamic(
     Φ::Number,
     F10::Number,
     F10ₐ::Number,
-    Kp::Number
+    Kp::Number,
 )
     Mi = _JACCHIA1977_CONSTANTS.Mi
     Av = _JACCHIA1977_CONSTANTS.Av
@@ -290,8 +279,8 @@ function _jacchia1977_dynamic(
             typeof(Φ),
             typeof(F10),
             typeof(F10ₐ),
-            typeof(Kp)
-        )
+            typeof(Kp),
+        ),
     )
 
     # == Static Model at the Mean Exospheric Temperature, Eq. 20 [1] =======================
@@ -325,17 +314,7 @@ function _jacchia1977_dynamic(
     n = 10 .^ ad
     ρ = sum(n .* Mi) / Av
 
-    return Jacchia1977Output{RT}(
-        ρ,
-        Tz,
-        T½,
-        n[3],
-        n[2],
-        n[5],
-        n[4],
-        n[1],
-        n[6]
-    )
+    return Jacchia1977Output{RT}(ρ, Tz, T½, n[3], n[2], n[5], n[4], n[1], n[6])
 end
 
 """
@@ -374,7 +353,7 @@ end
 Compute the temperature [K] at the altitude `z` [km] using the profile parameters `c`
 obtained from [`_jacchia1977_profile_params`](@ref) (eqs. 3 and 4 of [1]).
 """
-function _jacchia1977_temperature(z::Number, c::NTuple{7, T}) where {T<:Number}
+function _jacchia1977_temperature(z::Number, c::NTuple{7, T}) where {T <: Number}
     T₀ = _JACCHIA1977_CONSTANTS.T₀
     z₀ = _JACCHIA1977_CONSTANTS.z₀
     zx = _JACCHIA1977_CONSTANTS.zx
@@ -417,7 +396,7 @@ term for other altitudes.
 - **[2]** de Matos, B. S., Carrara, V (1985-1987). *Fortran implementation of the Jacchia
     1977 model*. INPE, São José dos Campos, BR.
 """
-function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
+function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
     Rstar = _JACCHIA1977_CONSTANTS.Rstar
     Av    = _JACCHIA1977_CONSTANTS.Av
     Ra    = _JACCHIA1977_CONSTANTS.Ra
@@ -438,9 +417,9 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
     c = _jacchia1977_profile_params(T∞)
 
     # Hydrogen flux and number density at 500 km (mks), Section 7 [1].
-    aux        = 28.9 / T∞^RT(0.25)
-    ϕH         = 10^(RT(6.90) + aux) / 2.0e20
-    ln_nH_500  = (RT(5.94) + aux) * ln10
+    aux       = 28.9 / T∞^RT(0.25)
+    ϕH        = 10^(RT(6.90) + aux) / 2.0e20
+    ln_nH_500 = (RT(5.94) + aux) * ln10
 
     # Number of species included in the mean molecular mass (H is included above 140 km).
     nc = 5
@@ -579,12 +558,12 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
                     # Number densities with the departures from diffusive equilibrium
                     # corrections (eqs. 14 and 15 of [1]) at the beginning of the segment.
                     @reset al[1] = an[1]
-                    @reset al[2] = an[2] -
-                        RT(0.07) * (1 + tanh(RT(0.18) * (zᵢ - 111))) * ln10
+                    @reset al[2] =
+                        an[2] - RT(0.07) * (1 + tanh(RT(0.18) * (zᵢ - 111))) * ln10
                     @reset al[3] = an[3]
                     @reset al[4] = an[4]
-                    @reset al[5] = an[5] -
-                        RT(0.24) * exp(-RT(0.009) * (zᵢ - RT(97.7))^2) * ln10
+                    @reset al[5] =
+                        an[5] - RT(0.24) * exp(-RT(0.009) * (zᵢ - RT(97.7))^2) * ln10
 
                     g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
                     Σ  = zero(RT)
@@ -600,9 +579,9 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
                     zᵢ += 4step
 
                     int = step * Σ
-                    Tf  = _jacchia1977_temperature(zᵢ, c)
+                    Tf = _jacchia1977_temperature(zᵢ, c)
                     ΔlnT = log(Tᵢ / Tf)
-                    Tᵢ  = Tf
+                    Tᵢ = Tf
 
                     for i in 1:5
                         @reset an[i] = an[i] - int * Mi[i] + ΔlnT * (1 + αi[i])
@@ -619,14 +598,15 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
 
                     @inbounds for i in 1:5
                         Tl  = _jacchia1977_temperature(zⱼ, c)
-                        Σ  += Wb[i] / Tl
+                        Σ   += Wb[i] / Tl
                         aux = Wb[i] / √Tl
-                        Σ₁ += Σϕ * aux
-                        Σ₂ += aux
-                        zⱼ += step
+                        Σ₁  += Σϕ * aux
+                        Σ₂  += aux
+                        zⱼ  += step
                     end
 
-                    @reset an[6] = an[6] - (g * Σ * step * Mi[6] - ΔlnT * (1 + αi[6])) -
+                    @reset an[6] =
+                        an[6] - (g * Σ * step * Mi[6] - ΔlnT * (1 + αi[6])) -
                         Σ₁ * 1000 * step - Σ₂ * ϕH * 1000 * step
                 end
             elseif z > 500
@@ -650,8 +630,8 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
                     zⱼ = zᵢ
 
                     @inbounds for i in 1:5
-                        Tl  = _jacchia1977_temperature(zⱼ, c)
-                        Σ  += Wb[i] * g / Tl
+                        Tl = _jacchia1977_temperature(zⱼ, c)
+                        Σ += Wb[i] * g / Tl
                         Σ₂ += Wb[i] / √Tl
                         zⱼ += step
                     end
@@ -686,7 +666,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number}
 
     @inbounds for i in 1:6
         if i <= nc
-            nᵢ  = exp(an[i])
+            nᵢ = exp(an[i])
             Σm += nᵢ * Mi[i]
             Σn += nᵢ
         end
@@ -751,26 +731,14 @@ Compute the base-10 logarithm of the number densities considering the diurnal va
     the geomagnetic variation.
 """
 function _jacchia1977_diurnal(
-    T½::Number,
-    Ωp::Number,
-    Ωs::Number,
-    δs::Number,
-    ϕ::Number,
-    z::Number,
-    M̄::Number
+    T½::Number, Ωp::Number, Ωs::Number, δs::Number, ϕ::Number, z::Number, M̄::Number
 )
     Mi = _JACCHIA1977_CONSTANTS.Mi
 
     RT = float(
         promote_type(
-            typeof(T½),
-            typeof(Ωp),
-            typeof(Ωs),
-            typeof(δs),
-            typeof(ϕ),
-            typeof(z),
-            typeof(M̄)
-        )
+            typeof(T½), typeof(Ωp), typeof(Ωs), typeof(δs), typeof(ϕ), typeof(z), typeof(M̄)
+        ),
     )
 
     # Hour angle of the Sun [rad].
@@ -832,11 +800,7 @@ to 35 of [1]), given the quiet exospheric temperature `T_quiet` [K], the latitud
     subtract the static model evaluated at `T_quiet` to obtain the geomagnetic variation.
 """
 function _jacchia1977_geomagnetic(
-    T_quiet::Number,
-    Kp::Number,
-    ϕ::Number,
-    λ::Number,
-    z::Number
+    T_quiet::Number, Kp::Number, ϕ::Number, λ::Number, z::Number
 )
     ai = _JACCHIA1977_CONSTANTS.ai
 

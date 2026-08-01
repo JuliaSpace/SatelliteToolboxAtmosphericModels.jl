@@ -66,19 +66,18 @@
         log₁₀_ρ = parse(Float64, l[13:20])
         T_exo   = parse(Float64, l[21:27])
         T_local = parse(Float64, l[28:34])
-        an      = [parse(Float64, l[35 + 7 * (i - 1):34 + 7 * i]) for i in 1:6]
+        an      = [parse(Float64, l[(35 + 7 * (i - 1)):(34 + 7 * i)]) for i in 1:6]
 
         log₁₀_n, M̄, ρ = AtmosphericModels._jacchia1977_static(T½, Float64(alt))
 
         Tz = AtmosphericModels._jacchia1977_temperature(
-            Float64(alt),
-            AtmosphericModels._jacchia1977_profile_params(T½)
+            Float64(alt), AtmosphericModels._jacchia1977_profile_params(T½)
         )
 
-        @test M̄         ≈ wmol    atol = 0.006
-        @test log10(ρ)  ≈ log₁₀_ρ atol = 0.0006
-        @test T½        ≈ T_exo   atol = 0.006
-        @test Tz        ≈ T_local atol = 0.006
+        @test M̄ ≈ wmol atol = 0.006
+        @test log10(ρ) ≈ log₁₀_ρ atol = 0.0006
+        @test T½ ≈ T_exo atol = 0.006
+        @test Tz ≈ T_local atol = 0.006
 
         for i in 1:6
             @test log₁₀_n[i] ≈ an[i] atol = 0.0006
@@ -134,10 +133,9 @@ end
         # The line format is (1X, I4, 5(1X, F6.2, F8.3)).
         vals = [
             (
-                parse(Float64, l[ 7 + 15 * (i - 1):12 + 15 * (i - 1)]),
-                parse(Float64, l[13 + 15 * (i - 1):20 + 15 * (i - 1)])
-            )
-            for i in 1:5
+                parse(Float64, l[(7 + 15 * (i - 1)):(12 + 15 * (i - 1))]),
+                parse(Float64, l[(13 + 15 * (i - 1)):(20 + 15 * (i - 1))]),
+            ) for i in 1:5
         ]
 
         # The reference test program uses this truncated value of π.
@@ -145,16 +143,7 @@ end
 
         for (i, ϕ) in enumerate(lats)
             out = AtmosphericModels._jacchia1977_dynamic(
-                z,
-                ϕ,
-                ra,
-                0.0,
-                0.0,
-                ra - gst,
-                Φ,
-                F10,
-                F10ₐ,
-                Kp
+                z, ϕ, ra, 0.0, 0.0, ra - gst, Φ, F10, F10ₐ, Kp
             )
 
             n = (
@@ -163,7 +152,7 @@ end
                 out.N2_number_density,
                 out.Ar_number_density,
                 out.O_number_density,
-                out.H_number_density
+                out.H_number_density,
             )
 
             M̄ = sum(n .* Mi) / sum(n)
@@ -192,18 +181,10 @@ end
 
 @testset "SR-375 Worked Example" begin
     jd  = date_to_jd(1974, 5, 4, 14, 0, 0)
-    out = AtmosphericModels.jacchia1977(
-        jd,
-        deg2rad(40),
-        deg2rad(-45),
-        320e3,
-        114.0,
-        87.6,
-        5.0
-    )
+    out = AtmosphericModels.jacchia1977(jd, deg2rad(40), deg2rad(-45), 320e3, 114.0, 87.6, 5.0)
 
     @test out.exospheric_temperature ≈ 873.1 atol = 0.1
-    @test log10(out.total_density)   ≈ -10.934 atol = 0.05
+    @test log10(out.total_density) ≈ -10.934 atol = 0.05
 end
 
 ############################################################################################
@@ -234,27 +215,21 @@ end
         expected = AtmosphericModels.jacchia1977(instant, ϕ_gd, λ, h, F10, F10ₐ, Kp)
         result   = AtmosphericModels.jacchia1977(instant, ϕ_gd, λ, h)
 
-        @test result.total_density          ≈ expected.total_density
-        @test result.temperature            ≈ expected.temperature
+        @test result.total_density ≈ expected.total_density
+        @test result.temperature ≈ expected.temperature
         @test result.exospheric_temperature ≈ expected.exospheric_temperature
-        @test result.N2_number_density      ≈ expected.N2_number_density
-        @test result.O2_number_density      ≈ expected.O2_number_density
-        @test result.O_number_density       ≈ expected.O_number_density
-        @test result.Ar_number_density      ≈ expected.Ar_number_density
-        @test result.He_number_density      ≈ expected.He_number_density
-        @test result.H_number_density       ≈ expected.H_number_density
+        @test result.N2_number_density ≈ expected.N2_number_density
+        @test result.O2_number_density ≈ expected.O2_number_density
+        @test result.O_number_density ≈ expected.O_number_density
+        @test result.Ar_number_density ≈ expected.Ar_number_density
+        @test result.He_number_density ≈ expected.He_number_density
+        @test result.H_number_density ≈ expected.H_number_density
     end
 end
 
 @testset "Show" begin
     result = AtmosphericModels.jacchia1977(
-        DateTime("2023-01-01T10:00:00"),
-        0,
-        0,
-        500e3,
-        100,
-        100,
-        3
+        DateTime("2023-01-01T10:00:00"), 0, 0, 500e3, 100, 100, 3
     )
 
     str = sprint(show, result)
@@ -268,21 +243,9 @@ end
 
 @testset "Errors" begin
     @test_throws ArgumentError AtmosphericModels.jacchia1977(
-        now(),
-        0,
-        0,
-        89.9e3,
-        100,
-        100,
-        3
+        now(), 0, 0, 89.9e3, 100, 100, 3
     )
     @test_throws ArgumentError AtmosphericModels.jacchia1977(
-        now(),
-        0,
-        0,
-        2000.1e3,
-        100,
-        100,
-        3
+        now(), 0, 0, 2000.1e3, 100, 100, 3
     )
 end

@@ -44,7 +44,8 @@
     for i in 1:length(AtmosphericModels._EXPONENTIAL_ATMOSPHERE_H₀)
         h = 1000 * AtmosphericModels._EXPONENTIAL_ATMOSPHERE_H₀[i]
 
-        @test AtmosphericModels.exponential(h) == AtmosphericModels._EXPONENTIAL_ATMOSPHERE_ρ₀[i]
+        @test AtmosphericModels.exponential(h) ==
+            AtmosphericModels._EXPONENTIAL_ATMOSPHERE_ρ₀[i]
     end
 
     # == Scenario 03 =======================================================================

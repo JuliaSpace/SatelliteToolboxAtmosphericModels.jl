@@ -22,7 +22,7 @@ import Base: show
 #                                        Constants                                         #
 ############################################################################################
 
-const _D = string(Crayon(reset = true))
+const _D = string(Crayon(; reset = true))
 const _B = string(crayon"bold")
 
 ############################################################################################

@@ -27,7 +27,7 @@ function ChainRulesCore.rrule(
     ap::Number;
     flags::AtmosphericModels.Nrlmsise00Flags = AtmosphericModels.Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
-    P::Union{Nothing, AbstractMatrix} = nothing
+    P::Union{Nothing, AbstractMatrix} = nothing,
 )
     y = AtmosphericModels.nrlmsise00(
         jd,
@@ -39,7 +39,7 @@ function ChainRulesCore.rrule(
         ap;
         flags = flags,
         include_anomalous_oxygen = include_anomalous_oxygen,
-        P = P
+        P = P,
     )
 
     fields = fieldnames(AtmosphericModels.Nrlmsise00Output)
@@ -54,11 +54,11 @@ function ChainRulesCore.rrule(
                     x...;
                     flags = flags,
                     include_anomalous_oxygen = include_anomalous_oxygen,
-                    P = nothing
+                    P = nothing,
                 )
                 collect(getfield(out, f) for f in fields)
             end,
-            [jd, h, ϕ_gd, λ, F10ₐ, F10, ap]
+            [jd, h, ϕ_gd, λ, F10ₐ, F10, ap],
         )
 
         Δvec = [Δ[i] for i in 1:length(fields)]

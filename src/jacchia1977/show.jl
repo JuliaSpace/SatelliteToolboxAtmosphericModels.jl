@@ -14,7 +14,7 @@ function show(io::IO, out::Jacchia1977Output)
         io,
         "$(b)Jacchia 1977 output$(d) (ρ = ",
         @sprintf("%g", out.total_density),
-        " kg / m³)"
+        " kg / m³)",
     )
     return nothing
 end
@@ -36,15 +36,15 @@ function show(io::IO, mime::MIME"text/plain", out::Jacchia1977Output)
     str_H_number_den    = @sprintf("%15g", out.H_number_density)
 
     println(io, "Jacchia 1977 Atmospheric Model Result:")
-    println(io, "$(b)      Total density :$(d)", str_total_density,   "  kg / m³")
-    println(io, "$(b)        Temperature :$(d)", str_temperature,     "  K")
+    println(io, "$(b)      Total density :$(d)", str_total_density, "  kg / m³")
+    println(io, "$(b)        Temperature :$(d)", str_temperature, "  K")
     println(io, "$(b)   Exospheric Temp. :$(d)", str_exospheric_temp, "  K")
-    println(io, "$(b)  N₂ number density :$(d)", str_N₂_number_den,   "  1 / m³")
-    println(io, "$(b)  O₂ number density :$(d)", str_O₂_number_den,   "  1 / m³")
-    println(io, "$(b)  O  number density :$(d)", str_O_number_den,    "  1 / m³")
-    println(io, "$(b)  Ar number density :$(d)", str_Ar_number_den,   "  1 / m³")
-    println(io, "$(b)  He number density :$(d)", str_He_number_den,   "  1 / m³")
-    print(io,   "$(b)  H  number density :$(d)", str_H_number_den,    "  1 / m³")
+    println(io, "$(b)  N₂ number density :$(d)", str_N₂_number_den, "  1 / m³")
+    println(io, "$(b)  O₂ number density :$(d)", str_O₂_number_den, "  1 / m³")
+    println(io, "$(b)  O  number density :$(d)", str_O_number_den, "  1 / m³")
+    println(io, "$(b)  Ar number density :$(d)", str_Ar_number_den, "  1 / m³")
+    println(io, "$(b)  He number density :$(d)", str_He_number_den, "  1 / m³")
+    print(io, "$(b)  H  number density :$(d)", str_H_number_den, "  1 / m³")
 
     return nothing
 end
