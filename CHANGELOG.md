@@ -1,9 +1,15 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
-Version 2.0.0
+Version 1.3.0
 -------------
 
+- ![Deprecation][badge-deprecation] The keyword argument `roots_container` of `jr1971` is
+  not used anymore and is kept only for backward compatibility. The model now computes the
+  roots of the quartic polynomial using a closed-form algorithm that does not allocate.
+  For the same reason, the dependency PolynomialRoots.jl and the ForwardDiff.jl /
+  ImplicitDifferentiation.jl extension were removed since the new algorithm is natively
+  compatible with automatic differentiation.
 - ![Feature][badge-feature] The package now supports the Jacchia 1977 model
   (`AtmosphericModels.jacchia1977`). The implementation numerically integrates the
   barometric and diffusion equations as described in SAO Special Report #375 and is
@@ -11,11 +17,6 @@ Version 2.0.0
   space index fetching follows the prescriptions in the report: lagged daily F10.7,
   Gaussian-weighted averaged F10.7, and Kp delayed by a geomagnetic latitude dependent
   interval.
-- ![BREAKING][badge-breaking] The keyword argument `roots_container` of `jr1971` was
-  removed. The model now computes the roots of the quartic polynomial using a closed-form
-  algorithm that does not allocate. For the same reason, the dependency PolynomialRoots.jl
-  and the ForwardDiff.jl / ImplicitDifferentiation.jl extension were removed since the new
-  algorithm is natively compatible with automatic differentiation.
 - ![Bugfix][badge-bugfix] The nighttime minimum global exospheric temperature in the JR1971
   model used the daily F10.7 flux in the term that requires the 81-day average, leading to
   wrong densities whenever both indices differ.

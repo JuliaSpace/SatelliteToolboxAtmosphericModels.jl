@@ -79,6 +79,10 @@ The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
     index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
     `Val` object, not a `Bool`.
     (**Default**: `Val(true)`)
+- `roots_container::Union{Nothing, AbstractVector}`: This keyword is not used anymore and
+    is kept only for backward compatibility. The quartic polynomial roots are now computed
+    using a closed-form algorithm that does not allocate.
+    (**Default**: `nothing`)
 
 # Returns
 
@@ -91,12 +95,18 @@ function jr1971(
     λ::Number,
     h::Number;
     verbose::Val{verbosity} = Val(true),
+    roots_container::Union{Nothing, AbstractVector} = nothing,
 ) where {verbosity}
     return jr1971(datetime2julian(instant), ϕ_gd, λ, h; verbose = verbose)
 end
 
 function jr1971(
-    jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity} = Val(true)
+    jd::Number,
+    ϕ_gd::Number,
+    λ::Number,
+    h::Number;
+    verbose::Val{verbosity} = Val(true),
+    roots_container::Union{Nothing, AbstractVector} = nothing,
 ) where {verbosity}
     # Get the data in the desired Julian Day.
     F10  = space_index(Val(:F10obs), jd)
@@ -139,6 +149,7 @@ function jr1971(
     F10ₐ::Number,
     Kp::Number;
     verbose::Val{verbosity} = Val(true),
+    roots_container::Union{Nothing, AbstractVector} = nothing,
 ) where {verbosity}
     return jr1971(
         datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp; verbose = Val(verbosity)
@@ -154,6 +165,7 @@ function jr1971(
     F10ₐ::FT2,
     Kp::KT;
     verbose::Val{verbosity} = Val(true),
+    roots_container::Union{Nothing, AbstractVector} = nothing,
 ) where {
     JT <: Number,
     PT <: Number,
