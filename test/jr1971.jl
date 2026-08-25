@@ -352,3 +352,10 @@ end
     @test result isa AtmosphericModels.JR1971Output{Float64}
     @test result.total_density == expected.total_density
 end
+
+@testset "Float32 Output Type" begin
+    # The output element type must be the promotion of the input types, and the call must
+    # be type stable.
+    result = AtmosphericModels.jr1971(2460000.25f0, 0.5f0, 0.5f0, 300.0f3, 100.0f0, 100.0f0, 3.0f0)
+    @test result isa AtmosphericModels.JR1971Output{Float32}
+end

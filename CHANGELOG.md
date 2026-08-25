@@ -4,6 +4,11 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Enhancement][badge-enhancement] Several type instabilities related to `Float64`
+  literals were removed from the JR1971, JB2008, and modified Harris-Priester models. In
+  particular, the modified Harris-Priester model now returns the promotion of the input
+  types (e.g. `Float32` for all-`Float32` inputs) as documented, instead of always
+  returning `Float64`. The results for `Float64` inputs are unchanged.
 - ![Enhancement][badge-enhancement] The NRLMSISE-00 coefficient tables are now tuples
   instead of heap-allocated vectors. Since all the accesses use literal indices, the bounds
   checks are elided at compile time, making the model about 3 % faster. The results are

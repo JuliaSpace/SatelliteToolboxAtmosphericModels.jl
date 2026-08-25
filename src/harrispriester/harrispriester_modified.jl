@@ -200,7 +200,7 @@ function harrispriester_modified(
     sin_ϕ, cos_ϕ   = sincos(ϕ_gd)
 
     cos_ψ = sin_ϕ * sin_δs + cos_ϕ * cos_δs * cos(Ωp - Ωs - _HARRIS_PRIESTER_LAG_ANGLE)
-    cos²_ψ_by_2 = max(RT(0), 0.5 + 0.5 * cos_ψ)
+    cos²_ψ_by_2 = max(RT(0), RT(1 / 2) + RT(1 / 2) * cos_ψ)
     cos_ψ_by_2 = sqrt(cos²_ψ_by_2)
 
     # Compute cos(ψ/2)ⁿ with a smoothing function to avoid issues when cos(ψ/2) is near 0.
@@ -219,7 +219,7 @@ function harrispriester_modified(
     ρ = ρ_min_h + (ρ_max_h - ρ_min_h) * cos_ψ_by_2_pow_n
 
     # Convert from g/km³ to kg/m³.
-    return ρ * 1e-12
+    return RT(ρ * 1e-12)
 end
 
 """

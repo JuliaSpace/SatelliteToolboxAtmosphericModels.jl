@@ -687,3 +687,11 @@ end
     @test_throws ArgumentError AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 7)
     @test_throws ArgumentError AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 1)
 end
+
+@testset "Float32 Output Type (Modified)" begin
+    # The output element type must be the promotion of the input types.
+    result = AtmosphericModels.harrispriester_modified(
+        2460000.25f0, 0.5f0, 0.5f0, 300.0f3, 100.0f0
+    )
+    @test result isa Float32
+end

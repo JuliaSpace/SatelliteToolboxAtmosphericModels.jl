@@ -317,7 +317,7 @@ function jb2008(
     ΔM10 = M10 - M10ₐ
     ΔY10 = Y10 - Y10ₐ
 
-    Wt  = min((F10ₐ / 240)^(1 / 4), 1.0)
+    Wt  = min((F10ₐ / 240)^RT(1 / 4), RT(1))
     Fsₐ = F10ₐ * Wt + S10ₐ * (1-Wt)
     Tc  = 392.4 + 3.227Fsₐ + 0.298ΔF10 + 2.259ΔS10 + 0.312ΔM10 + 0.178ΔY10
 
@@ -392,7 +392,7 @@ function jb2008(
     # in which z₁ is the minimum value between `h` and 105 km. The integration will be
     # computed by Newton-Cotes 4th degree method.
 
-    z₂ = min(h, 105.0)
+    z₂ = min(h, RT(105))
 
     int, z₂ = _jb2008_∫(z₁, z₂, R1, Tx, T∞, _jb2008_δf1; verbose = Val(verbosity))
 
@@ -455,7 +455,7 @@ function jb2008(
         # in which z₃ is the minimum value between `h` and 500 km. The integration will be
         # computed by Newton-Cotes 4th degree method.
 
-        z₃ = min(h, 500.0)
+        z₃ = min(h, RT(500))
 
         int₁, z₃ = _jb2008_∫(z₂, z₃, R1, Tx, T∞, _jb2008_δf2; verbose = Val(verbosity))
 
@@ -474,7 +474,7 @@ function jb2008(
         # in which z₄ is the maximum value between `h` and 500 km. The integration will be
         # computed by Newton-Cotes 4th degree method.
 
-        z₄ = max(h, 500.0)
+        z₄ = max(h, RT(500))
 
         int₂, z₄ = _jb2008_∫(
             z₃, z₄, (h <= 500) ? R2 : R3, Tx, T∞, _jb2008_δf2; verbose = Val(verbosity)
@@ -634,8 +634,9 @@ function _jb2008_high_altitude(h::Number, F10ₐ::Number)
     # Auxiliary variables.
     C = _JB2008_CHT
 
-    # Compute the high-altitude density correction.
-    FρH = one(promote_type(typeof(h), typeof(F10ₐ)))
+    # Compute the high-altitude density correction. Notice that the element type must also
+    # consider the coefficients so that all branches below return the same type.
+    FρH = one(promote_type(typeof(h), typeof(F10ₐ), eltype(C)))
 
     @inbounds if 1000 <= h <= 1500
         z = (h - 1000) / 500

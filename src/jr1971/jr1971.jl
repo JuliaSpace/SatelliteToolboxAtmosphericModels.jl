@@ -299,7 +299,7 @@ function jr1971(
 
     # -- Geomagnetic Effect, Eq. B-7 [3] ---------------------------------------------------
 
-    Δlog₁₀ρ_g = h < 200 ? 0.012Kp + 1.2e-5exp(Kp) : 0.0
+    Δlog₁₀ρ_g = h < 200 ? RT(0.012Kp + 1.2e-5exp(Kp)) : zero(RT)
 
     # -- Semi-annual Variation, Section B.1.3 [3] ------------------------------------------
 
@@ -512,7 +512,7 @@ function jr1971(
                 ρO * Av / Mi.O * 1e6,
                 ρAr * Av / Mi.Ar * 1e6,
                 ρHe * Av / Mi.He * 1e6,
-                0.0,
+                zero(RT),
             )
         end
 
@@ -569,7 +569,7 @@ function jr1971(
 
         if h > 500
             # Compute the temperature and the H density at 500 km.
-            T₅₀₀       = _jr1971_temperature(500.0, Tx, T∞)
+            T₅₀₀       = _jr1971_temperature(RT(500), Tx, T∞)
             log₁₀_T₅₀₀ = log10(T₅₀₀)
             ρ₅₀₀_H     = Mi.H / Av * 10^(73.13 - (39.4 - 5.5log₁₀_T₅₀₀) * log₁₀_T₅₀₀)
 
