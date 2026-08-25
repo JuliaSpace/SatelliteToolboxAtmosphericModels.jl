@@ -1,6 +1,15 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 1.4.0
+-------------
+
+- ![Bugfix][badge-bugfix] The numerical integrator of the Jacchia 1977 model could loop
+  forever for reduced-precision inputs (e.g. `Float32`) because the loop termination
+  compared the accumulated altitude against a fixed tolerance of 1e-4 km, which is smaller
+  than the accumulated rounding error of such types. The loops now iterate over an integer
+  panel count. The results for `Float64` inputs are unchanged.
+
 Version 1.3.0
 -------------
 

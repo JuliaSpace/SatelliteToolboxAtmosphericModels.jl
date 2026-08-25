@@ -437,9 +437,9 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
     int = zero(RT)
     zᵢ  = RT(90)
 
-    step = _jacchia1977_step(zᵢ, z_end, RT(0.05))
+    step, np = _jacchia1977_step(zᵢ, z_end, RT(0.05))
 
-    while abs(z_end - zᵢ) > 1e-4
+    for _ in 1:np
         g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2
         Σ  = zero(RT)
         zⱼ = zᵢ
@@ -480,10 +480,10 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
         Tᵢ    = Tf
         int   = zero(RT)
 
-        step = _jacchia1977_step(z_ini, z_end, RT(0.05))
-        zᵢ   = z_ini
+        step, np = _jacchia1977_step(z_ini, z_end, RT(0.05))
+        zᵢ       = z_ini
 
-        while abs(z_end - zᵢ) > 1e-4
+        for _ in 1:np
             g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
             Σ  = zero(RT)
             zⱼ = zᵢ
@@ -514,10 +514,11 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
             z_end = RT(500)
             Tᵢ    = Tf
             int   = zero(RT)
-            step  = RT(5)
             zᵢ    = z_ini
 
-            while abs(z_end - zᵢ) > 1e-4
+            step, np = _jacchia1977_step(z_ini, z_end, RT(5))
+
+            for _ in 1:np
                 g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
                 Σ  = zero(RT)
                 zⱼ = zᵢ
@@ -549,12 +550,12 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
                 z_ini = RT(500)
                 z_end = RT(z)
 
-                step = _jacchia1977_step(z_ini, z_end, RT(-5))
-                zᵢ   = z_ini
+                step, np = _jacchia1977_step(z_ini, z_end, RT(-5))
+                zᵢ       = z_ini
 
                 al = ntuple(_ -> RT(0), Val(5))
 
-                while abs(z_end - zᵢ) > 1e-4
+                for _ in 1:np
                     # Number densities with the departures from diffusive equilibrium
                     # corrections (eqs. 14 and 15 of [1]) at the beginning of the segment.
                     @reset al[1] = an[1]
@@ -620,10 +621,10 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
                 int   = zero(RT)
                 intϕ  = zero(RT)
 
-                step = _jacchia1977_step(z_ini, z_end, RT(2.5))
-                zᵢ   = z_ini
+                step, np = _jacchia1977_step(z_ini, z_end, RT(2.5))
+                zᵢ       = z_ini
 
-                while abs(z_end - zᵢ) > 1e-4
+                for _ in 1:np
                     g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
                     Σ  = zero(RT)
                     Σ₂ = zero(RT)
@@ -683,17 +684,25 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
 end
 
 """
-    _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number) -> Number
+    _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number) -> Number, Int
 
 Compute the integration step [km] so that the interval between `z_ini` and `z_end` [km] is
 divided into an integer number of Boole rule applications with a step close to `base_step`
 [km], as in the reference implementation [2].
+
+# Returns
+
+- `Number`: Integration step [km], where each Boole rule application spans four steps.
+- `Int`: Number of Boole rule applications (panels) required to cover the interval. It is
+    0 if the interval length is smaller than or equal to the tolerance of 1e-4 km.
 """
 function _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number)
     quarter = (z_end - z_ini) / 4
-    n = trunc(quarter / base_step)
-    (n <= 0) && (n = one(n))
-    return quarter / n
+    n = trunc(Int, quarter / base_step)
+    (n <= 0) && (n = 1)
+    step = quarter / n
+    (abs(z_end - z_ini) <= 1e-4) && (n = 0)
+    return step, n
 end
 
 """

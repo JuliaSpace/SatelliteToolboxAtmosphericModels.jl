@@ -227,6 +227,37 @@ end
     end
 end
 
+############################################################################################
+#                                       Test Results                                       #
+############################################################################################
+#
+# The integration loops must terminate for reduced-precision inputs. Before the integer
+# panel count was introduced, the termination criterion compared the accumulated altitude
+# against a fixed tolerance of 1e-4 km, which is smaller than the accumulated rounding
+# error of `Float32` altitudes, leading to an infinite loop.
+#
+############################################################################################
+
+@testset "Reduced-Precision Inputs" begin
+    # Downward hydrogen integration branch (z < 500 km).
+    log₁₀_n, M̄, ρ = AtmosphericModels._jacchia1977_static(900.0f0, 150.0f0)
+    @test all(isfinite, log₁₀_n)
+    @test isfinite(M̄)
+    @test isfinite(ρ)
+
+    # Upward hydrogen integration branch (z > 500 km).
+    log₁₀_n, M̄, ρ = AtmosphericModels._jacchia1977_static(900.0f0, 641.0f0)
+    @test all(isfinite, log₁₀_n)
+    @test isfinite(M̄)
+    @test isfinite(ρ)
+
+    # Public API with `Float32` inputs.
+    out = AtmosphericModels.jacchia1977(
+        2460000.25f0, 0.5f0, 0.5f0, 300.0f3, 100.0f0, 100.0f0, 3.0f0
+    )
+    @test isfinite(out.total_density)
+end
+
 @testset "Show" begin
     result = AtmosphericModels.jacchia1977(
         DateTime("2023-01-01T10:00:00"), 0, 0, 500e3, 100, 100, 3
