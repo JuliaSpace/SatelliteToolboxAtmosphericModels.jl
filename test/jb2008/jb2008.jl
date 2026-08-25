@@ -37,7 +37,7 @@
 
     # Execute the tests.
     for filename in test_list
-        open(filename) do file
+        open(joinpath(@__DIR__, filename)) do file
             line_num = 0
             year     = 0
             doy      = 0

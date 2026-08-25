@@ -5,9 +5,7 @@ using SatelliteToolboxAtmosphericModels
 using SatelliteToolboxBase
 
 @testset "Atmospheric Model Jacchia 1977" verbose = true begin
-    cd("./jacchia1977")
     include("./jacchia1977/jacchia1977.jl")
-    cd("..")
 end
 
 @testset "Atmospheric Model Jacchia-Roberts 1971" verbose = true begin
@@ -15,9 +13,7 @@ end
 end
 
 @testset "Atmospheric Model Jacchia-Bowman 2008" verbose = true begin
-    cd("./jb2008")
     include("./jb2008/jb2008.jl")
-    cd("..")
 end
 
 @testset "Atmospheric Model NRLMSISE-00" verbose = true begin
@@ -46,11 +42,8 @@ if isempty(VERSION.prerelease)
         include("./performance.jl")
     end
 
-    Pkg.add("ForwardDiff")
-    Pkg.add("Mooncake")
-    Pkg.add("ChainRulesCore")
-    Pkg.add("Zygote")
-
+    # ForwardDiff, Mooncake, ChainRulesCore, and Zygote are already declared in the test
+    # target of the Project.toml.
     using ForwardDiff
     using Mooncake
     using ChainRulesCore

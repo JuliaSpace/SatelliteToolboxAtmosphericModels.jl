@@ -60,7 +60,7 @@
 
     count = 0
 
-    for l in readlines("ja77_stat.dat")
+    for l in readlines(joinpath(@__DIR__, "ja77_stat.dat"))
         m = match(r"^\s+(\d+)\s", l)
         m === nothing && continue
 
@@ -147,7 +147,7 @@ end
 
     count = 0
 
-    for l in readlines("ja77_dynm.dat")
+    for l in readlines(joinpath(@__DIR__, "ja77_dynm.dat"))
         m = match(r"^\s*(-?\d+)\s", l)
         m === nothing && continue
         occursin("mmolms", l) && continue
