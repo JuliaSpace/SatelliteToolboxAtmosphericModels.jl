@@ -116,7 +116,11 @@ function jacchia1977(
     # Lag of the daily flux [days].
     Δt = 1.26 + 0.37 * sin(H - deg2rad(92))
 
-    F10 = space_index(Val(:F10obs), jd - Δt)
+    # The report uses daily indices tabulated per calendar date. Hence, we must fetch the
+    # value related to the calendar day of the lagged instant, adding back the 8-hour shift
+    # applied internally by SpaceIndices.jl to move the interval center to the measurement
+    # time (20:00 UTC).
+    F10 = space_index(Val(:F10obs), jd - Δt + 8 / 24)
 
     # == Gaussian-Weighted Averaged F10.7, Eqs. 21-22 [1] ==================================
 

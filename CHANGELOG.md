@@ -5,6 +5,11 @@ Version 1.4.0
 -------------
 
 - ![Bugfix][badge-bugfix] The automatic space index fetching of the Jacchia 1977 model
+  selected the daily F10.7 flux of the day before the lagged instant prescribed in eq. 23
+  of the report because SpaceIndices.jl shifts the F10.7 lookups by -8 hours to center the
+  intervals on the measurement time. The fetching now compensates this shift, returning the
+  flux tabulated for the calendar day of the lagged instant.
+- ![Bugfix][badge-bugfix] The automatic space index fetching of the Jacchia 1977 model
   required the F10.7 flux to be available up to 213 days after the input time, making the
   model unusable for recent epochs (the fetching threw an `ArgumentError`). The Gaussian
   window is now truncated at the available data span and the weights are renormalized

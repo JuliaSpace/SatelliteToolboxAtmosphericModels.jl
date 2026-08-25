@@ -195,7 +195,7 @@ end
 # must be the same. The space indices fetched for the instant 2023-01-01T10:00:00.000 at
 # 23° S, 45° W are:
 #
-#   F10  = 178.3 sfu (lagged by 1.1821357920055 days)
+#   F10  = 164.9 sfu (value of 2022-12-31, lagged by 1.1821357920055 days)
 #   F10ₐ = 155.76634372870583 sfu (Gaussian-weighted mean with 71-day standard width)
 #   Kp   = 3.0 (delayed by 0.29100570997169495 days)
 #
@@ -207,7 +207,7 @@ end
     instant = DateTime("2023-01-01T10:00:00")
     ϕ_gd    = -23 |> deg2rad
     λ       = -45 |> deg2rad
-    F10     = 178.3
+    F10     = 164.9
     F10ₐ    = 155.76634372870583
     Kp      = 3.0
 
