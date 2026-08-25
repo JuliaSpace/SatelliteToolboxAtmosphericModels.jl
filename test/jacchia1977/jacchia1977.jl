@@ -199,14 +199,36 @@ end
 #
 # Section 9 of the report [1] contains a worked example: 1974-05-04 14:00 UT, 40° N, 45° W,
 # 320 km, F10 = 114 sfu, F10ₐ = 87.6 sfu, and delayed Kp = 5.0, leading to T½ = 873.1 K and
-# log₁₀ ρ = -10.934. Notice that the example in the report ignores eq. 32 and rounds every
-# intermediate result. Hence, we use a loose tolerance for the density.
+# log₁₀ ρ = -10.934.
+#
+# Our implementation reproduces every intermediate quantity of the example (Sun geometry,
+# mean molecular mass, pseudo exospheric temperatures, static number densities, exospheric
+# temperature variation, seasonal-latitudinal variation, and semiannual variation) to the
+# precision printed in the report. However, two values of the example are inconsistent
+# with the equations of the report itself:
+#
+#   1. The homopause displacement contributions ΔH log nᵢ of the example imply
+#      Δz_H ≈ 7720 m, which corresponds to a coefficient of 7.5e3 in eq. 33 instead of the
+#      printed 5.0e3 (which yields Δz_H ≈ 5147 m for ΔG T∞ = 122 K).
+#
+#   2. The equatorial wave contribution Δe log nᵢ = +0.063 of the example corresponds to
+#      eq. 35 evaluated at the geographic latitude (40°), whereas the equation prescribes
+#      the geomagnetic latitude (50.47°), which yields +0.029.
+#
+# We follow the equations as printed, like the reference implementation [2]. Consequently,
+# the assembled example values (final log₁₀ nᵢ and log₁₀ ρ = -10.934) cannot be reproduced
+# exactly: following the equations yields log₁₀ ρ = -10.898. Hence, we use a loose
+# tolerance for the total density and tight tolerances for all the consistent intermediate
+# quantities.
 #
 ############################################################################################
 
 @testset "SR-375 Worked Example" begin
-    jd  = date_to_jd(1974, 5, 4, 14, 0, 0)
-    out = AtmosphericModels.jacchia1977(jd, deg2rad(40), deg2rad(-45), 320e3, 114.0, 87.6, 5.0)
+    jd = date_to_jd(1974, 5, 4, 14, 0, 0)
+    ϕ  = deg2rad(40)
+    λ  = deg2rad(-45)
+
+    out = AtmosphericModels.jacchia1977(jd, ϕ, λ, 320e3, 114.0, 87.6, 5.0)
 
     @test out.exospheric_temperature ≈ 873.1 atol = 0.1
     @test log10(out.total_density) ≈ -10.934 atol = 0.05
@@ -214,15 +236,56 @@ end
     # The local temperature must tend to the local exospheric temperature at high
     # altitudes. The report evaluates the quiet local exospheric temperature as
     # T₀(∞) = 939.3 K and the disturbed one as T₀(∞) + ΔG T∞ = 1061 K.
-    out_disturbed = AtmosphericModels.jacchia1977(
-        jd, deg2rad(40), deg2rad(-45), 2000e3, 114.0, 87.6, 5.0
-    )
-    out_quiet = AtmosphericModels.jacchia1977(
-        jd, deg2rad(40), deg2rad(-45), 2000e3, 114.0, 87.6, 0.0
-    )
+    out_disturbed = AtmosphericModels.jacchia1977(jd, ϕ, λ, 2000e3, 114.0, 87.6, 5.0)
+    out_quiet     = AtmosphericModels.jacchia1977(jd, ϕ, λ, 2000e3, 114.0, 87.6, 0.0)
 
     @test out_disturbed.temperature ≈ 1061.0 atol = 0.5
     @test out_quiet.temperature ≈ 939.3 atol = 0.1
+
+    # == Intermediate Quantities of the Example ============================================
+
+    # Sun geometry.
+    s_i = AtmosphericModels.sun_position_mod(jd)
+    δs  = atan(s_i[3], √(s_i[1]^2 + s_i[2]^2))
+    Ωs  = atan(s_i[2], s_i[1])
+    Ωp  = λ + jd_to_gmst(jd)
+    H   = rem2pi(Ωp - Ωs, RoundNearest)
+
+    @test rad2deg(δs) ≈ +15.96 atol = 0.01
+    @test rad2deg(H) ≈ -14.18 atol = 0.02
+
+    # Mean molecular mass at 320 km for the mean exospheric temperature.
+    T½ = out.exospheric_temperature
+    ~, M̄, ~ = AtmosphericModels._jacchia1977_static(T½, 320.0)
+    @test M̄ ≈ 16.90 atol = 0.01
+
+    # Pseudo exospheric temperatures and number densities of the diurnal variation. The
+    # example values in the internal order (He, O₂, N₂, Ar, O, H) are
+    # Θᵢ = (996.8, 950.8, 952.6, 948.2, 963.9, 939.3) K and
+    # log₁₀ (nᵢ)₀ = (12.719, 12.224, 13.670, 9.765, 14.587, 11.265).
+    al, ~, Θ_H = AtmosphericModels._jacchia1977_diurnal(T½, Ωp, Ωs, δs, ϕ, 320.0, M̄)
+
+    @test Θ_H ≈ 939.3 atol = 0.1
+
+    example_log₁₀_n₀ = (12.719, 12.224, 13.670, 9.765, 14.587, 11.265)
+
+    for i in 1:6
+        @test al[i] ≈ example_log₁₀_n₀[i] atol = 0.005
+    end
+
+    # Geomagnetic variation of the exospheric temperature.
+    ~, ΔT∞ = AtmosphericModels._jacchia1977_geomagnetic(Θ_H, 5.0, ϕ, λ, 320.0)
+    @test ΔT∞ ≈ 122 atol = 0.5
+
+    # Seasonal-latitudinal variation (He and O columns of the example).
+    Φ   = mod((jd - 2433282.5) / 365.2422, 1)
+    Δsl = AtmosphericModels._jacchia1977_seasonal_latitudinal(Φ, δs, ϕ, 320.0)
+
+    @test Δsl[1] ≈ -0.346 atol = 0.001
+    @test Δsl[5] ≈ -0.070 atol = 0.001
+
+    # Semiannual variation.
+    @test AtmosphericModels._jacchia1977_semiannual(Φ, 320.0) ≈ +0.037 atol = 0.001
 end
 
 ############################################################################################
