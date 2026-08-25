@@ -4,6 +4,12 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The automatic space index fetching of the JR1971 and Jacchia
+  1977 models used the observed F10.7 flux, whereas the Jacchia models were fitted with
+  the flux adjusted to 1 AU, as documented in the reference Fortran implementation of the
+  Jacchia 1977 model. The fetching now uses the adjusted flux. The two series differ by up
+  to ±3.4 %, which maps to several percent in the auto-fetched density near the perihelion
+  and aphelion. Users passing the indices manually are not affected.
 - ![Bugfix][badge-bugfix] The automatic space index fetching of the NRLMSISE-00 model used
   the F10.7 flux adjusted to 1 AU, whereas the model documentation explicitly requires the
   observed flux at the actual distance of the Earth from the Sun (as also stated in the

@@ -58,10 +58,11 @@ The function throws an `ArgumentError` if the altitude `h` is outside the interv
 - `ϕ_gd::Number`: Geodetic latitude [rad].
 - `λ::Number`: Longitude [rad].
 - `h::Number`: Altitude [m].
-- `F10::Number`: 10.7-cm solar flux [sfu], evaluated with the lag prescribed in [1] (from
-    0.9 day to 1.6 days, depending on the local solar time).
-- `F10ₐ::Number`: 10.7-cm averaged solar flux, Gaussian-weighted mean centered on the input
-    time with a standard width of 71 days [sfu].
+- `F10::Number`: 10.7-cm solar flux adjusted to 1 AU [sfu] (as used to fit the Jacchia
+    models), evaluated with the lag prescribed in [1] (from 0.9 day to 1.6 days, depending
+    on the local solar time).
+- `F10ₐ::Number`: 10.7-cm averaged solar flux adjusted to 1 AU, Gaussian-weighted mean
+    centered on the input time with a standard width of 71 days [sfu].
 - `Kp::Number`: Kp geomagnetic index, delayed by 0.1 day to 0.3 day depending on the
     geomagnetic latitude, as prescribed in [1].
 
@@ -141,8 +142,9 @@ function jacchia1977(
     # The report uses daily indices tabulated per calendar date. Hence, we must fetch the
     # value related to the calendar day of the lagged instant, adding back the 8-hour shift
     # applied internally by SpaceIndices.jl to move the interval center to the measurement
-    # time (20:00 UTC).
-    F10 = space_index(Val(:F10obs), jd - Δt + 8 / 24)
+    # time (20:00 UTC). Notice that the Jacchia models use the 10.7-cm flux adjusted to
+    # 1 AU, as documented in the reference implementation [2].
+    F10 = space_index(Val(:F10adj), jd - Δt + 8 / 24)
 
     # == Gaussian-Weighted Averaged F10.7, Eqs. 21-22 [1] ==================================
 
@@ -299,7 +301,7 @@ function _jacchia1977_averaged_f10(jd::Number)
     for k in k_min:k_max
         w    = exp(-(k / 71)^2)
         Σw   += w
-        Σw_F += w * space_index(Val(:F10obs), jd + k)
+        Σw_F += w * space_index(Val(:F10adj), jd + k)
     end
 
     return Σw_F / Σw, k_min, k_max
@@ -308,12 +310,12 @@ end
 """
     _jacchia1977_has_f10(jd::Number) -> Bool
 
-Return `true` if the observed F10.7 flux is available at the Julian day `jd`, or `false`
-otherwise.
+Return `true` if the F10.7 flux adjusted to 1 AU is available at the Julian day `jd`, or
+`false` otherwise.
 """
 function _jacchia1977_has_f10(jd::Number)
     try
-        space_index(Val(:F10obs), jd)
+        space_index(Val(:F10adj), jd)
         return true
     catch e
         e isa ArgumentError && return false

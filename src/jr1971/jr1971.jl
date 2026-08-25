@@ -74,8 +74,10 @@ The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
 - `ϕ_gd::Number`: Geodetic latitude [rad].
 - `λ::Number`: Longitude [rad].
 - `h::Number`: Altitude [m].
-- `F10::Number`: 10.7-cm solar flux [sfu].
-- `F10ₐ::Number`: 10.7-cm averaged solar flux, 81-day centered on input time [sfu].
+- `F10::Number`: 10.7-cm solar flux adjusted to 1 AU [sfu], as used to fit the Jacchia
+    models.
+- `F10ₐ::Number`: 10.7-cm averaged solar flux adjusted to 1 AU, 81-day centered on input
+    time [sfu].
 - `Kp::Number`: Kp geomagnetic index with a delay of 3 hours.
 
 # Keywords
@@ -113,9 +115,10 @@ function jr1971(
     verbose::Val{verbosity} = Val(true),
     roots_container::Union{Nothing, AbstractVector} = nothing,
 ) where {verbosity}
-    # Get the data in the desired Julian Day.
-    F10  = space_index(Val(:F10obs), jd)
-    F10ₐ = sum(space_index(Val(:F10obs), jd + k) for k in -40:40) / 81
+    # Get the data in the desired Julian Day. The Jacchia models were fitted with the
+    # 10.7-cm flux adjusted to 1 AU, so we must not use the observed values here.
+    F10  = space_index(Val(:F10adj), jd)
+    F10ₐ = sum(space_index(Val(:F10adj), jd + k) for k in -40:40) / 81
 
     # For the Kp, we must obtain the index using a 3-hour delay. Thus, we need to obtain the
     # Kp vector first, containing the Kp values for every 3 hours.

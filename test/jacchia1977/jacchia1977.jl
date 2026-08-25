@@ -294,10 +294,11 @@ end
 #
 # We select a day and run the model with and without passing the space indices. The result
 # must be the same. The space indices fetched for the instant 2023-01-01T10:00:00.000 at
-# 23° S, 45° W are:
+# 23° S, 45° W, using the 10.7-cm flux adjusted to 1 AU as used to fit the Jacchia models,
+# are:
 #
-#   F10  = 164.9 sfu (value of 2022-12-31, lagged by 1.1821357920055 days)
-#   F10ₐ = 155.76634372870583 sfu (Gaussian-weighted mean with 71-day standard width)
+#   F10  = 159.5 sfu (value of 2022-12-31, lagged by 1.1821357920055 days)
+#   F10ₐ = 152.12946765567946 sfu (Gaussian-weighted mean with 71-day standard width)
 #   Kp   = 3.0 (delayed by 0.29100570997169495 days)
 #
 ############################################################################################
@@ -308,8 +309,8 @@ end
     instant = DateTime("2023-01-01T10:00:00")
     ϕ_gd    = -23 |> deg2rad
     λ       = -45 |> deg2rad
-    F10     = 164.9
-    F10ₐ    = 155.76634372870583
+    F10     = 159.5
+    F10ₐ    = 152.12946765567946
     Kp      = 3.0
 
     for h in (150e3, 400e3, 1000e3)

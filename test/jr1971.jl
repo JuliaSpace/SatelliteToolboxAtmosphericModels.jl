@@ -226,10 +226,11 @@ end
 # select a day and run this function with and without passing the space indices. The result
 # must be the same.
 #
-# We have the following space indices for the instant 2023-01-01T10:00:00.000:
+# We have the following space indices for the instant 2023-01-01T10:00:00.000, using the
+# 10.7-cm flux adjusted to 1 AU, as used to fit the Jacchia models:
 #
-#   F10  = 152.6 sfu
-#   F10ₐ = 159.12345679012347 sfu
+#   F10  = 147.5 sfu
+#   F10ₐ = 154.2407407407407 sfu
 #   Kp   = 2.0 (3-hour delayed value, i.e. related to the interval 06:00 - 09:00)
 #
 ############################################################################################
@@ -242,8 +243,8 @@ end
     h       = collect(90:50:1000) .* 1000
     ϕ_gd    = -23 |> deg2rad
     λ       = -45 |> deg2rad
-    F10     = 152.6
-    F10ₐ    = 159.12345679012347
+    F10     = 147.5
+    F10ₐ    = 154.2407407407407
     Kp      = 2.0
 
     expected = AtmosphericModels.jr1971.(instant, ϕ_gd, λ, h, F10, F10ₐ, Kp)
