@@ -126,7 +126,7 @@ function jb2008(
 ) where {verbosity}
     # Get the data in the desired Julian Day considering the tabular time of the model.
     F10    = space_index(Val(:F10obs), jd - 1)
-    F10ₐ   = sum(space_index.(Val(:F10obs), jd + k) for k in -41:39) / 81
+    F10ₐ   = sum(space_index(Val(:F10obs), jd + k) for k in -41:39) / 81
     S10    = space_index(Val(:S10), jd - 1)
     S10ₐ   = space_index(Val(:S81a), jd - 1)
     M10    = space_index(Val(:M10), jd - 2)
@@ -268,8 +268,9 @@ function jb2008(
     α_He = -0.38
     α_H  = 0.0
 
-    # Values used to establish height step sizes in the integration process between 90 km and
-    # 105 km, 105 km to 500 km, and above 500 km.
+    # Values used to establish height step sizes in the integration process: `R1` between
+    # 90 km and 500 km, `R2` in the hydrogen integration from the altitude to 500 km when
+    # the altitude is lower than 500 km, and `R3` above 500 km.
     R1 = 0.010
     R2 = 0.025
     R3 = 0.075
@@ -552,7 +553,7 @@ function jb2008(
         # Notice that the source-code also checks if `Fz` is negative, zeroing the
         # semiannual variation in this case. However, this check can never be triggered
         # since `Fz` is clamped to be equal or higher than 10⁻⁶ inside the function.
-        Fz, Gz, Δsalog₁₀ρ = _jb2008_semiannual(doy, h, F10ₐ, S10ₐ, M10ₐ)
+        _, _, Δsalog₁₀ρ = _jb2008_semiannual(doy, h, F10ₐ, S10ₐ, M10ₐ)
 
         # Convert from `log10` to `log`.
         Δsalogρ = log(10) * Δsalog₁₀ρ

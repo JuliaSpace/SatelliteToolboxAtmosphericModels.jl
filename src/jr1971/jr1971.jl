@@ -115,7 +115,7 @@ function jr1971(
 ) where {verbosity}
     # Get the data in the desired Julian Day.
     F10  = space_index(Val(:F10obs), jd)
-    F10ₐ = sum(space_index.(Val(:F10obs), jd + k) for k in -40:40) / 81
+    F10ₐ = sum(space_index(Val(:F10obs), jd + k) for k in -40:40) / 81
 
     # For the Kp, we must obtain the index using a 3-hour delay. Thus, we need to obtain the
     # Kp vector first, containing the Kp values for every 3 hours.
@@ -303,7 +303,7 @@ function jr1971(
 
     # -- Semi-annual Variation, Section B.1.3 [3] ------------------------------------------
 
-    # Number of days since January 1, 1958.
+    # Number of tropical years since January 1, 1958.
     Φ = (jd - 2436204.5) / 365.2422
 
     τ_sa = Φ + 0.09544 * ((1 / 2 * (1 + sin(2π * Φ + 6.035)))^(1.65) - 1 / 2)
@@ -361,9 +361,8 @@ function jr1971(
 
         r₁, r₂, x, y = _jr1971_roots(c₀, c₁, c₂, c₃)
 
-        # -- f and k, [1. p. 371] ----------------------------------------------------------
+        # -- k, [1. p. 371] ----------------------------------------------------------------
 
-        f = 35^4 * Ra² / Ca[5]
         k = -g₀ / (Rstar * (Tx - T₁))
 
         # -- U(ν), V(ν), W(ν), and X — see _jr1971_U, _jr1971_V, _jr1971_W ----------------
@@ -491,6 +490,9 @@ function jr1971(
                 q₆ / y * atan(y * (h - z₂) / (y^2 + (h - x) * (z₂ - x)))
 
             # -- Compute the Density of Each Specie [3] ------------------------------------
+
+            # `f` is defined in [1, p. 371].
+            f = 35^4 * Ra² / Ca[5]
 
             expk = k * f * (log_F₃ + F₄)
             ρN₂  = ρ₁₀₀ * Mi[1] / M₀ * μi[1] * (T₁₀₀ / Tz)^(1 + αi.N₂) * exp(Mi[1] * expk)

@@ -1003,7 +1003,7 @@ function _globe7(
     @reset nrlmsise00d.apt  = T(apt)
     @reset nrlmsise00d.apdf = T(apdf)
 
-    # Parameters not used: 82, 89, 99, 139-149.
+    # Parameters not used: 83, 90, 100, 140-150.
     tinf =
         p[31] +
         flags.F10_Mean * t₁ +
@@ -1510,7 +1510,6 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == Initialization of Variables =======================================================
 
-    temperature = T(0)
     meso_tn1 = ntuple(_ -> T(0), 5)
     meso_tgn1 = ntuple(_ -> T(0), 2)
 
