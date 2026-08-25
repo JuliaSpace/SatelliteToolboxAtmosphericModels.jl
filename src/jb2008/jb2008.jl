@@ -79,6 +79,8 @@ If we omit all space indices, the system tries to obtain them automatically for 
 day `jd` or `instant`. However, the indices must be already initialized using the function
 `SpaceIndices.init()`.
 
+The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
+
 # Arguments
 
 - `jd::Number`: Julian day to compute the model.
@@ -278,6 +280,8 @@ function jb2008(
 
     # Convert the altitude from [m] to [km].
     h /= 1000
+
+    (h < 90) && throw(ArgumentError("The altitude must not be lower than 90 km."))
 
     # Compute the Sun position represented in the inertial reference frame (MOD).
     s_i = sun_position_mod(jd)

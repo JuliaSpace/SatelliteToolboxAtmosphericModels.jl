@@ -4,6 +4,10 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The JB2008 model now validates the altitude at the entry point,
+  throwing an `ArgumentError` for altitudes below 90 km, and its docstring documents the
+  bound. Previously, such altitudes emitted a spurious warning and an error message
+  mentioning an altitude of 0 km.
 - ![Bugfix][badge-bugfix] The JR1971 model returned `NaN` for all densities when the Sun
   declination was exactly zero (equinox) because the helium seasonal correction contained a
   0 / 0 term. The correction is now written using `sign`, which is finite and returns the
