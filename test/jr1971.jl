@@ -325,6 +325,21 @@ end
     @test result.total_density == expected.total_density
 end
 
+@testset "Helium Seasonal Correction at the Equinoxes" begin
+    # The correction must be 0 (and not NaN) when the Sun declination is exactly zero. The
+    # previous formulation contained the term δs / (2 abs(δs)), which is NaN in this case,
+    # propagating to the helium and total densities.
+    @test AtmosphericModels._jr1971_helium_seasonal_correction(deg2rad(45), 0.0) == 0.0
+
+    # The value must match the original formulation when the Sun declination is not zero.
+    for δs in (-0.4, -0.1, 0.2), ϕ_gd in (-1.0, 0.3, 1.2)
+        expected = 0.65 / deg2rad(23.439291) * abs(δs) *
+            (sin(π / 4 - ϕ_gd * δs / (2abs(δs)))^3 - 0.35355)
+
+        @test AtmosphericModels._jr1971_helium_seasonal_correction(ϕ_gd, δs) == expected
+    end
+end
+
 @testset "Errors" begin
     @test_throws ArgumentError AtmosphericModels.jr1971(now(), 0, 0, 89.9e3, 100, 100, 3)
 end

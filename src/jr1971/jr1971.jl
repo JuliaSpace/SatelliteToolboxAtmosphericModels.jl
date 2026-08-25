@@ -559,10 +559,7 @@ function jr1971(
 
         # -- Correction of Seasonal Variations of Helium by Latitude, Eq. 4-101 [3] --------
 
-        Δlog₁₀ρ_He =
-            0.65 / deg2rad(23.439291) *
-            abs(δs) *
-            (sin(π / 4 - ϕ_gd * δs / (2abs(δs)))^3 - 0.35355)
+        Δlog₁₀ρ_He = _jr1971_helium_seasonal_correction(ϕ_gd, δs)
 
         ρHe *= 10^(Δlog₁₀ρ_He)
 
@@ -652,6 +649,21 @@ Compute the `S(z)` polynomial [1, p. 371] at the altitude `z` [km] given its coe
 @inline _jr1971_S(z, B₀, B₁, B₂, B₃, B₄, B₅) = @evalpoly(z, B₀, B₁, B₂, B₃, B₄, B₅)
 
 ############################################################################################
+
+"""
+    _jr1971_helium_seasonal_correction(ϕ_gd::Number, δs::Number) -> Number
+
+Compute the base-10 logarithm of the correction of the seasonal variation of the helium
+density by latitude (eq. 4-101 [3]) given the geodetic latitude `ϕ_gd` [rad] and the Sun
+declination `δs` [rad].
+"""
+function _jr1971_helium_seasonal_correction(ϕ_gd::Number, δs::Number)
+    # Notice that `sign(δs)` is 0 when `δs` is 0 (equinox), which makes the entire
+    # expression 0 due to the `abs(δs)` factor. Writing the term as `δs / (2 abs(δs))`, as
+    # in [3], would produce a NaN in this case.
+    return 0.65 / deg2rad(23.439291) * abs(δs) *
+        (sin(π / 4 - ϕ_gd * sign(δs) / 2)^3 - 0.35355)
+end
 
 """
     _jr1971_mean_molecular_mass(z::Number; kwargs...) -> Number

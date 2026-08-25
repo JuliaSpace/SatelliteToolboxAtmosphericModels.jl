@@ -4,6 +4,10 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The JR1971 model returned `NaN` for all densities when the Sun
+  declination was exactly zero (equinox) because the helium seasonal correction contained a
+  0 / 0 term. The correction is now written using `sign`, which is finite and returns the
+  same values elsewhere.
 - ![Bugfix][badge-bugfix] The `temperature` field returned by the Jacchia 1977 model was
   computed from the temperature profile related to the mean exospheric temperature `T½`,
   ignoring the diurnal and geomagnetic variations, as in the reference Fortran
