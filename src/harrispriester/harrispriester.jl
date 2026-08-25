@@ -65,9 +65,9 @@ function harrispriester(
     n::Int = 4,
     alt_ρ::AbstractMatrix{DT} = _HARRIS_PRIESTER_ALT_RHO,
 ) where {JT <: Number, PT <: Number, LT <: Number, HT <: Number, DT <: Number}
-    @assert 2 <= n <= 6 "The cosine exponent must be between 2 and 6."
+    (2 <= n <= 6) || throw(ArgumentError("The cosine exponent must be between 2 and 6."))
 
-    RT = promote_type(JT, PT, LT, HT, DT)
+    RT = float(promote_type(JT, PT, LT, HT, DT))
 
     min_alt = alt_ρ[1, 1]
     max_alt = alt_ρ[end, 1]

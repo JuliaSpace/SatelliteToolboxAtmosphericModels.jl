@@ -92,7 +92,7 @@ end
 function harrispriester_modified(
     jd::JT, ϕ_gd::PT, λ::LT, h::HT, F10ₐ::FT; n::Number = 4
 ) where {JT <: Number, PT <: Number, LT <: Number, HT <: Number, FT <: Number}
-    RT = promote_type(JT, PT, LT, HT, FT, typeof(n))
+    RT = float(promote_type(JT, PT, LT, HT, FT, typeof(n)))
 
     # Convert inputs to kilometers for consistency with the original Fortran model.
     h_km = h / 1000

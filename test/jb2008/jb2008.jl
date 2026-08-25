@@ -161,3 +161,17 @@ end
         now(), 0, 0, 89.9e3, 100, 100, 100, 100, 100, 100, 100, 100, 85
     )
 end
+
+@testset "Integer Inputs" begin
+    # All-integer inputs must promote to a floating-point output instead of throwing an
+    # InexactError when constructing the output structure.
+    result = AtmosphericModels.jb2008(
+        2460000, 0, 0, 300_000, 100, 100, 100, 100, 100, 100, 100, 100, 85
+    )
+    expected = AtmosphericModels.jb2008(
+        2460000.0, 0.0, 0.0, 300e3, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
+        100.0, 85.0
+    )
+    @test result isa AtmosphericModels.JB2008Output{Float64}
+    @test result.total_density == expected.total_density
+end

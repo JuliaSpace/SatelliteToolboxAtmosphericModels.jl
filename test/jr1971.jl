@@ -343,3 +343,12 @@ end
 @testset "Errors" begin
     @test_throws ArgumentError AtmosphericModels.jr1971(now(), 0, 0, 89.9e3, 100, 100, 3)
 end
+
+@testset "Integer Inputs" begin
+    # All-integer inputs must promote to a floating-point output instead of throwing an
+    # InexactError when constructing the output structure.
+    result   = AtmosphericModels.jr1971(2460000, 0, 0, 300_000, 100, 100, 3)
+    expected = AtmosphericModels.jr1971(2460000.0, 0.0, 0.0, 300e3, 100.0, 100.0, 3.0)
+    @test result isa AtmosphericModels.JR1971Output{Float64}
+    @test result.total_density == expected.total_density
+end

@@ -668,3 +668,22 @@ end
     ]
     @test issorted(rhos; rev = true)
 end
+
+@testset "Integer Inputs and Cosine Exponent Validation" begin
+    jd = 2460000
+
+    # All-integer inputs must promote to a floating-point output instead of throwing.
+    result   = AtmosphericModels.harrispriester(jd, 0, 0, 300_000)
+    expected = AtmosphericModels.harrispriester(2460000.0, 0.0, 0.0, 300e3)
+    @test result isa Float64
+    @test result == expected
+
+    result   = AtmosphericModels.harrispriester_modified(jd, 0, 0, 300_000, 100)
+    expected = AtmosphericModels.harrispriester_modified(2460000.0, 0.0, 0.0, 300e3, 100.0)
+    @test result == expected
+
+    # The cosine exponent validation must throw an ArgumentError, which cannot be disabled
+    # by compiler options like the previous @assert.
+    @test_throws ArgumentError AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 7)
+    @test_throws ArgumentError AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 1)
+end

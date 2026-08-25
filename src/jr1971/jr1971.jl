@@ -181,7 +181,7 @@ function jr1971(
     KT <: Number,
     verbosity,
 }
-    RT = promote_type(JT, PT, LT, HT, FT, FT2, KT)
+    RT = float(promote_type(JT, PT, LT, HT, FT, FT2, KT))
 
     # == Constants =========================================================================
 

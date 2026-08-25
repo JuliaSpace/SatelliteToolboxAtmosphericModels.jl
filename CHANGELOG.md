@@ -4,6 +4,11 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The JR1971, JB2008, and modified Harris-Priester models threw an
+  `InexactError` when all the inputs were integers. The output element type is now the
+  promotion of the input types converted to a floating-point type. Additionally, the
+  Harris-Priester cosine exponent is now validated with an `ArgumentError` instead of an
+  `@assert`, which can be disabled by compiler options.
 - ![Bugfix][badge-bugfix] The JB2008 model now validates the altitude at the entry point,
   throwing an `ArgumentError` for altitudes below 90 km, and its docstring documents the
   bound. Previously, such altitudes emitted a spurious warning and an error message

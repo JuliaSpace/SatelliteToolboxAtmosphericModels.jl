@@ -232,7 +232,7 @@ function jb2008(
     DT <: Number,
     verbosity,
 }
-    RT = promote_type(JT, PT, LT, HT, FT, FT2, ST, ST2, MT, MT2, YT, YT2, DT)
+    RT = float(promote_type(JT, PT, LT, HT, FT, FT2, ST, ST2, MT, MT2, YT, YT2, DT))
 
     ########################################################################################
     #                                      Constants                                       #
