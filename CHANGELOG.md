@@ -4,6 +4,9 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The standard library `Dates` is now a declared dependency. It was
+  previously reachable only through a re-export of SatelliteToolboxBase.jl, which could
+  break silently if that upstream re-export changed.
 - ![Bugfix][badge-bugfix] The JR1971, JB2008, and modified Harris-Priester models threw an
   `InexactError` when all the inputs were integers. The output element type is now the
   promotion of the input types converted to a floating-point type. Additionally, the
