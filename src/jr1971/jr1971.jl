@@ -666,8 +666,9 @@ function _jr1971_helium_seasonal_correction(ϕ_gd::Number, δs::Number)
     # Notice that `sign(δs)` is 0 when `δs` is 0 (equinox), which makes the entire
     # expression 0 due to the `abs(δs)` factor. Writing the term as `δs / (2 abs(δs))`, as
     # in [3], would produce a NaN in this case.
-    return 0.65 / deg2rad(23.439291) * abs(δs) *
-        (sin(π / 4 - ϕ_gd * sign(δs) / 2)^3 - 0.35355)
+    return 0.65 / deg2rad(23.439291) *
+           abs(δs) *
+           (sin(π / 4 - ϕ_gd * sign(δs) / 2)^3 - 0.35355)
 end
 
 """

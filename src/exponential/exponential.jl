@@ -34,9 +34,7 @@ function exponential(h::Number)
 
     # Get the values for the exponential model. Since the altitude table is sorted, we can
     # use a binary search to find the layer related to the altitude `h`.
-    id = clamp(
-        searchsortedlast(_EXPONENTIAL_ATMOSPHERE_H₀, h), 1, length(_EXPONENTIAL_ATMOSPHERE_H₀)
-    )
+    id = clamp(searchsortedlast(_EXPONENTIAL_ATMOSPHERE_H₀, h), 1, length(_EXPONENTIAL_ATMOSPHERE_H₀))
     h₀ = _EXPONENTIAL_ATMOSPHERE_H₀[id]
     ρ₀ = _EXPONENTIAL_ATMOSPHERE_ρ₀[id]
     H  = _EXPONENTIAL_ATMOSPHERE_H[id]

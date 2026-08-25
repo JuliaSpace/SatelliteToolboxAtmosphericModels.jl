@@ -355,14 +355,8 @@ end
 
     for h in (150e3, 600e3)
         out_default  = AtmosphericModels.jacchia1977(jd, ϕ, λ, h, 114.0, 87.6, 5.0)
-        out_constant = AtmosphericModels.jacchia1977(
-            jd, ϕ, λ, h, 114.0, 87.6, 5.0;
-            geomagnetic_profile = Val(:constant)
-        )
-        out_tanh = AtmosphericModels.jacchia1977(
-            jd, ϕ, λ, h, 114.0, 87.6, 5.0;
-            geomagnetic_profile = Val(:tanh)
-        )
+        out_constant = AtmosphericModels.jacchia1977(jd, ϕ, λ, h, 114.0, 87.6, 5.0; geomagnetic_profile = Val(:constant))
+        out_tanh     = AtmosphericModels.jacchia1977(jd, ϕ, λ, h, 114.0, 87.6, 5.0; geomagnetic_profile = Val(:tanh))
 
         @test out_constant.total_density == out_default.total_density
         @test out_tanh.total_density != out_constant.total_density
@@ -371,20 +365,17 @@ end
 
     # Both options must match exactly when there is no geomagnetic activity.
     out_constant = AtmosphericModels.jacchia1977(
-        jd, ϕ, λ, 300e3, 114.0, 87.6, 0.0;
-        geomagnetic_profile = Val(:constant)
+        jd, ϕ, λ, 300e3, 114.0, 87.6, 0.0; geomagnetic_profile = Val(:constant)
     )
     out_tanh = AtmosphericModels.jacchia1977(
-        jd, ϕ, λ, 300e3, 114.0, 87.6, 0.0;
-        geomagnetic_profile = Val(:tanh)
+        jd, ϕ, λ, 300e3, 114.0, 87.6, 0.0; geomagnetic_profile = Val(:tanh)
     )
 
     @test out_tanh.total_density == out_constant.total_density
 
     # Invalid options must throw.
     @test_throws ArgumentError AtmosphericModels.jacchia1977(
-        jd, ϕ, λ, 300e3, 114.0, 87.6, 5.0;
-        geomagnetic_profile = Val(:linear)
+        jd, ϕ, λ, 300e3, 114.0, 87.6, 5.0; geomagnetic_profile = Val(:linear)
     )
 end
 

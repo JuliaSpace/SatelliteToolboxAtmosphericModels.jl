@@ -109,7 +109,7 @@ function jacchia1977(
         λ,
         h;
         geomagnetic_profile = geomagnetic_profile,
-        verbose = verbose
+        verbose = verbose,
     )
 end
 
@@ -119,7 +119,7 @@ function jacchia1977(
     λ::Number,
     h::Number;
     geomagnetic_profile::Val = Val(:constant),
-    verbose::Val{verbosity} = Val(true)
+    verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     # == Daily F10.7 With the Solar Hour Angle Dependent Lag, Eq. 23 [1] ===================
 
@@ -177,8 +177,7 @@ function jacchia1977(
     """
 
     return jacchia1977(
-        jd, ϕ_gd, λ, h, F10, F10ₐ, Kp;
-        geomagnetic_profile = geomagnetic_profile
+        jd, ϕ_gd, λ, h, F10, F10ₐ, Kp; geomagnetic_profile = geomagnetic_profile
     )
 end
 
@@ -193,14 +192,26 @@ function jacchia1977(
     geomagnetic_profile::Val = Val(:constant),
 )
     return jacchia1977(
-        datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp;
-        geomagnetic_profile = geomagnetic_profile
+        datetime2julian(instant),
+        ϕ_gd,
+        λ,
+        h,
+        F10,
+        F10ₐ,
+        Kp;
+        geomagnetic_profile = geomagnetic_profile,
     )
 end
 
 function jacchia1977(
-    jd::JT, ϕ_gd::PT, λ::LT, h::HT, F10::FT, F10ₐ::FT2, Kp::KT;
-    geomagnetic_profile::Val = Val(:constant)
+    jd::JT,
+    ϕ_gd::PT,
+    λ::LT,
+    h::HT,
+    F10::FT,
+    F10ₐ::FT2,
+    Kp::KT;
+    geomagnetic_profile::Val = Val(:constant),
 ) where {
     JT <: Number,
     PT <: Number,
@@ -222,8 +233,8 @@ function jacchia1977(
 
     geomagnetic_profile isa Union{Val{:constant}, Val{:tanh}} || throw(
         ArgumentError(
-            "The keyword `geomagnetic_profile` must be `Val(:constant)` or `Val(:tanh)`."
-        )
+            "The keyword `geomagnetic_profile` must be `Val(:constant)` or `Val(:tanh)`.",
+        ),
     )
 
     # Compute the Sun position represented in the inertial reference frame (MOD).
@@ -718,8 +729,8 @@ function _jacchia1977_static(
                     zⱼ = zᵢ
 
                     @inbounds for i in 1:5
-                        Tl  = _jacchia1977_temperature(zⱼ, c, ΔT_geo)
-                        Σ  += Wb[i] * g / Tl
+                        Tl = _jacchia1977_temperature(zⱼ, c, ΔT_geo)
+                        Σ += Wb[i] * g / Tl
                         Σs += Wb[i] / √Tl
                         Σn += exp(al[i])
                         zⱼ += step
@@ -911,12 +922,7 @@ displacement and equatorial wave corrections use the full variation in both case
 - `T`: Geomagnetic variation of the exospheric temperature [K], eq. 31 of [1].
 """
 function _jacchia1977_geomagnetic(
-    T_quiet::Number,
-    Kp::Number,
-    ϕ::Number,
-    λ::Number,
-    z::Number,
-    ::Val{GP} = Val(:constant)
+    T_quiet::Number, Kp::Number, ϕ::Number, λ::Number, z::Number, ::Val{GP} = Val(:constant)
 ) where {GP}
     ai = _JACCHIA1977_CONSTANTS.ai
 

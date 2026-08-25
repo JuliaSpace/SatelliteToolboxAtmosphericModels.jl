@@ -310,18 +310,14 @@ end
     instant = DateTime("2023-01-01T10:00:00")
 
     expected = AtmosphericModels.jr1971(instant, 0.5, 0.3, 300e3, 100, 100, 3)
-    result   = AtmosphericModels.jr1971(
-        instant, 0.5, 0.3, 300e3, 100, 100, 3; roots_container = zeros(5)
-    )
+    result   = AtmosphericModels.jr1971(instant, 0.5, 0.3, 300e3, 100, 100, 3; roots_container = zeros(5))
 
     @test result.total_density == expected.total_density
 
     SpaceIndices.init()
 
     expected = AtmosphericModels.jr1971(instant, 0.5, 0.3, 300e3)
-    result   = AtmosphericModels.jr1971(
-        instant, 0.5, 0.3, 300e3; roots_container = zeros(5)
-    )
+    result   = AtmosphericModels.jr1971(instant, 0.5, 0.3, 300e3; roots_container = zeros(5))
 
     @test result.total_density == expected.total_density
 end
@@ -334,7 +330,9 @@ end
 
     # The value must match the original formulation when the Sun declination is not zero.
     for δs in (-0.4, -0.1, 0.2), ϕ_gd in (-1.0, 0.3, 1.2)
-        expected = 0.65 / deg2rad(23.439291) * abs(δs) *
+        expected =
+            0.65 / deg2rad(23.439291) *
+            abs(δs) *
             (sin(π / 4 - ϕ_gd * δs / (2abs(δs)))^3 - 0.35355)
 
         @test AtmosphericModels._jr1971_helium_seasonal_correction(ϕ_gd, δs) == expected
@@ -357,6 +355,8 @@ end
 @testset "Float32 Output Type" begin
     # The output element type must be the promotion of the input types, and the call must
     # be type stable.
-    result = AtmosphericModels.jr1971(2460000.25f0, 0.5f0, 0.5f0, 300.0f3, 100.0f0, 100.0f0, 3.0f0)
+    result = AtmosphericModels.jr1971(
+        2460000.25f0, 0.5f0, 0.5f0, 300.0f3, 100.0f0, 100.0f0, 3.0f0
+    )
     @test result isa AtmosphericModels.JR1971Output{Float32}
 end

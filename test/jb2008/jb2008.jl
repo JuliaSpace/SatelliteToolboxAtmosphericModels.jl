@@ -169,8 +169,19 @@ end
         2460000, 0, 0, 300_000, 100, 100, 100, 100, 100, 100, 100, 100, 85
     )
     expected = AtmosphericModels.jb2008(
-        2460000.0, 0.0, 0.0, 300e3, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
-        100.0, 85.0
+        2460000.0,
+        0.0,
+        0.0,
+        300e3,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        85.0,
     )
     @test result isa AtmosphericModels.JB2008Output{Float64}
     @test result.total_density == expected.total_density
@@ -180,8 +191,19 @@ end
     # The output element type must be the promotion of the input types, and the call must
     # be type stable.
     result = AtmosphericModels.jb2008(
-        2460000.25f0, 0.5f0, 0.5f0, 300.0f3, 100.0f0, 100.0f0, 100.0f0, 100.0f0, 100.0f0,
-        100.0f0, 100.0f0, 100.0f0, 85.0f0
+        2460000.25f0,
+        0.5f0,
+        0.5f0,
+        300.0f3,
+        100.0f0,
+        100.0f0,
+        100.0f0,
+        100.0f0,
+        100.0f0,
+        100.0f0,
+        100.0f0,
+        100.0f0,
+        85.0f0,
     )
     @test result isa AtmosphericModels.JB2008Output{Float32}
 end
