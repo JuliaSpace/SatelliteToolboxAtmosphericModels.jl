@@ -4,6 +4,10 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Enhancement][badge-enhancement] The NRLMSISE-00 coefficient tables are now tuples
+  instead of heap-allocated vectors. Since all the accesses use literal indices, the bounds
+  checks are elided at compile time, making the model about 3 % faster. The results are
+  unchanged.
 - ![Bugfix][badge-bugfix] The standard library `Dates` is now a declared dependency. It was
   previously reachable only through a re-export of SatelliteToolboxBase.jl, which could
   break silently if that upstream re-export changed.

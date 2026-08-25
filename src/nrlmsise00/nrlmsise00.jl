@@ -732,8 +732,8 @@ end
 """
     _globe7(
         nrlmsise00d::Nrlmsise00Structure{T},
-        p::AbstractVector{V}
-    ) where {T<:Number, V<:Number} -> Nrlmsise00Structure{T}, T
+        p::NTuple{N, V}
+    ) where {N, T<:Number, V<:Number} -> Nrlmsise00Structure{T}, T
 
 Compute the function `G(L)` with upper thermosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00`.
@@ -749,8 +749,8 @@ structure `nrlmsise00`.
 - `T`: Result of `G(L)`.
 """
 function _globe7(
-    nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}
-) where {T <: Number, V <: Number}
+    nrlmsise00d::Nrlmsise00Structure{T}, p::NTuple{N, V}
+) where {N, T <: Number, V <: Number}
     # == Unpack NRLMSISE00 Structure =======================================================
 
     ap     = nrlmsise00d.ap
@@ -1027,15 +1027,15 @@ end
 """
     _glob7s(
         nrlmsise00d::Nrlmsise00Structure{T},
-        p::AbstractVector{V}
-    ) where {T<:Number, V<:Number} -> T
+        p::NTuple{N, V}
+    ) where {N, T<:Number, V<:Number} -> T
 
 Compute the function `G(L)` with lower atmosphere parameters `p` and the NRLMSISE-00
 structure `nrlmsise00d`.
 """
 function _glob7s(
-    nrlmsise00d::Nrlmsise00Structure{T}, p::AbstractVector{V}
-) where {T <: Number, V <: Number}
+    nrlmsise00d::Nrlmsise00Structure{T}, p::NTuple{N, V}
+) where {N, T <: Number, V <: Number}
 
     # == Unpack NRLMSISE00 Structure =======================================================
 
