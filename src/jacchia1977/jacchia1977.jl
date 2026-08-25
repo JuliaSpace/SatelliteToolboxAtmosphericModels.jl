@@ -67,6 +67,15 @@ The function throws an `ArgumentError` if the altitude `h` is outside the interv
 
 # Keywords
 
+- `geomagnetic_profile::Val`: Profile of the geomagnetic variation of the temperature. If
+    it is `Val(:constant)`, the entire temperature profile used to compute the geomagnetic
+    variation of the number densities is increased by the geomagnetic variation of the
+    exospheric temperature, as in the reference implementation [2] and in the numerical
+    example of [1]. If it is `Val(:tanh)`, the increase is weighted by the
+    altitude-dependent profile of eq. 32 of [1], which vanishes at 90 km and tends to the
+    full variation at high altitudes. The report states that neglecting eq. 32 is not
+    justified at lower heights.
+    (**Default**: `Val(:constant)`)
 - `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
     index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
     `Val` object, not a `Bool`, and it is only available in the methods that fetch the
@@ -90,13 +99,26 @@ function jacchia1977(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
+    geomagnetic_profile::Val = Val(:constant),
     verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
-    return jacchia1977(datetime2julian(instant), ϕ_gd, λ, h; verbose = verbose)
+    return jacchia1977(
+        datetime2julian(instant),
+        ϕ_gd,
+        λ,
+        h;
+        geomagnetic_profile = geomagnetic_profile,
+        verbose = verbose
+    )
 end
 
 function jacchia1977(
-    jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity} = Val(true)
+    jd::Number,
+    ϕ_gd::Number,
+    λ::Number,
+    h::Number;
+    geomagnetic_profile::Val = Val(:constant),
+    verbose::Val{verbosity} = Val(true)
 ) where {verbosity}
     # == Daily F10.7 With the Solar Hour Angle Dependent Lag, Eq. 23 [1] ===================
 
@@ -152,7 +174,10 @@ function jacchia1977(
       Delayed Kp              : $(Kp) (lag = $(τ) days)
     """
 
-    return jacchia1977(jd, ϕ_gd, λ, h, F10, F10ₐ, Kp)
+    return jacchia1977(
+        jd, ϕ_gd, λ, h, F10, F10ₐ, Kp;
+        geomagnetic_profile = geomagnetic_profile
+    )
 end
 
 function jacchia1977(
@@ -162,13 +187,18 @@ function jacchia1977(
     h::Number,
     F10::Number,
     F10ₐ::Number,
-    Kp::Number,
+    Kp::Number;
+    geomagnetic_profile::Val = Val(:constant),
 )
-    return jacchia1977(datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp)
+    return jacchia1977(
+        datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp;
+        geomagnetic_profile = geomagnetic_profile
+    )
 end
 
 function jacchia1977(
-    jd::JT, ϕ_gd::PT, λ::LT, h::HT, F10::FT, F10ₐ::FT2, Kp::KT
+    jd::JT, ϕ_gd::PT, λ::LT, h::HT, F10::FT, F10ₐ::FT2, Kp::KT;
+    geomagnetic_profile::Val = Val(:constant)
 ) where {
     JT <: Number,
     PT <: Number,
@@ -188,6 +218,12 @@ function jacchia1977(
     !(90 <= z <= 2000) &&
         throw(ArgumentError("The altitude must be between 90 km and 2000 km."))
 
+    geomagnetic_profile isa Union{Val{:constant}, Val{:tanh}} || throw(
+        ArgumentError(
+            "The keyword `geomagnetic_profile` must be `Val(:constant)` or `Val(:tanh)`."
+        )
+    )
+
     # Compute the Sun position represented in the inertial reference frame (MOD).
     s_i = sun_position_mod(jd)
 
@@ -205,7 +241,9 @@ function jacchia1977(
     # modified Julian date referred to 1950.0).
     Φ = mod((jd - 2433282.5) / 365.2422, 1)
 
-    return _jacchia1977_dynamic(RT(z), ϕ_gd, Ωp, Ωs, δs, λ, Φ, F10, F10ₐ, Kp)
+    return _jacchia1977_dynamic(
+        RT(z), ϕ_gd, Ωp, Ωs, δs, λ, Φ, F10, F10ₐ, Kp, geomagnetic_profile
+    )
 end
 
 ############################################################################################
@@ -294,10 +332,14 @@ end
         Φ::Number,
         F10::Number,
         F10ₐ::Number,
-        Kp::Number
+        Kp::Number[, geomagnetic_profile::Val]
     ) -> Jacchia1977Output
 
 Compute the Jacchia 1977 dynamic model (routine ISDAMO of [2]).
+
+The optional argument `geomagnetic_profile` selects the profile of the geomagnetic
+variation of the temperature (see [`_jacchia1977_geomagnetic`](@ref)).
+(**Default**: `Val(:constant)`)
 
 # Arguments
 
@@ -328,6 +370,7 @@ function _jacchia1977_dynamic(
     F10::Number,
     F10ₐ::Number,
     Kp::Number,
+    geomagnetic_profile::Val = Val(:constant),
 )
     Mi = _JACCHIA1977_CONSTANTS.Mi
     Av = _JACCHIA1977_CONSTANTS.Av
@@ -362,7 +405,7 @@ function _jacchia1977_dynamic(
 
     # == Geomagnetic Variation, Eqs. 28-35 [1] =============================================
 
-    dn = _jacchia1977_geomagnetic(Θ_H, Kp, ϕ, λ, z)
+    dn = _jacchia1977_geomagnetic(Θ_H, Kp, ϕ, λ, z, geomagnetic_profile)
     ad = ad .+ dn .- ac
 
     # == Seasonal-Latitudinal Variation, Eqs. 36-39 [1] ====================================
@@ -436,7 +479,23 @@ function _jacchia1977_temperature(z::Number, c::NTuple{7, T}) where {T <: Number
 end
 
 """
-    _jacchia1977_static(T∞::T1, z::T2) where {T1<:Number, T2<:Number} -> NTuple{6, T}, T, T
+    _jacchia1977_temperature(z::Number, c::NTuple{7, T}, ΔT_geo::Number) where {T<:Number} -> Number
+
+Compute the temperature [K] at the altitude `z` [km] using the profile parameters `c`
+obtained from [`_jacchia1977_profile_params`](@ref), increased by the geomagnetic variation
+of the exospheric temperature `ΔT_geo` [K] weighted by the altitude-dependent profile of
+eq. 32 of [1].
+"""
+function _jacchia1977_temperature(
+    z::Number, c::NTuple{7, T}, ΔT_geo::Number
+) where {T <: Number}
+    T_quiet = _jacchia1977_temperature(z, c)
+    iszero(ΔT_geo) && return T_quiet
+    return T_quiet + ΔT_geo * tanh(0.006 * (z - 90))
+end
+
+"""
+    _jacchia1977_static(T∞::T1, z::T2[, ΔT_geo::T3]) where {T1<:Number, T2<:Number, T3<:Number} -> NTuple{6, T}, T, T
 
 Compute the Jacchia 1977 static model (routine IMOWEI of [2]) for the exospheric
 temperature `T∞` [K] and altitude `z` [km].
@@ -445,6 +504,11 @@ The function numerically integrates the barometric equation between 90 km and 10
 the diffusion equations above 100 km using the Boole rule, as in the reference
 implementation [2]. The atomic hydrogen is anchored at 500 km and integrated with its flux
 term for other altitudes.
+
+If the geomagnetic variation of the exospheric temperature `ΔT_geo` [K] is provided, the
+temperature profile is increased by `ΔT_geo` weighted by the altitude-dependent profile of
+eq. 32 of [1], and the asymptotic exospheric temperature used by the hydrogen boundary
+conditions becomes `T∞ + ΔT_geo`.
 
 # Returns
 
@@ -460,7 +524,9 @@ term for other altitudes.
 - **[2]** de Matos, B. S., Carrara, V (1985-1987). *Fortran implementation of the Jacchia
     1977 model*. INPE, São José dos Campos, BR.
 """
-function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
+function _jacchia1977_static(
+    T∞::T1, z::T2, ΔT_geo::T3 = zero(T1)
+) where {T1 <: Number, T2 <: Number, T3 <: Number}
     Rstar = _JACCHIA1977_CONSTANTS.Rstar
     Av    = _JACCHIA1977_CONSTANTS.Av
     Ra    = _JACCHIA1977_CONSTANTS.Ra
@@ -474,14 +540,15 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
     Ca    = _JACCHIA1977_CONSTANTS.Ca
     Wb    = _JACCHIA1977_CONSTANTS.Wb
 
-    RT = float(promote_type(T1, T2))
+    RT = float(promote_type(T1, T2, T3))
 
     ln10 = log(RT(10))
 
     c = _jacchia1977_profile_params(T∞)
 
-    # Hydrogen flux and number density at 500 km (mks), Section 7 [1].
-    aux       = 28.9 / T∞^RT(0.25)
+    # Hydrogen flux and number density at 500 km (mks), Section 7 [1]. The asymptotic
+    # exospheric temperature includes the geomagnetic variation.
+    aux       = 28.9 / (T∞ + ΔT_geo)^RT(0.25)
     ϕH        = 10^(RT(6.90) + aux) / 2.0e20
     ln_nH_500 = (RT(5.94) + aux) * ln10
 
@@ -511,7 +578,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
         @inbounds for i in 1:5
             Δz = zⱼ - 90
             M′ = @evalpoly(Δz, Ca[1], Ca[2], Ca[3], Ca[4], Ca[5], Ca[6])
-            Σ += Wb[i] * g * M′ / _jacchia1977_temperature(zⱼ, c)
+            Σ += Wb[i] * g * M′ / _jacchia1977_temperature(zⱼ, c, ΔT_geo)
             zⱼ += step
         end
 
@@ -522,7 +589,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
     ρ′  = ρ₀ * exp(-int / Rstar)
     Δz  = z_end - 90
     M′  = @evalpoly(Δz, Ca[1], Ca[2], Ca[3], Ca[4], Ca[5], Ca[6])
-    Tf  = _jacchia1977_temperature(z_end, c)
+    Tf  = _jacchia1977_temperature(z_end, c, ΔT_geo)
     N′  = Av * ρ′ / M₀ * T₀ / Tf
     ρ′  = N′ * M′
     aux = ρ′ / M₀
@@ -553,7 +620,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
             zⱼ = zᵢ
 
             @inbounds for i in 1:5
-                Σ  += Wb[i] * g / _jacchia1977_temperature(zⱼ, c)
+                Σ  += Wb[i] * g / _jacchia1977_temperature(zⱼ, c, ΔT_geo)
                 zⱼ += step
             end
 
@@ -561,7 +628,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
             zᵢ  += 4step
         end
 
-        Tf  = _jacchia1977_temperature(z_end, c)
+        Tf  = _jacchia1977_temperature(z_end, c, ΔT_geo)
         aux = log(Tᵢ / Tf)
 
         for i in 1:5
@@ -588,7 +655,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
                 zⱼ = zᵢ
 
                 @inbounds for i in 1:5
-                    Σ  += Wb[i] * g / _jacchia1977_temperature(zⱼ, c)
+                    Σ  += Wb[i] * g / _jacchia1977_temperature(zⱼ, c, ΔT_geo)
                     zⱼ += step
                 end
 
@@ -596,7 +663,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
                 zᵢ  += 4step
             end
 
-            Tf  = _jacchia1977_temperature(z_end, c)
+            Tf  = _jacchia1977_temperature(z_end, c, ΔT_geo)
             aux = log(Tᵢ / Tf)
 
             @reset an[6] = ln_nH_500
@@ -643,7 +710,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
                     zⱼ = zᵢ
 
                     @inbounds for i in 1:5
-                        Tl  = _jacchia1977_temperature(zⱼ, c)
+                        Tl  = _jacchia1977_temperature(zⱼ, c, ΔT_geo)
                         Σ  += Wb[i] * g / Tl
                         Σs += Wb[i] / √Tl
                         Σn += exp(al[i])
@@ -653,7 +720,7 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
                     zᵢ += 4step
 
                     int  = step * Σ
-                    Tf   = _jacchia1977_temperature(zᵢ, c)
+                    Tf   = _jacchia1977_temperature(zᵢ, c, ΔT_geo)
                     ΔlnT = log(Tᵢ / Tf)
                     Tᵢ   = Tf
 
@@ -813,7 +880,7 @@ end
         Kp::Number,
         ϕ::Number,
         λ::Number,
-        z::Number
+        z::Number[, geomagnetic_profile::Val]
     ) -> NTuple{6, T}
 
 Compute the base-10 logarithm of the number densities of the static model evaluated at the
@@ -822,6 +889,12 @@ homopause displacement and equatorial wave corrections (routine GEOACI of [2] an
 to 35 of [1]), given the quiet exospheric temperature `T_quiet` [K], the latitude `ϕ`
 [rad], the longitude `λ` [rad], and the altitude `z` [km].
 
+If `geomagnetic_profile` is `Val(:constant)` (default), the entire temperature profile is
+increased by the geomagnetic variation of the exospheric temperature, as in the reference
+implementation [2] and in the numerical example of [1]. If it is `Val(:tanh)`, the
+increase is weighted by the altitude-dependent profile of eq. 32 of [1]. The homopause
+displacement and equatorial wave corrections use the full variation in both cases.
+
 # Returns
 
 - `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] in the internal order
@@ -829,8 +902,13 @@ to 35 of [1]), given the quiet exospheric temperature `T_quiet` [K], the latitud
     subtract the static model evaluated at `T_quiet` to obtain the geomagnetic variation.
 """
 function _jacchia1977_geomagnetic(
-    T_quiet::Number, Kp::Number, ϕ::Number, λ::Number, z::Number
-)
+    T_quiet::Number,
+    Kp::Number,
+    ϕ::Number,
+    λ::Number,
+    z::Number,
+    ::Val{GP} = Val(:constant)
+) where {GP}
     ai = _JACCHIA1977_CONSTANTS.ai
 
     # Amplitude of the geomagnetic effect, eq. 31 [1].
@@ -844,7 +922,11 @@ function _jacchia1977_geomagnetic(
     # Geomagnetic variation of the exospheric temperature.
     ΔT∞ = A * sin²_ϕᵢ * sin²_ϕᵢ
 
-    dn, _, _ = _jacchia1977_static(T_quiet + ΔT∞, z)
+    dn, _, _ = if GP === :tanh
+        _jacchia1977_static(T_quiet, z, ΔT∞)
+    else
+        _jacchia1977_static(T_quiet + ΔT∞, z)
+    end
 
     # Homopause displacement, eq. 33 [1] [m].
     aux  = 0.01 * ΔT∞

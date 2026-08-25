@@ -4,6 +4,13 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Feature][badge-feature] The Jacchia 1977 model now supports the keyword
+  `geomagnetic_profile` to select how the geomagnetic variation of the exospheric
+  temperature is applied to the temperature profile. The default, `Val(:constant)`,
+  increases the entire profile, as in the reference Fortran implementation and in the
+  numerical example of the report. `Val(:tanh)` weights the increase by the
+  altitude-dependent profile of eq. 32 of the report, which the report states is required
+  at lower heights.
 - ![Bugfix][badge-bugfix] The Jacchia 1977 model clamped negative base-10 logarithms of the
   number densities to 0, as in the reference Fortran implementation. Hence, the number
   density of heavily depleted species (e.g. Ar, O₂, and N₂ at high altitudes) was reported

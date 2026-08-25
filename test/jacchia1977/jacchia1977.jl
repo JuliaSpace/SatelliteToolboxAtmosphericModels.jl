@@ -261,6 +261,60 @@ end
 #                                       Test Results                                       #
 ############################################################################################
 #
+# The keyword `geomagnetic_profile` selects how the geomagnetic variation of the exospheric
+# temperature is applied to the temperature profile used to compute the geomagnetic
+# variation of the number densities. `Val(:constant)` (default) increases the entire
+# profile, as in the reference implementation [2], whereas `Val(:tanh)` weights the
+# increase by the altitude-dependent profile of eq. 32 of [1]. Hence, the default must
+# match the reference behavior exactly, the two options must differ when Kp > 0, and they
+# must match exactly when Kp = 0.
+#
+############################################################################################
+
+@testset "Geomagnetic Profile Options" begin
+    jd = date_to_jd(1974, 5, 4, 14, 0, 0)
+    ϕ  = deg2rad(40)
+    λ  = deg2rad(-45)
+
+    for h in (150e3, 600e3)
+        out_default  = AtmosphericModels.jacchia1977(jd, ϕ, λ, h, 114.0, 87.6, 5.0)
+        out_constant = AtmosphericModels.jacchia1977(
+            jd, ϕ, λ, h, 114.0, 87.6, 5.0;
+            geomagnetic_profile = Val(:constant)
+        )
+        out_tanh = AtmosphericModels.jacchia1977(
+            jd, ϕ, λ, h, 114.0, 87.6, 5.0;
+            geomagnetic_profile = Val(:tanh)
+        )
+
+        @test out_constant.total_density == out_default.total_density
+        @test out_tanh.total_density != out_constant.total_density
+        @test isfinite(out_tanh.total_density)
+    end
+
+    # Both options must match exactly when there is no geomagnetic activity.
+    out_constant = AtmosphericModels.jacchia1977(
+        jd, ϕ, λ, 300e3, 114.0, 87.6, 0.0;
+        geomagnetic_profile = Val(:constant)
+    )
+    out_tanh = AtmosphericModels.jacchia1977(
+        jd, ϕ, λ, 300e3, 114.0, 87.6, 0.0;
+        geomagnetic_profile = Val(:tanh)
+    )
+
+    @test out_tanh.total_density == out_constant.total_density
+
+    # Invalid options must throw.
+    @test_throws ArgumentError AtmosphericModels.jacchia1977(
+        jd, ϕ, λ, 300e3, 114.0, 87.6, 5.0;
+        geomagnetic_profile = Val(:linear)
+    )
+end
+
+############################################################################################
+#                                       Test Results                                       #
+############################################################################################
+#
 # The integration loops must terminate for reduced-precision inputs. Before the integer
 # panel count was introduced, the termination criterion compared the accumulated altitude
 # against a fixed tolerance of 1e-4 km, which is smaller than the accumulated rounding
