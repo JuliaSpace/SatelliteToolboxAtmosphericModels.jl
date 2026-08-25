@@ -45,7 +45,13 @@
 # The static model is compared against the file ja77_stat.dat, which contains the output of
 # the reference implementation [2] for F10 = F10ₐ = 100 sfu and altitudes from 90 km to
 # 2000 km. The tolerances are the half-ULP of the fixed-width format used to generate the
-# file.
+# file, except for the values affected by the hydrogen number density. Here, we depart from
+# the reference implementation [2], which integrates the hydrogen over a window displaced
+# by one Boole panel below 500 km and omits the total number density factor of the flux
+# term of eq. 16 [1] above 500 km. The observed deviations from the file are at most
+# 0.024 in the hydrogen log-density (at 150 km), 0.0010 in the total log-density (at
+# 1990 km, where the hydrogen dominates the mass), and 0.0061 in the mean molecular mass
+# (at 1590 km).
 #
 ############################################################################################
 
@@ -74,20 +80,32 @@
             Float64(alt), AtmosphericModels._jacchia1977_profile_params(T½)
         )
 
-        @test M̄ ≈ wmol atol = 0.006
-        @test log10(ρ) ≈ log₁₀_ρ atol = 0.0006
+        @test M̄ ≈ wmol atol = 0.008
+        @test log10(ρ) ≈ log₁₀_ρ atol = 0.0015
         @test T½ ≈ T_exo atol = 0.006
         @test Tz ≈ T_local atol = 0.006
 
-        for i in 1:6
+        for i in 1:5
             @test log₁₀_n[i] ≈ an[i] atol = 0.0006
         end
+
+        # See the explanation about the hydrogen tolerance in the comment above.
+        @test log₁₀_n[6] ≈ an[6] atol = 0.03
 
         count += 1
     end
 
     # Make sure we compared all the altitudes in the file.
     @test count == 192
+
+    # The hydrogen number density must be continuous across the 500 km anchor, in which the
+    # integration switches between the downward and upward branches.
+    log₁₀_n_m, ~, ~ = AtmosphericModels._jacchia1977_static(T½, 499.9)
+    log₁₀_n_0, ~, ~ = AtmosphericModels._jacchia1977_static(T½, 500.0)
+    log₁₀_n_p, ~, ~ = AtmosphericModels._jacchia1977_static(T½, 500.1)
+
+    @test log₁₀_n_m[6] ≈ log₁₀_n_0[6] atol = 1e-3
+    @test log₁₀_n_p[6] ≈ log₁₀_n_0[6] atol = 1e-3
 end
 
 ############################################################################################

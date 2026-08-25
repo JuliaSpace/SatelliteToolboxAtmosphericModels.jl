@@ -4,6 +4,14 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The hydrogen integration of the Jacchia 1977 model reproduced two
+  inaccuracies of the reference Fortran implementation: below 500 km, the hydrogen was
+  integrated over a window displaced by one Boole panel (about 20 km) from the window used
+  by the other species; and above 500 km, the flux term of eq. 16 of the report omitted the
+  total number density factor. Both were fixed, changing the hydrogen number density by up
+  to 6 % (at 150 km) with respect to the previous version. The total density changes by
+  less than 0.25 %, and only above approximately 1500 km, where the hydrogen dominates the
+  mass.
 - ![Bugfix][badge-bugfix] The automatic space index fetching of the Jacchia 1977 model
   selected the daily F10.7 flux of the day before the lagged instant prescribed in eq. 23
   of the report because SpaceIndices.jl shifts the F10.7 lookups by -8 hours to center the

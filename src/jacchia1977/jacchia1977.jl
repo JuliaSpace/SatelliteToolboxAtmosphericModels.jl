@@ -605,16 +605,22 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
                 @reset an[i] = an[i] - int * Mi[i] + aux * (1 + αi[i])
             end
 
-            if z < 500
+            if z != 500
                 ############################################################################
-                #        Downward Integration From 500 km to z With the H Flux Term        #
+                #      Integration Between 500 km and z With the Hydrogen Flux Term        #
                 ############################################################################
+
+                # The hydrogen flux term of eq. 16 [1] is Φ / (D n_H) dz with the diffusion
+                # coefficient D = 2.0e20 √T / N and the total number density
+                # N = Σ₅ nᵢ + n_H, leading to (Σ₅ nᵢ / n_H + 1) Φ / (2.0e20 √T) dz. Since
+                # this term requires the number densities of the other species, the
+                # hydrogen is integrated panel by panel together with them.
 
                 Tᵢ    = Tf
                 z_ini = RT(500)
                 z_end = RT(z)
 
-                step, np = _jacchia1977_step(z_ini, z_end, RT(-5))
+                step, np = _jacchia1977_step(z_ini, z_end, z < 500 ? RT(-5) : RT(2.5))
                 zᵢ       = z_ini
 
                 al = ntuple(_ -> RT(0), Val(5))
@@ -632,88 +638,37 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
 
                     g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
                     Σ  = zero(RT)
+                    Σs = zero(RT)
                     Σn = zero(RT)
                     zⱼ = zᵢ
 
                     @inbounds for i in 1:5
-                        Σ  += Wb[i] * g / _jacchia1977_temperature(zⱼ, c)
+                        Tl  = _jacchia1977_temperature(zⱼ, c)
+                        Σ  += Wb[i] * g / Tl
+                        Σs += Wb[i] / √Tl
                         Σn += exp(al[i])
                         zⱼ += step
                     end
 
                     zᵢ += 4step
 
-                    int = step * Σ
-                    Tf = _jacchia1977_temperature(zᵢ, c)
+                    int  = step * Σ
+                    Tf   = _jacchia1977_temperature(zᵢ, c)
                     ΔlnT = log(Tᵢ / Tf)
-                    Tᵢ = Tf
+                    Tᵢ   = Tf
 
                     for i in 1:5
                         @reset an[i] = an[i] - int * Mi[i] + ΔlnT * (1 + αi[i])
                     end
 
-                    # Hydrogen integration with the flux term, following the reference
-                    # implementation [2].
+                    # Hydrogen barometric and flux terms over the same panel, using the
+                    # hydrogen number density at the beginning of the segment.
                     Σϕ = Σn / exp(an[6]) * ϕH
-                    g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
-                    zⱼ = zᵢ
-                    Σ  = zero(RT)
-                    Σ₁ = zero(RT)
-                    Σ₂ = zero(RT)
-
-                    @inbounds for i in 1:5
-                        Tl  = _jacchia1977_temperature(zⱼ, c)
-                        Σ   += Wb[i] / Tl
-                        aux = Wb[i] / √Tl
-                        Σ₁  += Σϕ * aux
-                        Σ₂  += aux
-                        zⱼ  += step
-                    end
 
                     @reset an[6] =
-                        an[6] - (g * Σ * step * Mi[6] - ΔlnT * (1 + αi[6])) -
-                        Σ₁ * 1000 * step - Σ₂ * ϕH * 1000 * step
+                        an[6] - (int * Mi[6] - ΔlnT * (1 + αi[6])) -
+                        (Σϕ + ϕH) * Σs * 1000 * step
                 end
-            elseif z > 500
-                ############################################################################
-                #         Upward Integration From 500 km to z With the H Flux Term         #
-                ############################################################################
-
-                Tᵢ    = Tf
-                z_ini = RT(500)
-                z_end = RT(z)
-                int   = zero(RT)
-                intϕ  = zero(RT)
-
-                step, np = _jacchia1977_step(z_ini, z_end, RT(2.5))
-                zᵢ       = z_ini
-
-                for _ in 1:np
-                    g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
-                    Σ  = zero(RT)
-                    Σ₂ = zero(RT)
-                    zⱼ = zᵢ
-
-                    @inbounds for i in 1:5
-                        Tl = _jacchia1977_temperature(zⱼ, c)
-                        Σ += Wb[i] * g / Tl
-                        Σ₂ += Wb[i] / √Tl
-                        zⱼ += step
-                    end
-
-                    int  += step * Σ
-                    intϕ += 1000 * step * ϕH * Σ₂
-                    zᵢ   += 4step
-                end
-
-                Tf  = _jacchia1977_temperature(z_end, c)
-                aux = log(Tᵢ / Tf)
-
-                for i in 1:6
-                    @reset an[i] = an[i] - int * Mi[i] + aux * (1 + αi[i])
-                end
-
-                @reset an[6] = an[6] - intϕ
             end
         end
     end
