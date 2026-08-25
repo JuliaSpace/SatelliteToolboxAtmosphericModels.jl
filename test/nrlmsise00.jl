@@ -421,16 +421,19 @@ end
     end
 
     # Now, we check the automatic space index fetching by comparing the result against a
-    # call providing the indices obtained manually for this instant: the daily F10.7 of the
-    # previous day (159.5 sfu), the 81-day centered average (154.2407407407407 sfu), and
-    # the daily averaged Ap (13.75).
+    # call providing the indices obtained manually for this instant: the observed daily
+    # F10.7 of the previous day (164.9 sfu), the observed 81-day centered average
+    # (159.12345679012347 sfu), and the daily averaged Ap (13.75). Notice that the model
+    # documentation requires the observed flux at the actual distance of the Earth from the
+    # Sun, and not the flux adjusted to 1 AU (the online version used 159.5 sfu here, which
+    # is the adjusted value of the previous day).
     expected_fetch = AtmosphericModels.nrlmsise00(
         DateTime("2023-01-01T10:00:00"),
         400e3,
         -23 |> deg2rad,
         -45 |> deg2rad,
-        154.2407407407407,
-        159.5,
+        159.12345679012347,
+        164.9,
         13.75,
     )
 

@@ -4,6 +4,13 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The automatic space index fetching of the NRLMSISE-00 model used
+  the F10.7 flux adjusted to 1 AU, whereas the model documentation explicitly requires the
+  observed flux at the actual distance of the Earth from the Sun (as also stated in the
+  docstring). The fetching now uses the observed flux. The two series differ by up to
+  ±3.4 %, which maps to a spurious annual signature of up to ±7 % in the auto-fetched
+  density near the perihelion and aphelion. Users passing the indices manually are not
+  affected.
 - ![Enhancement][badge-enhancement] Several type instabilities related to `Float64`
   literals were removed from the JR1971, JB2008, and modified Harris-Priester models. In
   particular, the modified Harris-Priester model now returns the promotion of the input
