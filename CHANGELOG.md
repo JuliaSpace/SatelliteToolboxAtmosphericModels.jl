@@ -4,6 +4,15 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The `temperature` field returned by the Jacchia 1977 model was
+  computed from the temperature profile related to the mean exospheric temperature `T½`,
+  ignoring the diurnal and geomagnetic variations, as in the reference Fortran
+  implementation. It is now the local temperature, computed from the profile related to the
+  local quiet exospheric temperature (phase angle of -60°, prescribed for the actual
+  temperature in eq. 26 of the report) increased by the geomagnetic variation. For the
+  worked example of the report, the returned temperature at high altitudes now matches the
+  report values (939.3 K quiet and 1061 K disturbed) to better than 0.5 K. The densities
+  are unaffected.
 - ![Feature][badge-feature] The Jacchia 1977 model now supports the keyword
   `geomagnetic_profile` to select how the geomagnetic variation of the exospheric
   temperature is applied to the temperature profile. The default, `Val(:constant)`,

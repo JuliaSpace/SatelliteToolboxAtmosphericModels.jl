@@ -210,6 +210,19 @@ end
 
     @test out.exospheric_temperature ≈ 873.1 atol = 0.1
     @test log10(out.total_density) ≈ -10.934 atol = 0.05
+
+    # The local temperature must tend to the local exospheric temperature at high
+    # altitudes. The report evaluates the quiet local exospheric temperature as
+    # T₀(∞) = 939.3 K and the disturbed one as T₀(∞) + ΔG T∞ = 1061 K.
+    out_disturbed = AtmosphericModels.jacchia1977(
+        jd, deg2rad(40), deg2rad(-45), 2000e3, 114.0, 87.6, 5.0
+    )
+    out_quiet = AtmosphericModels.jacchia1977(
+        jd, deg2rad(40), deg2rad(-45), 2000e3, 114.0, 87.6, 0.0
+    )
+
+    @test out_disturbed.temperature ≈ 1061.0 atol = 0.5
+    @test out_quiet.temperature ≈ 939.3 atol = 0.1
 end
 
 ############################################################################################

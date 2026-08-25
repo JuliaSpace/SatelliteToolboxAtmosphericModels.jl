@@ -14,9 +14,12 @@ Output of the atmospheric model Jacchia 1977.
 # Fields
 
 - `total_density::T`: Total atmospheric density [kg / m³].
-- `temperature::T`: Temperature at the selected position [K].
+- `temperature::T`: Local temperature at the selected position [K], computed from the
+    temperature profile related to the local quiet exospheric temperature (phase angle of
+    -60°, as prescribed for the actual temperature in eq. 26 of the report) increased by
+    the geomagnetic variation.
 - `exospheric_temperature::T`: Mean exospheric temperature `T½` above the selected position
-    [K].
+    [K], as defined in eq. 20 of the report.
 - `N2_number_density::T`: Number density of N₂ [1 / m³].
 - `O2_number_density::T`: Number density of O₂ [1 / m³].
 - `O_number_density::T`: Number density of O [1 / m³].

@@ -396,17 +396,23 @@ function _jacchia1977_dynamic(
 
     _, M̄, _ = _jacchia1977_static(T½, z)
 
-    # Local temperature from the static temperature profile.
-    Tz = _jacchia1977_temperature(z, _jacchia1977_profile_params(T½))
-
     # == Diurnal Variation, Eqs. 24-27 [1] =================================================
 
     ad, ac, Θ_H = _jacchia1977_diurnal(T½, Ωp, Ωs, δs, ϕ, z, M̄)
 
     # == Geomagnetic Variation, Eqs. 28-35 [1] =============================================
 
-    dn = _jacchia1977_geomagnetic(Θ_H, Kp, ϕ, λ, z, geomagnetic_profile)
+    dn, ΔT∞ = _jacchia1977_geomagnetic(Θ_H, Kp, ϕ, λ, z, geomagnetic_profile)
     ad = ad .+ dn .- ac
+
+    # Local temperature from the profile related to the quiet local exospheric temperature
+    # `Θ_H` (phase angle of -60°, as prescribed for the actual temperature in eq. 26 [1])
+    # increased by the geomagnetic variation.
+    Tz = if geomagnetic_profile === Val(:tanh)
+        _jacchia1977_temperature(z, _jacchia1977_profile_params(Θ_H), ΔT∞)
+    else
+        _jacchia1977_temperature(z, _jacchia1977_profile_params(Θ_H + ΔT∞))
+    end
 
     # == Seasonal-Latitudinal Variation, Eqs. 36-39 [1] ====================================
 
@@ -900,6 +906,7 @@ displacement and equatorial wave corrections use the full variation in both case
 - `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] in the internal order
     (He, O₂, N₂, Ar, O, H), where `T` is the promotion of the input types. The caller must
     subtract the static model evaluated at `T_quiet` to obtain the geomagnetic variation.
+- `T`: Geomagnetic variation of the exospheric temperature [K], eq. 31 of [1].
 """
 function _jacchia1977_geomagnetic(
     T_quiet::Number,
@@ -935,7 +942,7 @@ function _jacchia1977_geomagnetic(
     # Equatorial wave, eq. 35 [1].
     Δe = 5.2e-4 * A * cos²_ϕᵢ * cos²_ϕᵢ
 
-    return ntuple(i -> dn[i] + ai[i] * Δz_H + Δe, Val(6))
+    return ntuple(i -> dn[i] + ai[i] * Δz_H + Δe, Val(6)), ΔT∞
 end
 
 """

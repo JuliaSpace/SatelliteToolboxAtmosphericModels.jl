@@ -51,7 +51,8 @@ These functions return an object of type `Jacchia1977Output` that contains the f
 fields:
 
 - `total_density::T`: Total atmospheric density [kg / m³].
-- `temperature::T`: Temperature at the selected position [K].
+- `temperature::T`: Local temperature at the selected position [K], including the diurnal
+  and geomagnetic variations.
 - `exospheric_temperature::T`: Mean exospheric temperature `T½` above the selected position
   [K].
 - `N2_number_density::T`: Number density of N₂ [1 / m³].
