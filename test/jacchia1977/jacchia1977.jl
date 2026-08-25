@@ -85,12 +85,15 @@
         @test T½ ≈ T_exo atol = 0.006
         @test Tz ≈ T_local atol = 0.006
 
+        # The reference implementation clamps negative base-10 logarithms to 0 before
+        # printing, whereas we return the true values. Hence, we apply the same clamp
+        # before comparing.
         for i in 1:5
-            @test log₁₀_n[i] ≈ an[i] atol = 0.0006
+            @test max(log₁₀_n[i], 0.0) ≈ an[i] atol = 0.0006
         end
 
         # See the explanation about the hydrogen tolerance in the comment above.
-        @test log₁₀_n[6] ≈ an[6] atol = 0.03
+        @test max(log₁₀_n[6], 0.0) ≈ an[6] atol = 0.03
 
         count += 1
     end
@@ -106,6 +109,10 @@
 
     @test log₁₀_n_m[6] ≈ log₁₀_n_0[6] atol = 1e-3
     @test log₁₀_n_p[6] ≈ log₁₀_n_0[6] atol = 1e-3
+
+    # The number density of heavily depleted species must not be clamped to 1 / m³.
+    log₁₀_n_top, ~, ~ = AtmosphericModels._jacchia1977_static(T½, 2000.0)
+    @test log₁₀_n_top[4] < -10
 end
 
 ############################################################################################

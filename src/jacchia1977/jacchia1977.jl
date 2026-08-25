@@ -691,9 +691,10 @@ function _jacchia1977_static(T∞::T1, z::T2) where {T1 <: Number, T2 <: Number}
             Σn += nᵢ
         end
 
-        # Convert to base-10 logarithm and clamp negative values, as in the reference
-        # implementation [2].
-        @reset log₁₀_n[i] = max(an[i] / ln10, RT(0))
+        # Convert to base-10 logarithm. Notice that the reference implementation [2] clamps
+        # negative values to 0, truncating the number density of heavily depleted species
+        # (e.g. Ar at high altitudes) to 1 / m³. We return the true values instead.
+        @reset log₁₀_n[i] = an[i] / ln10
     end
 
     M̄ = Σm / Σn

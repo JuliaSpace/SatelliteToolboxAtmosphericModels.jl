@@ -4,6 +4,11 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The Jacchia 1977 model clamped negative base-10 logarithms of the
+  number densities to 0, as in the reference Fortran implementation. Hence, the number
+  density of heavily depleted species (e.g. Ar, O₂, and N₂ at high altitudes) was reported
+  as 1 / m³ instead of its true, much smaller value. The total density is essentially
+  unaffected.
 - ![Bugfix][badge-bugfix] The hydrogen integration of the Jacchia 1977 model reproduced two
   inaccuracies of the reference Fortran implementation: below 500 km, the hydrogen was
   integrated over a window displaced by one Boole panel (about 20 km) from the window used
