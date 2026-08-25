@@ -225,6 +225,11 @@ end
         @test result.He_number_density ≈ expected.He_number_density
         @test result.H_number_density ≈ expected.H_number_density
     end
+
+    # The automatic fetching must work for recent epochs, in which the Gaussian window of
+    # the averaged F10.7 is truncated at the available data span.
+    result = AtmosphericModels.jacchia1977(now(UTC), 0.0, 0.0, 500e3)
+    @test isfinite(result.total_density)
 end
 
 ############################################################################################

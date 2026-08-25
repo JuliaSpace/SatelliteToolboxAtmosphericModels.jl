@@ -4,6 +4,11 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 1.4.0
 -------------
 
+- ![Bugfix][badge-bugfix] The automatic space index fetching of the Jacchia 1977 model
+  required the F10.7 flux to be available up to 213 days after the input time, making the
+  model unusable for recent epochs (the fetching threw an `ArgumentError`). The Gaussian
+  window is now truncated at the available data span and the weights are renormalized
+  accordingly, following the definition of the weighted mean in eq. 21 of the report.
 - ![Bugfix][badge-bugfix] The numerical integrator of the Jacchia 1977 model could loop
   forever for reduced-precision inputs (e.g. `Float32`) because the loop termination
   compared the accumulated altitude against a fixed tolerance of 1e-4 km, which is smaller

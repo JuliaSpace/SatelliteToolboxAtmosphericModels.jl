@@ -45,8 +45,8 @@ evaluated with a lag that depends on the solar hour angle, the averaged flux is 
 Gaussian-weighted mean with a standard width of 71 days centered on the input time, and the
 Kp is delayed by an interval that depends on the geomagnetic latitude. However, the indices
 must be already initialized using the function `SpaceIndices.init()`. Notice that the
-Gaussian-weighted mean requires the indices to be available up to 213 days after the input
-time.
+Gaussian-weighted mean uses a window of ±213 days (three standard widths) truncated at the
+available data span, renormalizing the weights accordingly.
 
 The function throws an `ArgumentError` if the altitude `h` is outside the interval
 [90, 2000] km.
@@ -120,18 +120,7 @@ function jacchia1977(
 
     # == Gaussian-Weighted Averaged F10.7, Eqs. 21-22 [1] ==================================
 
-    # The report recommends a Gaussian weight with a standard width of three solar
-    # rotations (71 days). We truncate the window at three standard widths.
-    Σw   = 0.0
-    Σw_F = 0.0
-
-    for k in -213:213
-        w    = exp(-(k / 71)^2)
-        Σw   += w
-        Σw_F += w * space_index(Val(:F10obs), jd + k)
-    end
-
-    F10ₐ = Σw_F / Σw
+    F10ₐ, k_min, k_max = _jacchia1977_averaged_f10(jd)
 
     # == Kp Delayed by the Geomagnetic Latitude Dependent Lag, Eq. 30 [1] ==================
 
@@ -155,7 +144,7 @@ function jacchia1977(
     verbosity && @debug """
     Jacchia 1977 - Fetched Space Indices
       Lagged daily F10.7      : $(F10) sfu (lag = $(Δt) days)
-      Gaussian averaged F10.7 : $(F10ₐ) sfu
+      Gaussian averaged F10.7 : $(F10ₐ) sfu (window = [$(k_min), $(k_max)] days)
       Delayed Kp              : $(Kp) (lag = $(τ) days)
     """
 
@@ -218,6 +207,77 @@ end
 ############################################################################################
 #                                    Private Functions                                     #
 ############################################################################################
+
+"""
+    _jacchia1977_averaged_f10(jd::Number) -> Float64, Int, Int
+
+Compute the Gaussian-weighted averaged F10.7 flux [sfu] centered on the Julian day `jd`
+(eqs. 21 and 22 of [1]) using a standard width of three solar rotations (71 days). The
+window is truncated at three standard widths (±213 days) or at the available data span,
+whichever is smaller, renormalizing the weights accordingly.
+
+# Returns
+
+- `Float64`: Gaussian-weighted averaged F10.7 flux [sfu].
+- `Int`: First offset [days] of the window used in the average.
+- `Int`: Last offset [days] of the window used in the average.
+"""
+function _jacchia1977_averaged_f10(jd::Number)
+    k_min = -213
+    k_max = +213
+
+    # If the window endpoints are outside the available data span, we use binary search to
+    # find the first and last available offsets. This algorithm assumes the data span is
+    # contiguous, which holds for the supported space index sets.
+    if !_jacchia1977_has_f10(jd + k_min)
+        lo, hi = k_min, 0
+
+        while hi - lo > 1
+            mid = (lo + hi) ÷ 2
+            _jacchia1977_has_f10(jd + mid) ? (hi = mid) : (lo = mid)
+        end
+
+        k_min = hi
+    end
+
+    if !_jacchia1977_has_f10(jd + k_max)
+        lo, hi = 0, k_max
+
+        while hi - lo > 1
+            mid = (lo + hi) ÷ 2
+            _jacchia1977_has_f10(jd + mid) ? (lo = mid) : (hi = mid)
+        end
+
+        k_max = lo
+    end
+
+    Σw   = 0.0
+    Σw_F = 0.0
+
+    for k in k_min:k_max
+        w    = exp(-(k / 71)^2)
+        Σw   += w
+        Σw_F += w * space_index(Val(:F10obs), jd + k)
+    end
+
+    return Σw_F / Σw, k_min, k_max
+end
+
+"""
+    _jacchia1977_has_f10(jd::Number) -> Bool
+
+Return `true` if the observed F10.7 flux is available at the Julian day `jd`, or `false`
+otherwise.
+"""
+function _jacchia1977_has_f10(jd::Number)
+    try
+        space_index(Val(:F10obs), jd)
+        return true
+    catch e
+        e isa ArgumentError && return false
+        rethrow()
+    end
+end
 
 """
     _jacchia1977_dynamic(
