@@ -1,6 +1,24 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 1.5.0
+-------------
+
+- ![Feature][badge-feature] The Jacchia 1977 model now provides the keyword `variant` to
+  select the assembly of the dynamic model. The default, `Val(:sr375)`, keeps the
+  formulation of the report. The new option, `Val(:stela)`, follows the simplified
+  assembly used by the CNES tools STELA and PATRIUS: the static model is evaluated at a
+  single local exospheric temperature computed with the hydrogen phase angle and a fixed
+  diurnal exponent, the geomagnetic variation of the exospheric temperature is weighted by
+  the altitude profile of eq. 32 of the report, only the semiannual variation is applied
+  to the number densities, and the daily and averaged fluxes are swapped in eq. 20, as in
+  the reference Java implementation. This variant produces total densities a few percent
+  higher on average, and it allows reproducing analyses performed with those tools: the
+  decay time of a 500 km sun-synchronous satellite computed by STELA is reproduced within
+  0.5 %, whereas the report formulation yields a decay time about 7 % longer. The variant
+  is validated against the density table and the algorithm of the class
+  fr.cnes.sirius.patrius.stela.forces.atmospheres.Jacchia77 of PATRIUS 4.16.
+
 Version 1.4.0
 -------------
 

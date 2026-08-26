@@ -13,6 +13,12 @@
 #
 #         https://github.com/jacobwilliams/INPE-atmosphere-models
 #
+# [3] CNES (2025). Java implementation of the Jacchia 1977 model used by the tools STELA
+#     and PATRIUS (class fr.cnes.sirius.patrius.stela.forces.atmospheres.Jacchia77,
+#     PATRIUS 4.16). Available in:
+#
+#         https://github.com/CNES/patrius
+#
 ############################################################################################
 
 export jacchia1977
@@ -39,6 +45,21 @@ Unlike the Jacchia-Roberts 1971 model, the Jacchia 1977 model does not have a cl
 solution. Hence, the barometric and diffusion equations are numerically integrated here,
 making this model considerably slower than [`jr1971`](@ref).
 
+The keyword `variant` selects how the dynamic model is assembled. The default,
+`Val(:sr375)`, follows the report [1]: each species is evaluated at its own pseudo
+exospheric temperature, and the geomagnetic, seasonal-latitudinal, and semiannual
+variations are applied to the number densities. The alternative, `Val(:stela)`, follows
+the simplified assembly used by the CNES tools STELA and PATRIUS [3]: the static model is
+evaluated at a single local exospheric temperature computed with the hydrogen phase angle
+(-60°) and a fixed diurnal exponent of 3, the geomagnetic variation of the exospheric
+temperature is weighted by the altitude profile of eq. 32 of [1] and added to that
+temperature, and only the semiannual variation is applied to the number densities. The
+reference implementation [3] also swaps the daily and averaged fluxes in eq. 20 of [1],
+computing the exospheric temperature with `5.48 F10^0.8 + 101.8 F10ₐ^0.4`, and we
+replicate this behavior to match its output. The STELA variant produces total densities a
+few percent higher on average than the report formulation, and it is provided to reproduce
+decay analyses performed with those tools.
+
 If we omit all space indices, the system tries to obtain them automatically for the
 selected day `jd` or `instant` using the prescriptions in the report [1]: the daily flux is
 evaluated with a lag that depends on the solar hour angle, the averaged flux is a
@@ -62,21 +83,29 @@ The function throws an `ArgumentError` if the altitude `h` is outside the interv
     models), evaluated with the lag prescribed in [1] (from 0.9 day to 1.6 days, depending
     on the local solar time).
 - `F10ₐ::Number`: 10.7-cm averaged solar flux adjusted to 1 AU, Gaussian-weighted mean
-    centered on the input time with a standard width of 71 days [sfu].
+    centered on the input time with a standard width of 71 days [sfu]. In the
+    `Val(:stela)` variant, the automatic fetching centers the mean on the lagged instant
+    instead, as in the reference implementation [3].
 - `Kp::Number`: Kp geomagnetic index, delayed by 0.1 day to 0.3 day depending on the
     geomagnetic latitude, as prescribed in [1].
 
 # Keywords
 
-- `geomagnetic_profile::Val`: Profile of the geomagnetic variation of the temperature. If
-    it is `Val(:constant)`, the entire temperature profile used to compute the geomagnetic
-    variation of the number densities is increased by the geomagnetic variation of the
-    exospheric temperature, as in the reference implementation [2] and in the numerical
-    example of [1]. If it is `Val(:tanh)`, the increase is weighted by the
-    altitude-dependent profile of eq. 32 of [1], which vanishes at 90 km and tends to the
-    full variation at high altitudes. The report states that neglecting eq. 32 is not
-    justified at lower heights.
+- `geomagnetic_profile::Val`: Profile of the geomagnetic variation of the temperature,
+    only available in the `Val(:sr375)` variant. If it is `Val(:constant)`, the entire
+    temperature profile used to compute the geomagnetic variation of the number densities
+    is increased by the geomagnetic variation of the exospheric temperature, as in the
+    reference implementation [2] and in the numerical example of [1]. If it is
+    `Val(:tanh)`, the increase is weighted by the altitude-dependent profile of eq. 32 of
+    [1], which vanishes at 90 km and tends to the full variation at high altitudes. The
+    report states that neglecting eq. 32 is not justified at lower heights.
     (**Default**: `Val(:constant)`)
+- `variant::Val`: Assembly of the dynamic model. If it is `Val(:sr375)`, the model follows
+    the report [1]. If it is `Val(:stela)`, the model follows the simplified assembly of
+    the CNES tools STELA and PATRIUS [3] (see the description above). The function throws
+    an `ArgumentError` for other values and when `geomagnetic_profile` is set to
+    `Val(:tanh)` together with `Val(:stela)`.
+    (**Default**: `Val(:sr375)`)
 - `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
     index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
     `Val` object, not a `Bool`, and it is only available in the methods that fetch the
@@ -86,7 +115,10 @@ The function throws an `ArgumentError` if the altitude `h` is outside the interv
 # Returns
 
 - `Jacchia1977Output`: Structure containing the results obtained from the model. Its
-    element type is the promotion of the types of the numeric inputs.
+    element type is the promotion of the types of the numeric inputs. In the `Val(:stela)`
+    variant, the field `exospheric_temperature` holds the local exospheric temperature
+    used to evaluate the static model, including the diurnal and geomagnetic variations,
+    instead of the mean exospheric temperature `T½` of eq. 20 of [1].
 
 # References
 
@@ -94,6 +126,9 @@ The function throws an `ArgumentError` if the altitude `h` is outside the interv
     models*. SAO Special Report #375.
 - **[2]** de Matos, B. S., Carrara, V (1985-1987). *Fortran implementation of the Jacchia
     1977 model*. INPE, São José dos Campos, BR.
+- **[3]** CNES (2025). *Java implementation of the Jacchia 1977 model used by the tools
+    STELA and PATRIUS* (class fr.cnes.sirius.patrius.stela.forces.atmospheres.Jacchia77,
+    PATRIUS 4.16). Available in https://github.com/CNES/patrius.
 """
 function jacchia1977(
     instant::DateTime,
@@ -101,6 +136,7 @@ function jacchia1977(
     λ::Number,
     h::Number;
     geomagnetic_profile::Val = Val(:constant),
+    variant::Val = Val(:sr375),
     verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     return jacchia1977(
@@ -109,6 +145,7 @@ function jacchia1977(
         λ,
         h;
         geomagnetic_profile = geomagnetic_profile,
+        variant = variant,
         verbose = verbose,
     )
 end
@@ -119,6 +156,7 @@ function jacchia1977(
     λ::Number,
     h::Number;
     geomagnetic_profile::Val = Val(:constant),
+    variant::Val = Val(:sr375),
     verbose::Val{verbosity} = Val(true),
 ) where {verbosity}
     # == Daily F10.7 With the Solar Hour Angle Dependent Lag, Eq. 23 [1] ===================
@@ -148,7 +186,11 @@ function jacchia1977(
 
     # == Gaussian-Weighted Averaged F10.7, Eqs. 21-22 [1] ==================================
 
-    F10ₐ, k_min, k_max = _jacchia1977_averaged_f10(jd)
+    # The reference implementation of the STELA variant [3] centers the Gaussian mean on
+    # the lagged instant instead of the input time.
+    F10ₐ, k_min, k_max =
+        variant === Val(:stela) ? _jacchia1977_averaged_f10(jd - Δt) :
+        _jacchia1977_averaged_f10(jd)
 
     # == Kp Delayed by the Geomagnetic Latitude Dependent Lag, Eq. 30 [1] ==================
 
@@ -177,7 +219,15 @@ function jacchia1977(
     """
 
     return jacchia1977(
-        jd, ϕ_gd, λ, h, F10, F10ₐ, Kp; geomagnetic_profile = geomagnetic_profile
+        jd,
+        ϕ_gd,
+        λ,
+        h,
+        F10,
+        F10ₐ,
+        Kp;
+        geomagnetic_profile = geomagnetic_profile,
+        variant = variant,
     )
 end
 
@@ -190,6 +240,7 @@ function jacchia1977(
     F10ₐ::Number,
     Kp::Number;
     geomagnetic_profile::Val = Val(:constant),
+    variant::Val = Val(:sr375),
 )
     return jacchia1977(
         datetime2julian(instant),
@@ -200,6 +251,7 @@ function jacchia1977(
         F10ₐ,
         Kp;
         geomagnetic_profile = geomagnetic_profile,
+        variant = variant,
     )
 end
 
@@ -212,6 +264,7 @@ function jacchia1977(
     F10ₐ::FT2,
     Kp::KT;
     geomagnetic_profile::Val = Val(:constant),
+    variant::Val = Val(:sr375),
 ) where {
     JT <: Number,
     PT <: Number,
@@ -237,6 +290,10 @@ function jacchia1977(
         ),
     )
 
+    variant isa Union{Val{:sr375}, Val{:stela}} || throw(
+        ArgumentError("The keyword `variant` must be `Val(:sr375)` or `Val(:stela)`.")
+    )
+
     # Compute the Sun position represented in the inertial reference frame (MOD).
     s_i = sun_position_mod(jd)
 
@@ -249,6 +306,22 @@ function jacchia1977(
     # Compute the right ascension of the selected location w.r.t. the inertial reference
     # frame.
     Ωp = λ + jd_to_gmst(jd)
+
+    if variant === Val(:stela)
+        geomagnetic_profile === Val(:constant) || throw(
+            ArgumentError(
+                "The keyword `geomagnetic_profile` is not supported by the STELA variant.",
+            ),
+        )
+
+        # Fraction of the tropic year from the number of whole days elapsed since January
+        # 1st of the current year, as in the reference implementation [3].
+        instant = julian2datetime(jd)
+        days    = Dates.value(Date(instant) - Date(year(instant), 1, 1))
+        Φ       = days / RT(365.2422)
+
+        return _jacchia1977_stela_dynamic(RT(z), ϕ_gd, Ωp, Ωs, δs, λ, Φ, F10, F10ₐ, Kp)
+    end
 
     # Fraction of the tropic year starting on January 1st, as in [2] (the epoch is the
     # modified Julian date referred to 1950.0).
@@ -441,6 +514,145 @@ function _jacchia1977_dynamic(
     ρ = sum(n .* Mi) / Av
 
     return Jacchia1977Output{RT}(ρ, Tz, T½, n[3], n[2], n[5], n[4], n[1], n[6])
+end
+
+"""
+    _jacchia1977_stela_dynamic(
+        z::Number,
+        ϕ::Number,
+        Ωp::Number,
+        Ωs::Number,
+        δs::Number,
+        λ::Number,
+        Φ::Number,
+        F10::Number,
+        F10ₐ::Number,
+        Kp::Number
+    ) -> Jacchia1977Output
+
+Compute the Jacchia 1977 dynamic model using the simplified assembly of the CNES tools
+STELA and PATRIUS [3].
+
+The static model is evaluated at a single local exospheric temperature computed with the
+hydrogen phase angle (-60°) of eq. 27 of [1] and a fixed diurnal exponent of 3, increased
+by the geomagnetic variation of eq. 31 of [1] weighted by the altitude profile of eq. 32
+of [1]. Only the semiannual variation (eqs. 40 to 44 of [1]) is applied to the number
+densities. Notice that the reference implementation [3] swaps the daily and averaged
+fluxes in eq. 20 of [1], computing the exospheric temperature with
+`5.48 F10^0.8 + 101.8 F10ₐ^0.4`, and caps the geomagnetic index at 9. We replicate both
+behaviors to match its output.
+
+# Arguments
+
+- `z::Number`: Altitude [km].
+- `ϕ::Number`: Latitude [rad].
+- `Ωp::Number`: Right ascension of the selected location [rad].
+- `Ωs::Number`: Right ascension of the Sun [rad].
+- `δs::Number`: Declination of the Sun [rad].
+- `λ::Number`: Longitude of the selected location [rad].
+- `Φ::Number`: Fraction of the tropic year starting on January 1st of the current year
+    [-].
+- `F10::Number`: 10.7-cm solar flux [sfu].
+- `F10ₐ::Number`: 10.7-cm averaged solar flux [sfu].
+- `Kp::Number`: Kp geomagnetic index [-].
+
+# Returns
+
+- `Jacchia1977Output`: Structure containing the results obtained from the model. Its
+    element type is the promotion of the types of the numeric inputs. The field
+    `exospheric_temperature` holds the local exospheric temperature used to evaluate the
+    static model, including the diurnal and geomagnetic variations.
+
+# References
+
+- **[1]** Jacchia, L. G (1977). *Thermospheric temperature, density and composition: New
+    models*. SAO Special Report #375.
+- **[3]** CNES (2025). *Java implementation of the Jacchia 1977 model used by the tools
+    STELA and PATRIUS* (class fr.cnes.sirius.patrius.stela.forces.atmospheres.Jacchia77,
+    PATRIUS 4.16). Available in https://github.com/CNES/patrius.
+"""
+function _jacchia1977_stela_dynamic(
+    z::Number,
+    ϕ::Number,
+    Ωp::Number,
+    Ωs::Number,
+    δs::Number,
+    λ::Number,
+    Φ::Number,
+    F10::Number,
+    F10ₐ::Number,
+    Kp::Number,
+)
+    Mi = _JACCHIA1977_CONSTANTS.Mi
+    Av = _JACCHIA1977_CONSTANTS.Av
+
+    RT = float(
+        promote_type(
+            typeof(z),
+            typeof(ϕ),
+            typeof(Ωp),
+            typeof(Ωs),
+            typeof(δs),
+            typeof(λ),
+            typeof(Φ),
+            typeof(F10),
+            typeof(F10ₐ),
+            typeof(Kp),
+        ),
+    )
+
+    # == Local Exospheric Temperature ======================================================
+
+    # Local solar time [h], wrapped to the interval (3.66, 27.66] as in the reference
+    # implementation [3] to keep the diurnal cosine positive except for a small sliver.
+    tLoc = mod((π + (Ωp - Ωs)) * 12 / π, 24)
+    (tLoc <= RT(3.66)) && (tLoc += 24)
+
+    # Phase angle of the diurnal variation: the hydrogen value of eq. 27 [1] (-60°) is
+    # applied to the total density.
+    A = π / 12 * (tLoc - 12) - deg2rad(RT(60))
+
+    # Diurnal variation, eq. 25 [1] with the exponent fixed at 3.
+    f = cos(A / 2)^3 + RT(0.08) * cos(3A - deg2rad(RT(75)))
+
+    sin_ϕ = sin(ϕ)
+    cos_ϕ = cos(ϕ)
+
+    # Diurnal factor of the exospheric temperature, eq. 24 [1].
+    factor =
+        1 + RT(0.15) * (δs / deg2rad(RT(23.44))) * sin_ϕ + RT(0.24) * cos_ϕ * (f - RT(0.5))
+
+    # Sine of the geomagnetic (invariant) latitude using the dipole approximation [2].
+    sin_ϕᵢ  = 0.9792 * sin_ϕ + 0.2028 * cos_ϕ * cos(λ - 5.0789081)
+    sin²_ϕᵢ = sin_ϕᵢ * sin_ϕᵢ
+
+    # Geomagnetic variation of the exospheric temperature (eq. 31 [1]) weighted by the
+    # altitude-dependent profile of eq. 32 [1]. The reference implementation [3] caps the
+    # geomagnetic index at 9.
+    Kp′ = min(Kp, 9)
+    ΔT∞ = 57.5 * Kp′ * (1 + 0.027 * exp(RT(0.4) * Kp′)) * sin²_ϕᵢ * sin²_ϕᵢ
+    ΔTg = ΔT∞ * tanh(RT(0.006) * (z - 90))
+
+    # Local exospheric temperature. Notice that the reference implementation [3] swaps the
+    # daily and averaged fluxes with respect to eq. 20 [1].
+    Tc = 5.48 * F10^RT(0.8) + 101.8 * F10ₐ^RT(0.4)
+    T∞ = Tc * factor + ΔTg
+
+    # == Static Model and Semiannual Variation =============================================
+
+    ad, ~, ~ = _jacchia1977_static(T∞, z)
+
+    ad = ad .+ _jacchia1977_semiannual(Φ, z)
+
+    # == Assemble the Output ===============================================================
+
+    n = 10 .^ ad
+    ρ = sum(n .* Mi) / Av
+
+    # Local temperature from the profile related to the local exospheric temperature.
+    Tz = _jacchia1977_temperature(z, _jacchia1977_profile_params(T∞))
+
+    return Jacchia1977Output{RT}(ρ, Tz, T∞, n[3], n[2], n[5], n[4], n[1], n[6])
 end
 
 """

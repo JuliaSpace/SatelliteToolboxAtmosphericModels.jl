@@ -383,6 +383,216 @@ end
 #                                       Test Results                                       #
 ############################################################################################
 #
+# The STELA variant is compared against the Java implementation of the Jacchia 1977 model
+# used by the CNES tools STELA and PATRIUS (class
+# fr.cnes.sirius.patrius.stela.forces.atmospheres.Jacchia77, PATRIUS 4.16, Apache License
+# 2.0, available in https://github.com/CNES/patrius):
+#
+#   1. The static model is compared against anchors extracted from the density map
+#      distributed with PATRIUS (resource jacchia77_tables/J77_densityMap.txt), which
+#      tabulates the base-10 logarithm of the total density on a grid of exospheric
+#      temperatures (200 : 25 : 3000 K) and altitudes (0 : 1 : 200 km and
+#      200 : 10 : 2500 km). Our static model agrees with the map within 0.0015 in the
+#      base-10 logarithm over the entire grid (the map was generated with slightly
+#      different physical constants).
+#
+#   2. The dynamic model is compared against a line-by-line Julia port of the PATRIUS
+#      class, which interpolates the density map bilinearly. The reference values below
+#      were generated with that port, and the tolerance covers the bilinear interpolation
+#      error of the map grid (at most 0.0013 in the base-10 logarithm over 15120
+#      verification points spanning 90 km to 1500 km, all seasons, and quiet to storm
+#      geomagnetic conditions). Driven by the same space indices, the port also reproduces
+#      the decay time of a 500 km sun-synchronous satellite computed by STELA within
+#      0.5 %.
+#
+############################################################################################
+
+@testset "STELA Variant - Static Model Anchors" begin
+    # Anchors (T∞ [K], z [km], log₁₀ ρ [kg / m³]) extracted from the PATRIUS density map
+    # at grid nodes, avoiding any interpolation error.
+    anchors = (
+        (500.0, 100.0, -6.2438613),
+        (500.0, 150.0, -8.8979120),
+        (500.0, 300.0, -11.8248430),
+        (500.0, 500.0, -14.0663220),
+        (500.0, 1000.0, -15.0767110),
+        (500.0, 2000.0, -15.8188010),
+        (750.0, 100.0, -6.2456473),
+        (750.0, 150.0, -8.7642544),
+        (750.0, 300.0, -11.0559420),
+        (750.0, 500.0, -13.0156560),
+        (750.0, 1000.0, -14.9328970),
+        (750.0, 2000.0, -15.9794780),
+        (1000.0, 100.0, -6.2468457),
+        (1000.0, 150.0, -8.7011871),
+        (1000.0, 300.0, -10.6669090),
+        (1000.0, 500.0, -12.2460600),
+        (1000.0, 1000.0, -14.5475370),
+        (1000.0, 2000.0, -15.7800190),
+        (1500.0, 100.0, -6.2484454),
+        (1500.0, 150.0, -8.6365767),
+        (1500.0, 300.0, -10.2717270),
+        (1500.0, 500.0, -11.4573420),
+        (1500.0, 1000.0, -13.5898660),
+        (1500.0, 2000.0, -15.0973290),
+        (2000.0, 100.0, -6.2495306),
+        (2000.0, 150.0, -8.6008757),
+        (2000.0, 300.0, -10.0776640),
+        (2000.0, 500.0, -11.0530620),
+        (2000.0, 1000.0, -12.7853970),
+        (2000.0, 2000.0, -14.6466800),
+    )
+
+    for (T∞, z, log₁₀ρ_map) in anchors
+        ~, ~, ρ = AtmosphericModels._jacchia1977_static(T∞, z)
+        @test log10(ρ) ≈ log₁₀ρ_map atol = 0.0015
+    end
+end
+
+@testset "STELA Variant - Dynamic Model" begin
+    # Reference values (ρ [kg / m³] and local exospheric temperature [K]) generated with
+    # the Julia port of the PATRIUS class described in the comment above. The last case
+    # exercises the geomagnetic index cap at 9.
+    cases = (
+        (
+            DateTime("2018-06-19T18:35:00"),
+            -22.0,
+            -45.0,
+            700e3,
+            100.0,
+            100.0,
+            3.0,
+            1.20151450e-14,
+            905.9249,
+        ),
+        (
+            DateTime("2017-03-15T06:00:00"),
+            40.0,
+            100.0,
+            500e3,
+            72.0,
+            75.0,
+            1.0,
+            1.26109121e-13,
+            760.7803,
+        ),
+        (
+            DateTime("2023-10-01T12:00:00"),
+            -60.0,
+            200.0,
+            350e3,
+            160.0,
+            150.0,
+            7.0,
+            2.06906347e-11,
+            1319.7208,
+        ),
+        (
+            DateTime("2020-01-05T00:00:00"),
+            0.0,
+            0.0,
+            150e3,
+            70.0,
+            71.0,
+            2.0,
+            1.53367492e-09,
+            662.8792,
+        ),
+        (
+            DateTime("2021-12-25T21:00:00"),
+            75.0,
+            310.0,
+            1000e3,
+            110.0,
+            95.0,
+            12.0,
+            7.42316029e-14,
+            1777.6371,
+        ),
+    )
+
+    for (instant, lat_d, lon_d, h, F10, F10ₐ, Kp, ρ_ref, T∞_ref) in cases
+        out = AtmosphericModels.jacchia1977(
+            instant, deg2rad(lat_d), deg2rad(lon_d), h, F10, F10ₐ, Kp; variant = Val(:stela)
+        )
+
+        @test out.exospheric_temperature ≈ T∞_ref atol = 0.1
+        @test log10(out.total_density) ≈ log10(ρ_ref) atol = 0.004
+    end
+
+    # The variant must differ from the default SR-375 assembly.
+    out_stela = AtmosphericModels.jacchia1977(
+        DateTime("2018-06-19T18:35:00"),
+        deg2rad(-22),
+        deg2rad(-45),
+        700e3,
+        100.0,
+        100.0,
+        3.0;
+        variant = Val(:stela),
+    )
+
+    out_sr375 = AtmosphericModels.jacchia1977(
+        DateTime("2018-06-19T18:35:00"),
+        deg2rad(-22),
+        deg2rad(-45),
+        700e3,
+        100.0,
+        100.0,
+        3.0,
+    )
+
+    @test out_stela.total_density != out_sr375.total_density
+
+    # The variant must work with reduced-precision inputs.
+    out = AtmosphericModels.jacchia1977(
+        2460000.25f0, 0.5f0, 0.5f0, 300.0f3, 100.0f0, 100.0f0, 3.0f0; variant = Val(:stela)
+    )
+
+    @test isfinite(out.total_density)
+end
+
+############################################################################################
+#                                       Test Results                                       #
+############################################################################################
+#
+# We select a day and run the STELA variant with and without passing the space indices.
+# The result must be the same. The space indices fetched for the instant
+# 2023-01-01T10:00:00.000 at 23° S, 45° W, using the 10.7-cm flux adjusted to 1 AU, are:
+#
+#   F10  = 159.5 sfu (value of 2022-12-31, lagged by 1.1821357920055 days)
+#   F10ₐ = 151.56872332807635 sfu (Gaussian-weighted mean centered on the lagged instant,
+#          as in the reference implementation)
+#   Kp   = 3.0 (delayed by 0.29100570997169495 days)
+#
+############################################################################################
+
+@testset "STELA Variant - Fetching All Space Indices" begin
+    SpaceIndices.init()
+
+    instant = DateTime("2023-01-01T10:00:00")
+    ϕ_gd    = -23 |> deg2rad
+    λ       = -45 |> deg2rad
+    F10     = 159.5
+    F10ₐ    = 151.56872332807635
+    Kp      = 3.0
+
+    for h in (150e3, 400e3, 1000e3)
+        expected = AtmosphericModels.jacchia1977(
+            instant, ϕ_gd, λ, h, F10, F10ₐ, Kp; variant = Val(:stela)
+        )
+        result = AtmosphericModels.jacchia1977(instant, ϕ_gd, λ, h; variant = Val(:stela))
+
+        @test result.total_density ≈ expected.total_density
+        @test result.temperature ≈ expected.temperature
+        @test result.exospheric_temperature ≈ expected.exospheric_temperature
+    end
+end
+
+############################################################################################
+#                                       Test Results                                       #
+############################################################################################
+#
 # The integration loops must terminate for reduced-precision inputs. Before the integer
 # panel count was introduced, the termination criterion compared the accumulated altitude
 # against a fixed tolerance of 1e-4 km, which is smaller than the accumulated rounding
@@ -430,5 +640,19 @@ end
     )
     @test_throws ArgumentError AtmosphericModels.jacchia1977(
         now(), 0, 0, 2000.1e3, 100, 100, 3
+    )
+    @test_throws ArgumentError AtmosphericModels.jacchia1977(
+        now(), 0, 0, 500e3, 100, 100, 3; variant = Val(:unknown)
+    )
+    @test_throws ArgumentError AtmosphericModels.jacchia1977(
+        now(),
+        0,
+        0,
+        500e3,
+        100,
+        100,
+        3;
+        variant = Val(:stela),
+        geomagnetic_profile = Val(:tanh),
     )
 end

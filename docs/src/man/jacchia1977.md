@@ -104,6 +104,44 @@ with_logger(ConsoleLogger(stderr, Logging.Debug)) do
 end
 ```
 
+## STELA Variant
+
+The CNES tools [STELA](https://www.connectbycnes.fr/en/stela) and
+[PATRIUS](https://github.com/CNES/patrius) implement a simplified variant of the Jacchia
+1977 model [3]: the static model, precomputed as a lookup table, is evaluated at a single
+local exospheric temperature computed with the hydrogen phase angle (-60°) and a fixed
+diurnal exponent of 3, the geomagnetic variation of the exospheric temperature is weighted
+by the altitude profile of eq. 32 of [1], only the semiannual variation is applied to the
+number densities, and the daily and averaged fluxes are swapped in eq. 20 of [1]. This
+assembly produces total densities a few percent higher on average than the report
+formulation, which directly affects, for example, orbital decay analyses.
+
+The keyword `variant` selects the assembly: `Val(:sr375)` (default) follows the report
+[1], whereas `Val(:stela)` follows the CNES tools, allowing the reproduction of analyses
+performed with them:
+
+```@repl jacchia1977
+AtmosphericModels.jacchia1977(
+    DateTime("2018-06-19T18:35:00"),
+    deg2rad(-22),
+    deg2rad(-45),
+    700e3,
+    100,
+    100,
+    3;
+    variant = Val(:stela)
+)
+```
+
+Our implementation of the variant evaluates the static model directly instead of
+interpolating the lookup table. It matches the total density of the reference Java
+implementation [3] within 0.3 %, which is the bilinear interpolation error of the table
+grid, and reproduces the decay time of a 500 km sun-synchronous satellite computed by
+STELA within 0.5 %. Notice that, in this variant, the field `exospheric_temperature` of
+the output holds the local exospheric temperature used to evaluate the static model
+instead of the mean exospheric temperature `T½`, and the keyword `geomagnetic_profile` is
+not supported.
+
 ## References
 
 - **[1]** **Jacchia, L. G** (1977). *Thermospheric temperature, density and composition:
@@ -111,3 +149,6 @@ end
 - **[2]** **de Matos, B. S., Carrara, V** (1985-1987). *Fortran implementation of the
   Jacchia 1977 model*. **INPE**, São José dos Campos, BR. Available in
   [INPE-atmosphere-models](https://github.com/jacobwilliams/INPE-atmosphere-models).
+- **[3]** **CNES** (2025). *Java implementation of the Jacchia 1977 model used by the
+  tools STELA and PATRIUS* (class fr.cnes.sirius.patrius.stela.forces.atmospheres.
+  Jacchia77, PATRIUS 4.16). Available in [CNES/patrius](https://github.com/CNES/patrius).
