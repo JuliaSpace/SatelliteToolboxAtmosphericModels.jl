@@ -386,7 +386,7 @@ end
 # The STELA variant is compared against the Java implementation of the Jacchia 1977 model
 # used by the CNES tools STELA and PATRIUS (class
 # fr.cnes.sirius.patrius.stela.forces.atmospheres.Jacchia77, PATRIUS 4.16, Apache License
-# 2.0, available in https://github.com/CNES/patrius):
+# 2.0, available in https://github.com/CNES/patrius; see also LICENSES/PATRIUS.txt):
 #
 #   1. The static model is compared against anchors extracted from the density map
 #      distributed with PATRIUS (resource jacchia77_tables/J77_densityMap.txt), which

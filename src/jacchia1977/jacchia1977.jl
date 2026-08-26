@@ -19,6 +19,11 @@
 #
 #         https://github.com/CNES/patrius
 #
+#     The license of the implementation used as reference for the STELA variant can be
+#     found at:
+#
+#         LICENSES/PATRIUS.txt
+#
 ############################################################################################
 
 export jacchia1977
