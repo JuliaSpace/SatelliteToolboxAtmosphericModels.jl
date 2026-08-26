@@ -620,8 +620,7 @@ function _jacchia1977_stela_dynamic(
     # Diurnal variation, eq. 25 [1] with the exponent fixed at 3.
     f = cos(A / 2)^3 + RT(0.08) * cos(3A - deg2rad(RT(75)))
 
-    sin_ϕ = sin(ϕ)
-    cos_ϕ = cos(ϕ)
+    sin_ϕ, cos_ϕ = sincos(ϕ)
 
     # Diurnal factor of the exospheric temperature, eq. 24 [1].
     factor =
@@ -715,7 +714,11 @@ function _jacchia1977_temperature(z::Number, c::NTuple{7, T}) where {T <: Number
 end
 
 """
-    _jacchia1977_temperature(z::Number, c::NTuple{7, T}, ΔT_geo::Number) where {T<:Number} -> Number
+    _jacchia1977_temperature(
+        z::Number,
+        c::NTuple{7, T},
+        ΔT_geo::Number
+    ) where {T<:Number} -> Number
 
 Compute the temperature [K] at the altitude `z` [km] using the profile parameters `c`
 obtained from [`_jacchia1977_profile_params`](@ref), increased by the geomagnetic variation
@@ -731,7 +734,10 @@ function _jacchia1977_temperature(
 end
 
 """
-    _jacchia1977_static(T∞::T1, z::T2[, ΔT_geo::T3]) where {T1<:Number, T2<:Number, T3<:Number} -> NTuple{6, T}, T, T
+    _jacchia1977_static(
+        T∞::T1,
+        z::T2[, ΔT_geo::T3]
+    ) where {T1<:Number, T2<:Number, T3<:Number} -> NTuple{6, T}, T, T
 
 Compute the Jacchia 1977 static model (routine IMOWEI of [2]) for the exospheric
 temperature `T∞` [K] and altitude `z` [km].
