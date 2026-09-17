@@ -57,6 +57,13 @@ day `jd` or `instant`. However, the indices must be already initialized using th
 
 The functions throw an `ArgumentError` if the altitude is negative.
 
+!!! warning
+
+    The positional arguments of this model follow the order of the reference implementation,
+    in which the altitude `h` comes before the latitude and the longitude, and the averaged
+    flux `F10ₐ` comes before the daily flux `F10`. This order differs from the other models
+    of this package.
+
 These functions return an object of type `Nrlmsise00Output` that contains the
 following fields:
 

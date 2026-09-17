@@ -3,6 +3,7 @@ using SatelliteToolboxAtmosphericModels
 
 makedocs(;
     modules = [SatelliteToolboxAtmosphericModels],
+    checkdocs = :exports,
     format = Documenter.HTML(;
         prettyurls = !("local" in ARGS),
         canonical = "https://juliaspace.github.io/SatelliteToolboxAtmosphericModels.jl/stable/",

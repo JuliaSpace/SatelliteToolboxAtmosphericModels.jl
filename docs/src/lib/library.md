@@ -1,9 +1,10 @@
 Library
 =======
 
-Documentation for `SatelliteToolboxAtmosphericModels.jl`.
+Documentation of the public API of `SatelliteToolboxAtmosphericModels.jl`. The functions
+are accessed through the module `AtmosphericModels`.
 
 ```@autodocs
 Modules = [SatelliteToolboxAtmosphericModels, AtmosphericModels]
-Private = true
+Private = false
 ```
