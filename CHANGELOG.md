@@ -1,6 +1,13 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 2.0.0
+-------------
+
+- ![Enhancement][badge-enhancement] The output structures of the models are now subtypes of
+  the new abstract type `AbstractAtmosphericModelOutput`, and their `show` methods share a
+  single implementation. The dependency on Crayons.jl was removed.
+
 Version 1.5.0
 -------------
 

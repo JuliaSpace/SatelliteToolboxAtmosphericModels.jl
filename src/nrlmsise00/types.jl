@@ -111,7 +111,7 @@ struct Nrlmsise00Structure{T <: Number, T_AP <: Union{Number, AbstractVector}}
 end
 
 """
-    struct Nrlmsise00Output{T<:Number}
+    struct Nrlmsise00Output{T <: Number} <: AbstractAtmosphericModelOutput
 
 Output structure for NRLMSISE00 model.
 
@@ -137,7 +137,7 @@ on satellites and debris. We group these species under the term **Anomalous Oxyg
 their individual variations are not presently separable with the drag data used to define
 this model component.
 """
-struct Nrlmsise00Output{T <: Number}
+struct Nrlmsise00Output{T <: Number} <: AbstractAtmosphericModelOutput
     total_density::T
     temperature::T
     exospheric_temperature::T
@@ -149,4 +149,23 @@ struct Nrlmsise00Output{T <: Number}
     H_number_density::T
     He_number_density::T
     Ar_number_density::T
+end
+
+_model_name(::Type{<:Nrlmsise00Output}) = "NRLMSISE-00"
+_model_description(::Type{<:Nrlmsise00Output}) = "NRLMSISE-00"
+
+function _show_fields(::Type{<:Nrlmsise00Output})
+    return (
+        ("Total density", :total_density, _SHOW_FORMAT_DENSITY, "kg / m³"),
+        ("Temperature", :temperature, _SHOW_FORMAT_TEMPERATURE, "K"),
+        ("Exospheric Temp.", :exospheric_temperature, _SHOW_FORMAT_TEMPERATURE, "K"),
+        ("N  number density", :N_number_density, _SHOW_FORMAT_DENSITY, "1 / m³"),
+        ("N₂ number density", :N2_number_density, _SHOW_FORMAT_DENSITY, "1 / m³"),
+        ("O  number density", :O_number_density, _SHOW_FORMAT_DENSITY, "1 / m³"),
+        ("Anomalous O num. den.", :aO_number_density, _SHOW_FORMAT_DENSITY, "1 / m³"),
+        ("O₂ number density", :O2_number_density, _SHOW_FORMAT_DENSITY, "1 / m³"),
+        ("Ar number density", :Ar_number_density, _SHOW_FORMAT_DENSITY, "1 / m³"),
+        ("He number density", :He_number_density, _SHOW_FORMAT_DENSITY, "1 / m³"),
+        ("H  number density", :H_number_density, _SHOW_FORMAT_DENSITY, "1 / m³"),
+    )
 end
