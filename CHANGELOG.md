@@ -4,52 +4,51 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 2.0.0
 -------------
 
-- ![BREAKING][badge-breaking] The keyword `verbose` was removed from all the models. The
-  debug messages related to the automatic space index fetching are now always emitted
-  through the logging system, which can be configured to show or hide them.
-- ![BREAKING][badge-breaking] The deprecated keyword `roots_container` of `jr1971`, which had
-  no effect since v1.3.0, was removed.
-- ![BREAKING][badge-breaking] All the models now validate the altitude at their entry points,
-  throwing an `ArgumentError` outside their validity ranges: `[0, ∞)` for the exponential
-  and NRLMSISE-00 models, `[100, 1000]` km for the Harris-Priester models (the range of the
-  density profile for the classic model), `[90, 3000]` km for JR1971 and JB2008, and
-  `[90, 2000]` km for Jacchia 1977. Previously, the classic Harris-Priester model returned
-  zero above 1000 km, the modified Harris-Priester model silently extrapolated the density
-  outside its range (returning, e.g., 7.5 kg / m³ at the sea level), and JR1971 and JB2008
-  had no upper bound. The classic Harris-Priester model also validates the density profile
-  passed with the keyword `alt_ρ`.
-- ![BREAKING][badge-breaking] The field `turbo_scale_height` of `Nrlmsise00Flags` was
-  removed since it had no effect on the model (it is also unused in the reference
-  implementation).
 - ![BREAKING][badge-breaking] The keyword `n` (cosine exponent of the diurnal bulge) of both
   Harris-Priester models now accepts any `Number` in the interval `[2, 7]`, throwing an
   `ArgumentError` otherwise. Previously, the classic model required an `Int` in `[2, 6]`,
   and the modified model accepted any value without validation. The exponent no longer
   participates in the output type promotion of the modified model.
-- ![Enhancement][badge-enhancement] The tables of the exponential and Harris-Priester models
-  are now static arrays instead of mutable global vectors and matrices, and the density
-  profile of the classic Harris-Priester model is searched with a row-indexed binary search
-  that works for any matrix type without allocating.
-- ![Enhancement][badge-enhancement] The modified Harris-Priester model evaluates the diurnal
-  factor first and skips the maximum density profile on the night side, and the minimum and
-  maximum profiles share a single implementation. The model is about 24 % faster, and the
-  results are unchanged.
-- ![Info][badge-info] The allocation tests now verify at runtime that every model is
-  allocation-free, including the methods that fetch the space indices automatically, and
-  the static checks with AllocCheck.jl cover the methods with explicit space indices.
-- ![Bugfix][badge-bugfix] The Zygote.jl rule of `nrlmsise00` now supports the 7-element
-  magnetic index vector `ap`. Previously, only the daily index was supported, and Zygote.jl
-  failed for the vector input.
-- ![Bugfix][badge-bugfix] The exponential model returned a `Float64` for `Float32` inputs.
-  It now returns the floating-point type of the input.
-- ![Bugfix][badge-bugfix] The JR1971 model returned wrong densities between 90 km and
-  100 km. The closed-form solution of the barometric equation presented in the reference
-  (and also implemented in GMAT) led to an almost constant density in this region and to a
-  discontinuity of a factor of about 6 at 100 km (e.g. 3.07e-6 kg / m³ at 99.999 km and
-  5.38e-7 kg / m³ at 100.001 km). The model now integrates the barometric equation
-  numerically using the 8-point Gauss-Legendre quadrature, which reproduces a fine
-  numerical integration to better than 1e-10 and makes the density continuous at 90 km and
-  100 km. The results above 100 km are unchanged.
+- ![BREAKING][badge-breaking] The field `turbo_scale_height` of `Nrlmsise00Flags` was
+  removed since it had no effect on the model (it is also unused in the reference
+  implementation).
+- ![BREAKING][badge-breaking] All the models now validate the altitude at their entry
+  points, throwing an `ArgumentError` outside their validity ranges: `[0, ∞)` for the
+  exponential and NRLMSISE-00 models, `[100, 1000]` km for the Harris-Priester models (the
+  range of the density profile for the classic model), `[90, 3000]` km for JR1971 and
+  JB2008, and `[90, 2000]` km for Jacchia 1977. Previously, the classic Harris-Priester
+  model returned zero above 1000 km, the modified Harris-Priester model silently
+  extrapolated the density outside its range (returning, e.g., 7.5 kg / m³ at the sea
+  level), and JR1971 and JB2008 had no upper bound. The classic Harris-Priester model also
+  validates the density profile passed with the keyword `alt_ρ`.
+- ![BREAKING][badge-breaking] The deprecated keyword `roots_container` of `jr1971`, which
+  had no effect since v1.3.0, was removed.
+- ![BREAKING][badge-breaking] The keyword `verbose` was removed from all the models. The
+  debug messages related to the automatic space index fetching are now always emitted
+  through the logging system, which can be configured to show or hide them.
+- ![Enhancement][badge-enhancement] The output structures of the models are now subtypes of
+  the new abstract type `AbstractAtmosphericModelOutput`, and their `show` methods share a
+  single implementation. The dependency on Crayons.jl was removed.
+- ![Enhancement][badge-enhancement] The NRLMSISE-00 model computes the cubic spline of the
+  lower thermosphere temperature profile once per evaluation instead of once per species,
+  making the model about 13 % faster below 72.5 km. The Legendre functions are now stored in
+  a static matrix and the internal helpers were simplified. The results are unchanged.
+- ![Enhancement][badge-enhancement] The JB2008 model evaluates the polynomials of the local
+  solar time and latitude correction of the exospheric temperature once instead of up to
+  three times, validates the exospheric temperature once instead of at every quadrature
+  node, and uses cheaper expressions for the fourth root of the flux ratio and for the
+  number of integration steps. The model is about 3 % faster, and the results are unchanged
+  to the round-off.
+- ![Enhancement][badge-enhancement] The JR1971 model is about 35 % faster above 125 km and
+  10 % faster below because the powers of the temperature ratios are evaluated as
+  exponentials of shared logarithms, base-10 powers use `exp10`, and the output structure is
+  built by a single helper. The results are unchanged to the round-off.
+- ![Enhancement][badge-enhancement] The diurnal variation of the Jacchia 1977 model no
+  longer integrates the hydrogen for the five static model evaluations that only use the
+  heavy species, and the quiet temperature profile is selected by dispatch instead of a
+  test at every quadrature node. Together with the new quadrature, the model is about 12
+  times faster at 110 km, 5 times faster at 300 km, and 2.4 times faster at 1500 km than
+  the previous version.
 - ![Enhancement][badge-enhancement] The static model of Jacchia 1977 now integrates the
   barometric and diffusion equations using the composite 8-point Gauss-Legendre quadrature
   with the gravity evaluated at the nodes instead of the Boole rule with a fine step and
@@ -62,59 +61,60 @@ Version 2.0.0
   of the hydrogen number density with 10 km panels. The model is 2.6 times faster at
   300 km, and the total density changes by less than 0.01 % with respect to the previous
   version.
-- ![Enhancement][badge-enhancement] The diurnal variation of the Jacchia 1977 model no
-  longer integrates the hydrogen for the five static model evaluations that only use the
-  heavy species, and the quiet temperature profile is selected by dispatch instead of a
-  test at every quadrature node. Together with the new quadrature, the model is about 12
-  times faster at 110 km, 5 times faster at 300 km, and 2.4 times faster at 1500 km than
-  the previous version.
-- ![Bugfix][badge-bugfix] The Jacchia 1977 model returned a hydrogen number density of about
-  1 / m³ up to 140 km, where the model does not include the hydrogen, due to an internal
-  placeholder. It now returns 0, as the JR1971 model does below 500 km. Additionally, the
-  local temperature computed exactly at 90 km now keeps the type of the altitude, fixing
-  the derivative with respect to the altitude at that point in automatic differentiation.
-- ![Bugfix][badge-bugfix] The number densities of the species returned by the JR1971 model
-  between 90 km and 100 km were computed from the total density using the constituent
-  fractions of the model without the molecular mass factor used above 100 km. Hence, the
-  species mass densities summed to 104.8 % of the total density, and the number density of,
-  e.g., atomic oxygen was 81 % higher than the consistent value. The species are now
-  computed as in the region between 100 km and 125 km. The total density is unchanged.
-- ![Enhancement][badge-enhancement] The JR1971 model is about 35 % faster above 125 km and
-  10 % faster below because the powers of the temperature ratios are evaluated as
-  exponentials of shared logarithms, base-10 powers use `exp10`, and the output structure is
-  built by a single helper. The results are unchanged to the round-off.
-- ![Enhancement][badge-enhancement] The JB2008 model evaluates the polynomials of the local
-  solar time and latitude correction of the exospheric temperature once instead of up to
-  three times, validates the exospheric temperature once instead of at every quadrature
-  node, and uses cheaper expressions for the fourth root of the flux ratio and for the
-  number of integration steps. The model is about 3 % faster, and the results are unchanged
-  to the round-off.
-- ![Enhancement][badge-enhancement] The NRLMSISE-00 model computes the cubic spline of the
-  lower thermosphere temperature profile once per evaluation instead of once per species,
-  making the model about 13 % faster below 72.5 km. The Legendre functions are now stored in
-  a static matrix and the internal helpers were simplified. The results are unchanged.
-- ![Bugfix][badge-bugfix] The NRLMSISE-00 model returned `NaN` for all densities below the
-  mesopause (72.5 km) when the flag `departures_from_eq` was `false` because the mixed N₂
-  density used to blend the thermospheric and lower atmosphere profiles was not computed.
-- ![Bugfix][badge-bugfix] The NRLMSISE-00 model now throws an `ArgumentError` if the vector
-  `ap` does not have 7 elements, instead of a `BoundsError` from a private function.
-- ![Bugfix][badge-bugfix] The NRLMSISE-00 model converted the input latitude and longitude
-  to degrees using the truncated internal constant of the reference implementation
-  (`1.74533e-2`) instead of the exact conversion, introducing a relative error of `4e-7` in
-  the angles. The inputs are now converted exactly, changing the results by a negligible
-  amount (about `1e-7` relative).
-- ![Bugfix][badge-bugfix] The NRLMSISE-00 model threw an `InexactError` when all the inputs
-  were integers. The output element type is now the promotion of the input types converted
-  to a floating-point type, as in the other models.
+- ![Enhancement][badge-enhancement] The modified Harris-Priester model evaluates the diurnal
+  factor first and skips the maximum density profile on the night side, and the minimum and
+  maximum profiles share a single implementation. The model is about 24 % faster, and the
+  results are unchanged.
+- ![Enhancement][badge-enhancement] The tables of the exponential and Harris-Priester models
+  are now static arrays instead of mutable global vectors and matrices, and the density
+  profile of the classic Harris-Priester model is searched with a row-indexed binary search
+  that works for any matrix type without allocating.
 - ![Bugfix][badge-bugfix] The keyword `P` of `nrlmsise00` silently copied the pre-allocated
   matrix (allocating on every call) when its type was not `Matrix{T}`, where `T` is the
   promoted input type, and truncated the Legendre functions to the element type of `P`
   when it was narrower. The keyword now accepts any `AbstractMatrix` without copying and
   throws an `ArgumentError` if its element type differs from the promoted input type. The
   dependency on LinearAlgebra.jl was removed.
-- ![Enhancement][badge-enhancement] The output structures of the models are now subtypes of
-  the new abstract type `AbstractAtmosphericModelOutput`, and their `show` methods share a
-  single implementation. The dependency on Crayons.jl was removed.
+- ![Bugfix][badge-bugfix] The NRLMSISE-00 model threw an `InexactError` when all the inputs
+  were integers. The output element type is now the promotion of the input types converted
+  to a floating-point type, as in the other models.
+- ![Bugfix][badge-bugfix] The NRLMSISE-00 model converted the input latitude and longitude
+  to degrees using the truncated internal constant of the reference implementation
+  (`1.74533e-2`) instead of the exact conversion, introducing a relative error of `4e-7` in
+  the angles. The inputs are now converted exactly, changing the results by a negligible
+  amount (about `1e-7` relative).
+- ![Bugfix][badge-bugfix] The NRLMSISE-00 model now throws an `ArgumentError` if the vector
+  `ap` does not have 7 elements, instead of a `BoundsError` from a private function.
+- ![Bugfix][badge-bugfix] The NRLMSISE-00 model returned `NaN` for all densities below the
+  mesopause (72.5 km) when the flag `departures_from_eq` was `false` because the mixed N₂
+  density used to blend the thermospheric and lower atmosphere profiles was not computed.
+- ![Bugfix][badge-bugfix] The number densities of the species returned by the JR1971 model
+  between 90 km and 100 km were computed from the total density using the constituent
+  fractions of the model without the molecular mass factor used above 100 km. Hence, the
+  species mass densities summed to 104.8 % of the total density, and the number density of,
+  e.g., atomic oxygen was 81 % higher than the consistent value. The species are now
+  computed as in the region between 100 km and 125 km. The total density is unchanged.
+- ![Bugfix][badge-bugfix] The Jacchia 1977 model returned a hydrogen number density of about
+  1 / m³ up to 140 km, where the model does not include the hydrogen, due to an internal
+  placeholder. It now returns 0, as the JR1971 model does below 500 km. Additionally, the
+  local temperature computed exactly at 90 km now keeps the type of the altitude, fixing
+  the derivative with respect to the altitude at that point in automatic differentiation.
+- ![Bugfix][badge-bugfix] The JR1971 model returned wrong densities between 90 km and
+  100 km. The closed-form solution of the barometric equation presented in the reference
+  (and also implemented in GMAT) led to an almost constant density in this region and to a
+  discontinuity of a factor of about 6 at 100 km (e.g. 3.07e-6 kg / m³ at 99.999 km and
+  5.38e-7 kg / m³ at 100.001 km). The model now integrates the barometric equation
+  numerically using the 8-point Gauss-Legendre quadrature, which reproduces a fine
+  numerical integration to better than 1e-10 and makes the density continuous at 90 km and
+  100 km. The results above 100 km are unchanged.
+- ![Bugfix][badge-bugfix] The exponential model returned a `Float64` for `Float32` inputs.
+  It now returns the floating-point type of the input.
+- ![Bugfix][badge-bugfix] The Zygote.jl rule of `nrlmsise00` now supports the 7-element
+  magnetic index vector `ap`. Previously, only the daily index was supported, and Zygote.jl
+  failed for the vector input.
+- ![Info][badge-info] The allocation tests now verify at runtime that every model is
+  allocation-free, including the methods that fetch the space indices automatically, and
+  the static checks with AllocCheck.jl cover the methods with explicit space indices.
 
 Version 1.5.0
 -------------
