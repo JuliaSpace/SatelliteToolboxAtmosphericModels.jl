@@ -95,8 +95,12 @@ function _check_altitude(h::Number, h_min::Number, h_max::Number)
     km(x) = isinteger(x / 1000) ? string(Int(x ÷ 1000)) : string(x / 1000)
 
     if isinf(h_max)
-        throw(ArgumentError("The altitude must be greater than or equal to $(km(h_min)) km."))
+        throw(
+            ArgumentError("The altitude must be greater than or equal to $(km(h_min)) km.")
+        )
     end
 
-    throw(ArgumentError("The altitude must be between $(km(h_min)) km and $(km(h_max)) km."))
+    throw(
+        ArgumentError("The altitude must be between $(km(h_min)) km and $(km(h_max)) km.")
+    )
 end
