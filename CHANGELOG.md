@@ -44,6 +44,12 @@ Version 2.0.0
   10 % faster below because the powers of the temperature ratios are evaluated as
   exponentials of shared logarithms, base-10 powers use `exp10`, and the output structure is
   built by a single helper. The results are unchanged to the round-off.
+- ![Enhancement][badge-enhancement] The JB2008 model evaluates the polynomials of the local
+  solar time and latitude correction of the exospheric temperature once instead of up to
+  three times, validates the exospheric temperature once instead of at every quadrature
+  node, and uses cheaper expressions for the fourth root of the flux ratio and for the
+  number of integration steps. The model is about 3 % faster, and the results are unchanged
+  to the round-off.
 - ![Enhancement][badge-enhancement] The NRLMSISE-00 model computes the cubic spline of the
   lower thermosphere temperature profile once per evaluation instead of once per species,
   making the model about 13 % faster below 72.5 km. The Legendre functions are now stored in

@@ -290,7 +290,7 @@ function jb2008(
     ΔM10 = M10 - M10ₐ
     ΔY10 = Y10 - Y10ₐ
 
-    Wt  = min((F10ₐ / 240)^RT(1 / 4), RT(1))
+    Wt  = min(sqrt(sqrt(F10ₐ / 240)), RT(1))
     Fsₐ = F10ₐ * Wt + S10ₐ * (1-Wt)
     Tc  = 392.4 + 3.227Fsₐ + 0.298ΔF10 + 2.259ΔS10 + 0.312ΔM10 + 0.178ΔY10
 
@@ -324,6 +324,8 @@ function jb2008(
     # Compute the local exospheric temperature with the geomagnetic storm effect.
     T_exo = Tl + DstΔTc
     T∞    = T_exo + ΔTc
+
+    (T∞ > 0) || throw(ArgumentError("The exospheric temperature must be positive."))
 
     # == Eq. 9 [3] =========================================================================
     #
@@ -662,7 +664,7 @@ Compute the temperature [K] at height `z` [km] given the temperature `Tx` [K] at
 inflection point, and the exospheric temperature `T∞` [K] according to the theory of the
 model Jacchia 1971 [3]. The inflection point is considered to be `z = 125 km`.
 
-The function throws an `ArgumentError` if `z` is lower than 90 km or if `T∞` is negative.
+The caller must ensure that `z` is not lower than 90 km and that `T∞` is positive.
 """
 function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
     # == Constants =========================================================================
@@ -671,11 +673,6 @@ function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
     z₁  = 90       # ...................................... Altitude of the lower bound [km]
     zx  = 125      # ................................. Altitude of the inflection point [km]
     Δz₁ = z₁ - zx
-
-    # == Check the Parameters ==============================================================
-
-    (z < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
-    (T∞ < 0) && throw(ArgumentError("The exospheric temperature must be positive."))
 
     # Compute the temperature gradient at the inflection point.
     Gx = 1.9 * (Tx - T₁) / (zx - z₁)
@@ -755,14 +752,14 @@ function _jb2008_∫(
     R::Number,
     Tx::Number,
     T∞::Number,
-    δf::Function,
-)
+    δf::F,
+) where {F <: Function}
     # Compute the number of integration steps.
     #
     # This is computed so that `z₁ = z₀ * (zr)^n`. Hence, `zr` is the factor that defines
     # the size of each integration interval.
     al = log(z₁ / z₀)
-    n  = floor(al / R) + 1
+    n  = floor(Int, al / R) + 1
     zr = exp(al / n)
 
     # Initialize the integration auxiliary variables using the promoted type to keep the
@@ -775,7 +772,7 @@ function _jb2008_∫(
 
     # For each integration step, use the Newton-Cotes 4th degree formula to integrate
     # (Boole's rule).
-    @inbounds for i in 1:convert(Int, n)
+    @inbounds for i in 1:n
         zi₀ = zi₁             # ................. The beginning of the i-th integration step
         zi₁ = zr * zi₁        # ....................... The end of the i-th integration step
         Δz  = (zi₁ - zi₀) / 4 # ......................... Step for the i-th integration step
@@ -881,156 +878,36 @@ the source-code. The ones implemented here are exactly the same as in the source
 """
 function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
     # Auxiliary variables according to [2, p.  784].
-    B  = _JB2008_B
-    C  = _JB2008_C
     F  = (F10 - 100) / 100
     θ  = lst / 24
-    θ² = θ * θ
-    θ³ = θ² * θ
-    θ⁴ = θ² * θ²
-    θ⁵ = θ⁴ * θ
     cϕ = cos(ϕ_gd)
 
-    ΔTc = zero(promote_type(typeof(F), typeof(θ), typeof(cϕ), typeof(h)))
+    RT = promote_type(typeof(F), typeof(θ), typeof(cϕ), typeof(h))
+
+    # The correction is assembled from two polynomial families: `P_low` and `Q_low` below
+    # 300 km, and `P_high` and its derivative `dP_high` with respect to the normalized
+    # altitude above 300 km. The transition regions blend both families with cubic
+    # polynomials that match the values and the altitude derivatives at their borders.
+    P_low, Q_low    = _jb2008_ΔTc_low(θ, F, cϕ)
+    P_high, dP_high = _jb2008_ΔTc_high(θ, F, cϕ)
+
+    ΔTc = zero(RT)
 
     # Compute the temperature variation given the altitude.
-    @inbounds if 120 <= h <= 200
-        ΔTc200 =
-            C[17] +
-            C[18] * θ * cϕ +
-            C[19] * θ² * cϕ +
-            C[20] * θ³ * cϕ +
-            C[21] * F * cϕ +
-            C[22] * θ * F * cϕ +
-            C[23] * θ² * F * cϕ
-
-        # Notice that the source-code uses `B[2]` in the following expression, even though
-        # all other coefficients come from `C`. Both values are numerically identical.
-        ΔTc200Δz =
-            C[1] +
-            B[2] * F +
-            C[3] * θ * F +
-            C[4] * θ² * F +
-            C[5] * θ³ * F +
-            C[6] * θ⁴ * F +
-            C[7] * θ⁵ * F +
-            C[8] * θ * cϕ +
-            C[9] * θ² * cϕ +
-            C[10] * θ³ * cϕ +
-            C[11] * θ⁴ * cϕ +
-            C[12] * θ⁵ * cϕ +
-            C[13] * cϕ +
-            C[14] * F * cϕ +
-            C[15] * θ * F * cϕ +
-            C[16] * θ² * F * cϕ
-
+    if 120 <= h <= 200
         zp  = (h - 120) / 80
-        ΔTc = (3ΔTc200 - ΔTc200Δz) * zp^2 + (ΔTc200Δz - 2ΔTc200) * zp^3
+        ΔTc = (3Q_low - P_low) * zp^2 + (P_low - 2Q_low) * zp^3
 
     elseif 200 < h <= 240
-        H = (h - 200) / 50
-
-        ΔTc =
-            C[1] * H +
-            B[2] * F * H +
-            C[3] * θ * F * H +
-            C[4] * θ² * F * H +
-            C[5] * θ³ * F * H +
-            C[6] * θ⁴ * F * H +
-            C[7] * θ⁵ * F * H +
-            C[8] * θ * cϕ * H +
-            C[9] * θ² * cϕ * H +
-            C[10] * θ³ * cϕ * H +
-            C[11] * θ⁴ * cϕ * H +
-            C[12] * θ⁵ * cϕ * H +
-            C[13] * cϕ * H +
-            C[14] * F * cϕ * H +
-            C[15] * θ * F * cϕ * H +
-            C[16] * θ² * F * cϕ * H +
-            C[17] +
-            C[18] * θ * cϕ +
-            C[19] * θ² * cϕ +
-            C[20] * θ³ * cϕ +
-            C[21] * F * cϕ +
-            C[22] * θ * F * cϕ +
-            C[23] * θ² * F * cϕ
+        ΔTc = P_low * ((h - 200) / 50) + Q_low
 
     elseif 240 < h <= 300
-        H = 40 / 50
-
-        aux1 =
-            C[1] * H +
-            B[2] * F * H +
-            C[3] * θ * F * H +
-            C[4] * θ² * F * H +
-            C[5] * θ³ * F * H +
-            C[6] * θ⁴ * F * H +
-            C[7] * θ⁵ * F * H +
-            C[8] * θ * cϕ * H +
-            C[9] * θ² * cϕ * H +
-            C[10] * θ³ * cϕ * H +
-            C[11] * θ⁴ * cϕ * H +
-            C[12] * θ⁵ * cϕ * H +
-            C[13] * cϕ * H +
-            C[14] * F * cϕ * H +
-            C[15] * θ * F * cϕ * H +
-            C[16] * θ² * F * cϕ * H +
-            C[17] +
-            C[18] * θ * cϕ +
-            C[19] * θ² * cϕ +
-            C[20] * θ³ * cϕ +
-            C[21] * F * cϕ +
-            C[22] * θ * F * cϕ +
-            C[23] * θ² * F * cϕ
-
-        aux2 =
-            C[1] +
-            B[2] * F +
-            C[3] * θ * F +
-            C[4] * θ² * F +
-            C[5] * θ³ * F +
-            C[6] * θ⁴ * F +
-            C[7] * θ⁵ * F +
-            C[8] * θ * cϕ +
-            C[9] * θ² * cϕ +
-            C[10] * θ³ * cϕ +
-            C[11] * θ⁴ * cϕ +
-            C[12] * θ⁵ * cϕ +
-            C[13] * cϕ +
-            C[14] * F * cϕ +
-            C[15] * θ * F * cϕ +
-            C[16] * θ² * F * cϕ
-
-        H = 300 / 100
-
-        ΔTc300 =
-            B[1] +
-            B[2] * F +
-            B[3] * θ * F +
-            B[4] * θ² * F +
-            B[5] * θ³ * F +
-            B[6] * θ⁴ * F +
-            B[7] * θ⁵ * F +
-            B[8] * θ * cϕ +
-            B[9] * θ² * cϕ +
-            B[10] * θ³ * cϕ +
-            B[11] * θ⁴ * cϕ +
-            B[12] * θ⁵ * cϕ +
-            B[13] * H * cϕ +
-            B[14] * θ * H * cϕ +
-            B[15] * θ² * H * cϕ +
-            B[16] * θ³ * H * cϕ +
-            B[17] * θ⁴ * H * cϕ +
-            B[18] * θ⁵ * H * cϕ +
-            B[19] * cϕ
-
-        ΔTc300Δz =
-            B[13] * cϕ +
-            B[14] * θ * cϕ +
-            B[15] * θ² * cϕ +
-            B[16] * θ³ * cϕ +
-            B[17] * θ⁴ * cϕ +
-            B[18] * θ⁵ * cϕ
+        # Value and altitude derivative at 240 km from the lower family, and at 300 km
+        # from the upper family.
+        aux1 = P_low * (40 / 50) + Q_low
+        aux2 = P_low
+        ΔTc300   = P_high + 3dP_high
+        ΔTc300Δz = dP_high
 
         aux3 = 3ΔTc300 - ΔTc300Δz - 3aux1 - 2aux2
         aux4 = ΔTc300 - aux1 - aux2 - aux3
@@ -1038,66 +915,114 @@ function _jb2008_ΔTc(F10::Number, lst::Number, ϕ_gd::Number, h::Number)
         ΔTc  = @evalpoly(zp, aux1, aux2, aux3, aux4)
 
     elseif 300 < h <= 600
-        H = h / 100
-
-        ΔTc =
-            B[1] +
-            B[2] * F +
-            B[3] * θ * F +
-            B[4] * θ² * F +
-            B[5] * θ³ * F +
-            B[6] * θ⁴ * F +
-            B[7] * θ⁵ * F +
-            B[8] * θ * cϕ +
-            B[9] * θ² * cϕ +
-            B[10] * θ³ * cϕ +
-            B[11] * θ⁴ * cϕ +
-            B[12] * θ⁵ * cϕ +
-            B[13] * H * cϕ +
-            B[14] * θ * H * cϕ +
-            B[15] * θ² * H * cϕ +
-            B[16] * θ³ * H * cϕ +
-            B[17] * θ⁴ * H * cϕ +
-            B[18] * θ⁵ * H * cϕ +
-            B[19] * cϕ
+        ΔTc = P_high + (h / 100) * dP_high
 
     elseif 600 < h <= 800
-        zp = (h - 600) / 100
-        hp = 600 / 100
-
-        aux1 =
-            B[1] +
-            B[2] * F +
-            B[3] * θ * F +
-            B[4] * θ² * F +
-            B[5] * θ³ * F +
-            B[6] * θ⁴ * F +
-            B[7] * θ⁵ * F +
-            B[8] * θ * cϕ +
-            B[9] * θ² * cϕ +
-            B[10] * θ³ * cϕ +
-            B[11] * θ⁴ * cϕ +
-            B[12] * θ⁵ * cϕ +
-            B[13] * hp * cϕ +
-            B[14] * θ * hp * cϕ +
-            B[15] * θ² * hp * cϕ +
-            B[16] * θ³ * hp * cϕ +
-            B[17] * θ⁴ * hp * cϕ +
-            B[18] * θ⁵ * hp * cϕ +
-            B[19] * cϕ
-
-        aux2 =
-            B[13] * cϕ +
-            B[14] * θ * cϕ +
-            B[15] * θ² * cϕ +
-            B[16] * θ³ * cϕ +
-            B[17] * θ⁴ * cϕ +
-            B[18] * θ⁵ * cϕ
-
+        # Value and altitude derivative at 600 km, decaying to 0 at 800 km.
+        aux1 = P_high + 6dP_high
+        aux2 = dP_high
         aux3 = -(3aux1 + 4aux2) / 4
         aux4 = (aux1 + aux2) / 4
+        zp   = (h - 600) / 100
         ΔTc  = @evalpoly(zp, aux1, aux2, aux3, aux4)
     end
 
     return ΔTc
+end
+
+"""
+    _jb2008_ΔTc_low(θ::Number, F::Number, cϕ::Number) -> Number, Number
+
+Compute the polynomials of the coefficients `_JB2008_C` used by [`_jb2008_ΔTc`](@ref)
+below 300 km given the normalized local solar time `θ` [-], the normalized solar flux `F`
+[-], and the cosine of the geodetic latitude `cϕ` [-].
+
+# Returns
+
+- `Number`: Polynomial multiplying the normalized altitude [K].
+- `Number`: Polynomial independent of the altitude [K].
+"""
+function _jb2008_ΔTc_low(θ::Number, F::Number, cϕ::Number)
+    B  = _JB2008_B
+    C  = _JB2008_C
+    θ² = θ * θ
+    θ³ = θ² * θ
+    θ⁴ = θ² * θ²
+    θ⁵ = θ⁴ * θ
+
+    # Notice that the source-code uses `B[2]` in the following expression, even though all
+    # other coefficients come from `C`. Both values are numerically identical.
+    P =
+        C[1] +
+        B[2] * F +
+        C[3] * θ * F +
+        C[4] * θ² * F +
+        C[5] * θ³ * F +
+        C[6] * θ⁴ * F +
+        C[7] * θ⁵ * F +
+        C[8] * θ * cϕ +
+        C[9] * θ² * cϕ +
+        C[10] * θ³ * cϕ +
+        C[11] * θ⁴ * cϕ +
+        C[12] * θ⁵ * cϕ +
+        C[13] * cϕ +
+        C[14] * F * cϕ +
+        C[15] * θ * F * cϕ +
+        C[16] * θ² * F * cϕ
+
+    Q =
+        C[17] +
+        C[18] * θ * cϕ +
+        C[19] * θ² * cϕ +
+        C[20] * θ³ * cϕ +
+        C[21] * F * cϕ +
+        C[22] * θ * F * cϕ +
+        C[23] * θ² * F * cϕ
+
+    return P, Q
+end
+
+"""
+    _jb2008_ΔTc_high(θ::Number, F::Number, cϕ::Number) -> Number, Number
+
+Compute the polynomials of the coefficients `_JB2008_B` used by [`_jb2008_ΔTc`](@ref)
+above 300 km given the normalized local solar time `θ` [-], the normalized solar flux `F`
+[-], and the cosine of the geodetic latitude `cϕ` [-].
+
+# Returns
+
+- `Number`: Polynomial independent of the altitude [K].
+- `Number`: Polynomial multiplying the normalized altitude [K].
+"""
+function _jb2008_ΔTc_high(θ::Number, F::Number, cϕ::Number)
+    B  = _JB2008_B
+    θ² = θ * θ
+    θ³ = θ² * θ
+    θ⁴ = θ² * θ²
+    θ⁵ = θ⁴ * θ
+
+    P =
+        B[1] +
+        B[2] * F +
+        B[3] * θ * F +
+        B[4] * θ² * F +
+        B[5] * θ³ * F +
+        B[6] * θ⁴ * F +
+        B[7] * θ⁵ * F +
+        B[8] * θ * cϕ +
+        B[9] * θ² * cϕ +
+        B[10] * θ³ * cϕ +
+        B[11] * θ⁴ * cϕ +
+        B[12] * θ⁵ * cϕ +
+        B[19] * cϕ
+
+    dP =
+        B[13] * cϕ +
+        B[14] * θ * cϕ +
+        B[15] * θ² * cϕ +
+        B[16] * θ³ * cϕ +
+        B[17] * θ⁴ * cϕ +
+        B[18] * θ⁵ * cϕ
+
+    return P, dP
 end
