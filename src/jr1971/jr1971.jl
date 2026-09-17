@@ -144,6 +144,7 @@ function jr1971(
     T₁    = _JR1971_CONSTANTS.T₁
     M₁    = _JR1971_CONSTANTS.M₁
     ρ₁    = _JR1971_CONSTANTS.ρ₁
+    Tx_fit = _JR1971_CONSTANTS.Tx_fit
     zx    = _JR1971_CONSTANTS.zx
     Mi    = _JR1971_CONSTANTS.Mi
     αi    = _JR1971_CONSTANTS.αi
@@ -224,11 +225,7 @@ function jr1971(
     # The values at [1, p. 369] are from an old version of Jacchia 1971 model. We will use
     # the new values available at [2].
 
-    a  = 371.6678
-    b  = 0.0518806
-    c  = -294.3505
-    d  = -0.00216222
-    Tx = a + b * T∞ + c * exp(d * T∞)
+    Tx = Tx_fit[1] + Tx_fit[2] * T∞ + Tx_fit[3] * exp(Tx_fit[4] * T∞)
 
     # Compute the temperature at desired point.
     Tz = _jr1971_temperature(h, Tx, T∞)
@@ -266,7 +263,7 @@ function jr1971(
     # -- Total Correction, Eq. B-10 [4] ----------------------------------------------------
 
     Δlog₁₀ρ_c = Δlog₁₀ρ_g + Δlog₁₀ρ_lt + Δlog₁₀ρ_sa
-    Δρ_c = 10^(Δlog₁₀ρ_c)
+    Δρ_c = exp10(Δlog₁₀ρ_c)
 
     # == Density ===========================================================================
 
@@ -303,17 +300,19 @@ function jr1971(
         Mz = _jr1971_mean_molecular_mass(h)
         ρ  = ρ₁ * Δρ_c * Mz * T₁ / (M₁ * Tz) * exp(-int)
 
-        # Convert to SI and return.
-        return JR1971Output{RT}(
-            1000ρ,
+        # The composition is considered constant in this region. The mass density of each
+        # species is obtained from the constituent fractions `μi` as in the region between
+        # 100 km and 125 km, so that the species mass densities sum to the total density.
+        return _jr1971_output(
+            RT,
             Tz,
             T∞,
-            (ρ * μi.N₂) * Av / Mi.N₂ * 1e6,
-            (ρ * μi.O₂) * Av / Mi.O₂ * 1e6,
-            (ρ * μi.O) * Av / Mi.O * 1e6,
-            (ρ * μi.Ar) * Av / Mi.Ar * 1e6,
-            (ρ * μi.He) * Av / Mi.He * 1e6,
-            (ρ * μi.H) * Av / Mi.H * 1e6,
+            ρ * μi.N₂ * Mi.N₂ / M₀,
+            ρ * μi.O₂ * Mi.O₂ / M₀,
+            ρ * μi.O * Mi.O / M₀,
+            ρ * μi.Ar * Mi.Ar / M₀,
+            ρ * μi.He * Mi.He / M₀,
+            ρ * μi.H * Mi.H / M₀,
         )
 
     elseif h <= zx
@@ -386,28 +385,17 @@ function jr1971(
         # `f` is defined in [1, p. 371].
         f = 35^4 * Ra² / Ca[5]
 
+        # Notice that we write the power of the temperature ratio as an exponential to
+        # evaluate a single transcendental function per species.
         expk = k * f * (log_F₃ + F₄)
-        ρN₂  = ρ₁₀₀ * Mi[1] / M₀ * μi[1] * (T₁₀₀ / Tz)^(1 + αi.N₂) * exp(Mi[1] * expk)
-        ρO₂  = ρ₁₀₀ * Mi[2] / M₀ * μi[2] * (T₁₀₀ / Tz)^(1 + αi.O₂) * exp(Mi[2] * expk)
-        ρO   = ρ₁₀₀ * Mi[3] / M₀ * μi[3] * (T₁₀₀ / Tz)^(1 + αi.O) * exp(Mi[3] * expk)
-        ρAr  = ρ₁₀₀ * Mi[4] / M₀ * μi[4] * (T₁₀₀ / Tz)^(1 + αi.Ar) * exp(Mi[4] * expk)
-        ρHe  = ρ₁₀₀ * Mi[5] / M₀ * μi[5] * (T₁₀₀ / Tz)^(1 + αi.He) * exp(Mi[5] * expk)
+        lnT  = log(T₁₀₀ / Tz)
+        ρN₂  = ρ₁₀₀ * Mi.N₂ / M₀ * μi.N₂ * exp((1 + αi.N₂) * lnT + Mi.N₂ * expk)
+        ρO₂  = ρ₁₀₀ * Mi.O₂ / M₀ * μi.O₂ * exp((1 + αi.O₂) * lnT + Mi.O₂ * expk)
+        ρO   = ρ₁₀₀ * Mi.O / M₀ * μi.O * exp((1 + αi.O) * lnT + Mi.O * expk)
+        ρAr  = ρ₁₀₀ * Mi.Ar / M₀ * μi.Ar * exp((1 + αi.Ar) * lnT + Mi.Ar * expk)
+        ρHe  = ρ₁₀₀ * Mi.He / M₀ * μi.He * exp((1 + αi.He) * lnT + Mi.He * expk)
 
-        # Compute the total density.
-        ρ = ρN₂ + ρO₂ + ρO + ρAr + ρHe
-
-        # Convert to SI and return.
-        return JR1971Output{RT}(
-            1000ρ,
-            Tz,
-            T∞,
-            ρN₂ * Av / Mi.N₂ * 1e6,
-            ρO₂ * Av / Mi.O₂ * 1e6,
-            ρO * Av / Mi.O * 1e6,
-            ρAr * Av / Mi.Ar * 1e6,
-            ρHe * Av / Mi.He * 1e6,
-            zero(RT),
-        )
+        return _jr1971_output(RT, Tz, T∞, ρN₂, ρO₂, ρO, ρAr, ρHe, zero(RT))
 
     else
 
@@ -418,11 +406,11 @@ function jr1971(
         # References [3,4] suggest to compute the density using a polynomial fit, so that
         # the computational burden can be reduced:
 
-        ρ₁₂₅_N₂ = Δρ_c * Mi[1] * 10^(@evalpoly(T∞, δij.N₂...)) / Av
-        ρ₁₂₅_O₂ = Δρ_c * Mi[2] * 10^(@evalpoly(T∞, δij.O₂...)) / Av
-        ρ₁₂₅_O  = Δρ_c * Mi[3] * 10^(@evalpoly(T∞, δij.O...)) / Av
-        ρ₁₂₅_Ar = Δρ_c * Mi[4] * 10^(@evalpoly(T∞, δij.Ar...)) / Av
-        ρ₁₂₅_He = Δρ_c * Mi[5] * 10^(@evalpoly(T∞, δij.He...)) / Av
+        ρ₁₂₅_N₂ = Δρ_c * Mi.N₂ * exp10(@evalpoly(T∞, δij.N₂...)) / Av
+        ρ₁₂₅_O₂ = Δρ_c * Mi.O₂ * exp10(@evalpoly(T∞, δij.O₂...)) / Av
+        ρ₁₂₅_O  = Δρ_c * Mi.O * exp10(@evalpoly(T∞, δij.O...)) / Av
+        ρ₁₂₅_Ar = Δρ_c * Mi.Ar * exp10(@evalpoly(T∞, δij.Ar...)) / Av
+        ρ₁₂₅_He = Δρ_c * Mi.He * exp10(@evalpoly(T∞, δij.He...)) / Av
 
         # Notice that this fit leads to a very small discontinuity (about 0.002 %) at
         # 125 km, which is also present in [5].
@@ -434,25 +422,31 @@ function jr1971(
         # -- Eq. 25' [1] -------------------------------------------------------------------
 
         γ   = (g₀ * Ra² / (Rstar * l * T∞) * (T∞ - Tx) / (Tx - T₁) * (zx - z₁) / (Ra + zx))
-        γN₂ = γ * Mi[1]
-        γO₂ = γ * Mi[2]
-        γO  = γ * Mi[3]
-        γAr = γ * Mi[4]
-        γHe = γ * Mi[5]
+        γN₂ = γ * Mi.N₂
+        γO₂ = γ * Mi.O₂
+        γO  = γ * Mi.O
+        γAr = γ * Mi.Ar
+        γHe = γ * Mi.He
 
         # -- Eq. 25 [1] --------------------------------------------------------------------
 
-        ρN₂ = ρ₁₂₅_N₂ * (Tx / Tz)^(1 + αi.N₂ + γN₂) * ((T∞ - Tz) / (T∞ - Tx)) ^ γN₂
-        ρO₂ = ρ₁₂₅_O₂ * (Tx / Tz)^(1 + αi.O₂ + γO₂) * ((T∞ - Tz) / (T∞ - Tx)) ^ γO₂
-        ρO  = ρ₁₂₅_O * (Tx / Tz)^(1 + αi.O + γO) * ((T∞ - Tz) / (T∞ - Tx)) ^ γO
-        ρAr = ρ₁₂₅_Ar * (Tx / Tz)^(1 + αi.Ar + γAr) * ((T∞ - Tz) / (T∞ - Tx)) ^ γAr
-        ρHe = ρ₁₂₅_He * (Tx / Tz)^(1 + αi.He + γHe) * ((T∞ - Tz) / (T∞ - Tx)) ^ γHe
+        # Notice that we write the powers of the temperature ratios as exponentials of the
+        # logarithms, which are shared by all species, to evaluate a single transcendental
+        # function per species.
+        lnTx = log(Tx / Tz)
+        lnT∞ = log((T∞ - Tz) / (T∞ - Tx))
+
+        ρN₂ = ρ₁₂₅_N₂ * exp((1 + αi.N₂ + γN₂) * lnTx + γN₂ * lnT∞)
+        ρO₂ = ρ₁₂₅_O₂ * exp((1 + αi.O₂ + γO₂) * lnTx + γO₂ * lnT∞)
+        ρO  = ρ₁₂₅_O * exp((1 + αi.O + γO) * lnTx + γO * lnT∞)
+        ρAr = ρ₁₂₅_Ar * exp((1 + αi.Ar + γAr) * lnTx + γAr * lnT∞)
+        ρHe = ρ₁₂₅_He * exp((1 + αi.He + γHe) * lnTx + γHe * lnT∞)
 
         # -- Correction of Seasonal Variations of Helium by Latitude, Eq. 4-101 [3] --------
 
         Δlog₁₀ρ_He = _jr1971_helium_seasonal_correction(ϕ_gd, δs)
 
-        ρHe *= 10^(Δlog₁₀ρ_He)
+        ρHe *= exp10(Δlog₁₀ρ_He)
 
         # -- For Altitude Higher than 500 km, We Must Account for H ------------------------
 
@@ -462,28 +456,14 @@ function jr1971(
             # Compute the temperature and the H density at 500 km.
             T₅₀₀       = _jr1971_temperature(RT(500), Tx, T∞)
             log₁₀_T₅₀₀ = log10(T₅₀₀)
-            ρ₅₀₀_H     = Mi.H / Av * 10^(73.13 - (39.4 - 5.5log₁₀_T₅₀₀) * log₁₀_T₅₀₀)
+            ρ₅₀₀_H     = Mi.H / Av * exp10(73.13 - (39.4 - 5.5log₁₀_T₅₀₀) * log₁₀_T₅₀₀)
 
             # Compute the H density at desired altitude.
             γH = Mi.H * γ
             ρH = Δρ_c * ρ₅₀₀_H * (T₅₀₀ / Tz)^(1 + γH) * ((T∞ - Tz) / (T∞ - T₅₀₀))^γH
         end
 
-        # Apply the corrections.
-        ρ = ρN₂ + ρO₂ + ρO + ρAr + ρHe + ρH
-
-        # Convert to SI and return.
-        return JR1971Output{RT}(
-            1000ρ,
-            Tz,
-            T∞,
-            ρN₂ * Av / Mi.N₂ * 1e6,
-            ρO₂ * Av / Mi.O₂ * 1e6,
-            ρO * Av / Mi.O * 1e6,
-            ρAr * Av / Mi.Ar * 1e6,
-            ρHe * Av / Mi.He * 1e6,
-            ρH * Av / Mi.H * 1e6,
-        )
+        return _jr1971_output(RT, Tz, T∞, ρN₂, ρO₂, ρO, ρAr, ρHe, ρH)
     end
 end
 
@@ -553,6 +533,54 @@ function _jr1971_mean_molecular_mass(z::Number)
     molecular_mass = @evalpoly(z, Aa[1], Aa[2], Aa[3], Aa[4], Aa[5], Aa[6], Aa[7])
 
     return molecular_mass
+end
+
+"""
+    _jr1971_output(
+        ::Type{RT},
+        Tz::Number,
+        T∞::Number,
+        ρN₂::Number,
+        ρO₂::Number,
+        ρO::Number,
+        ρAr::Number,
+        ρHe::Number,
+        ρH::Number
+    ) where {RT <: Number} -> JR1971Output{RT}
+
+Build the output structure with element type `RT` given the temperature `Tz` [K] at the
+selected altitude, the exospheric temperature `T∞` [K], and the mass densities [g / cm³] of
+the species N₂, O₂, O, Ar, He, and H, converting the values to SI units.
+"""
+function _jr1971_output(
+    ::Type{RT},
+    Tz::Number,
+    T∞::Number,
+    ρN₂::Number,
+    ρO₂::Number,
+    ρO::Number,
+    ρAr::Number,
+    ρHe::Number,
+    ρH::Number,
+) where {RT <: Number}
+    Av = _JR1971_CONSTANTS.Av
+    Mi = _JR1971_CONSTANTS.Mi
+
+    # Total density [g / cm³].
+    ρ = ρN₂ + ρO₂ + ρO + ρAr + ρHe + ρH
+
+    # Convert the total density to [kg / m³] and the number densities to [1 / m³].
+    return JR1971Output{RT}(
+        1000ρ,
+        Tz,
+        T∞,
+        ρN₂ * Av / Mi.N₂ * 1e6,
+        ρO₂ * Av / Mi.O₂ * 1e6,
+        ρO * Av / Mi.O * 1e6,
+        ρAr * Av / Mi.Ar * 1e6,
+        ρHe * Av / Mi.He * 1e6,
+        ρH * Av / Mi.H * 1e6,
+    )
 end
 
 """

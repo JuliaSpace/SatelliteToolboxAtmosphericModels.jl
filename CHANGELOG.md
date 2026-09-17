@@ -34,6 +34,16 @@ Version 2.0.0
   numerically using the 8-point Gauss-Legendre quadrature, which reproduces a fine
   numerical integration to better than 1e-10 and makes the density continuous at 90 km and
   100 km. The results above 100 km are unchanged.
+- ![Bugfix][badge-bugfix] The number densities of the species returned by the JR1971 model
+  between 90 km and 100 km were computed from the total density using the constituent
+  fractions of the model without the molecular mass factor used above 100 km. Hence, the
+  species mass densities summed to 104.8 % of the total density, and the number density of,
+  e.g., atomic oxygen was 81 % higher than the consistent value. The species are now
+  computed as in the region between 100 km and 125 km. The total density is unchanged.
+- ![Enhancement][badge-enhancement] The JR1971 model is about 35 % faster above 125 km and
+  10 % faster below because the powers of the temperature ratios are evaluated as
+  exponentials of shared logarithms, base-10 powers use `exp10`, and the output structure is
+  built by a single helper. The results are unchanged to the round-off.
 - ![Enhancement][badge-enhancement] The NRLMSISE-00 model computes the cubic spline of the
   lower thermosphere temperature profile once per evaluation instead of once per species,
   making the model about 13 % faster below 72.5 km. The Legendre functions are now stored in

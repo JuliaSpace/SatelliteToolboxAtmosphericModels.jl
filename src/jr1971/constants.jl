@@ -37,6 +37,10 @@ const _JR1971_CONSTANTS = (;
 
     zx = 125.0, # .................................... Altitude of the inflection point [km]
 
+    # Coefficients of the fit of the temperature at the inflection point as a function of
+    # the exospheric temperature [2], see `jr1971`.
+    Tx_fit = (371.6678, 0.0518806, -294.3505, -0.00216222),
+
     # == Molecular Mass [g / mol] ==========================================================
 
     Mi = (N₂ = 28.0134, O₂ = 31.9988, O = 15.9994, Ar = 39.9480, He = 4.0026, H = 1.00797),

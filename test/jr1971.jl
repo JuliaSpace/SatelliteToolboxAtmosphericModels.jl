@@ -224,12 +224,27 @@ end
         end
     end
 
+    # The species mass densities must sum to the total density in this region.
+    C = AtmosphericModels._JR1971_CONSTANTS
+
+    for h in (90e3, 95e3, 100e3)
+        out = AtmosphericModels.jr1971(jd, ϕ_gd, λ, h, 100.0, 100.0, 4)
+        Σρ  = (
+            out.N2_number_density * C.Mi.N₂ +
+            out.O2_number_density * C.Mi.O₂ +
+            out.O_number_density * C.Mi.O +
+            out.Ar_number_density * C.Mi.Ar +
+            out.He_number_density * C.Mi.He +
+            out.H_number_density * C.Mi.H
+        ) / C.Av / 1e3
+        @test Σρ ≈ out.total_density rtol = 1e-4
+    end
+
     # The 8-point Gauss-Legendre quadrature of the integrand of the barometric equation
     # must match a fine midpoint integration between 90 km and 100 km.
     out = AtmosphericModels.jr1971(jd, ϕ_gd, λ, 95e3, 100.0, 100.0, 4)
     T∞  = out.exospheric_temperature
     Tx  = 371.6678 + 0.0518806 * T∞ - 294.3505 * exp(-0.00216222 * T∞)
-    C   = AtmosphericModels._JR1971_CONSTANTS
 
     f(z) =
         C.g₀ * C.Ra^2 / (C.Ra + z)^2 * AtmosphericModels._jr1971_mean_molecular_mass(z) /
@@ -259,7 +274,7 @@ end
     h = [100, 125.1, 300, 700, 1500] * 1000
 
     expected_ρ = [
-        6.941830425832428e-7
+        6.941802149854443e-7
         1.615563485591969e-8
         1.647659416350587e-11
         2.0027542699016525e-14
