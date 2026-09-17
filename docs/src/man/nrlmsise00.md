@@ -79,7 +79,8 @@ The input variable `ap` contains the magnetic index. It can be a `Number` or an
 
 If `ap` is a number, it must contain the daily magnetic index.
 
-If `ap` is an `AbstractVector`, it must be a vector with 7 dimensions as described below:
+If `ap` is an `AbstractVector`, it must be a vector with 7 elements as described below,
+otherwise the function throws an `ArgumentError`:
 
 | Index | Description                                                                   |
 |-------|:------------------------------------------------------------------------------|

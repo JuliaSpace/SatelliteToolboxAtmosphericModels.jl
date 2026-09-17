@@ -633,6 +633,15 @@ end
         now() |> datetime2julian, NaN, 0, 0, 100, 100, 20
     )
 
+    # == Wrong Size in Vector `ap` =========================================================
+
+    @test_throws ArgumentError AtmosphericModels.nrlmsise00(
+        now() |> datetime2julian, 100e3, 0, 0, 100, 100, [10.0, 10.0, 10.0]
+    )
+    @test_throws ArgumentError AtmosphericModels.nrlmsise00(
+        now() |> datetime2julian, 100e3, 0, 0, 100, 100, zeros(8)
+    )
+
     # == Wrong Size in Matrix `P` ==========================================================
 
     P = zeros(8, 3)

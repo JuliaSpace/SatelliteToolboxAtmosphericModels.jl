@@ -123,7 +123,8 @@ The input variable `ap` contains the magnetic index. It can be a `Number` or an
 
 If `ap` is a number, it must contain the daily magnetic index.
 
-If `ap` is an `AbstractVector`, it must be a vector with 7 elements as described below:
+If `ap` is an `AbstractVector`, it must be a vector with 7 elements as described below,
+otherwise the function throws an `ArgumentError`:
 
 | Index | Description                                                                   |
 |-------|:------------------------------------------------------------------------------|
@@ -293,6 +294,11 @@ function nrlmsise00(
     T_AP <: Union{Number, AbstractVector},
 }
     _check_altitude(h, 0, Inf)
+
+    # If `ap` is a vector, it must contain the daily index followed by the 3-hour history
+    # (see the section AP in the docstring).
+    ((ap isa Number) || (length(ap) == 7)) ||
+        throw(ArgumentError("The vector `ap` must have 7 elements."))
 
     RT = float(promote_type(JT, HT, PT, LT, FT, FT2))
 
