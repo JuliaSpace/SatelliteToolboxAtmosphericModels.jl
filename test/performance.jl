@@ -140,13 +140,13 @@ end
 ############################################################################################
 
 # AllocCheck.jl proves statically that the compiled code of the methods with explicit space
-# indices cannot allocate. The check is skipped on macOS with Julia 1.12+ because
-# AllocCheck.jl detects platform-specific runtime calls (jl_get_pgcstack_static) as
-# allocations. The methods with automatic space index fetching are not checked here since
-# the debug message they emit is reported as a potential allocation even when the logging
-# is disabled.
-if Sys.isapple() && (VERSION >= v"1.12")
-    @warn "Allocation tests skipped on macOS with Julia 1.12+ (AllocCheck.jl limitation)."
+# indices cannot allocate. The check is skipped on Julia 1.12+ because AllocCheck.jl
+# detects runtime calls of the newer Julia versions (e.g. jl_get_pgcstack_static) as
+# allocations. The runtime allocation tests above cover all the Julia versions. The
+# methods with automatic space index fetching are not checked here since the debug message
+# they emit is reported as a potential allocation even when the logging is disabled.
+if VERSION >= v"1.12"
+    @warn "Static allocation tests skipped on Julia 1.12+ (AllocCheck.jl limitation)."
 else
     @testset "Allocation Check" begin
         @test length(check_allocs(AtmosphericModels.exponential, (Float64,))) == 0
