@@ -720,20 +720,23 @@ end
     _jacchia1977_temperature(
         z::Number,
         c::NTuple{7, T},
-        ΔT_geo::Number
-    ) where {T<:Number} -> Number
+        ΔT_geo::Union{Nothing, Number}
+    ) where {T <: Number} -> Number
 
 Compute the temperature [K] at the altitude `z` [km] using the profile parameters `c`
 obtained from [`_jacchia1977_profile_params`](@ref), increased by the geomagnetic variation
 of the exospheric temperature `ΔT_geo` [K] weighted by the altitude-dependent profile of
-eq. 32 of [1].
+eq. 32 of [1]. If `ΔT_geo` is `nothing`, the quiet profile is returned without any
+additional computation.
 """
 function _jacchia1977_temperature(
     z::Number, c::NTuple{7, T}, ΔT_geo::Number
 ) where {T <: Number}
-    T_quiet = _jacchia1977_temperature(z, c)
-    iszero(ΔT_geo) && return T_quiet
-    return T_quiet + ΔT_geo * tanh(0.006 * (z - 90))
+    return _jacchia1977_temperature(z, c) + ΔT_geo * tanh(0.006 * (z - 90))
+end
+
+function _jacchia1977_temperature(z::Number, c::NTuple{7, T}, ::Nothing) where {T <: Number}
+    return _jacchia1977_temperature(z, c)
 end
 
 """
@@ -797,18 +800,24 @@ end
         z_end::Number,
         panel::Number,
         c::NTuple{7, Number},
-        ΔT_geo::Number
+        ΔT_geo::Union{Nothing, Number}
     ) -> Number
 
 Integrate `f(z, T)` between the altitudes `z_ini` and `z_end` [km] using the composite
 8-point Gauss-Legendre quadrature with panels of length close to `panel` [km], where `T` is
 the temperature [K] at `z` obtained from the profile parameters `c` increased by the
-geomagnetic variation `ΔT_geo` [K] (see [`_jacchia1977_temperature`](@ref)).
+geomagnetic variation `ΔT_geo` [K], or the quiet profile if `ΔT_geo` is `nothing` (see
+[`_jacchia1977_temperature`](@ref)).
 """
 function _jacchia1977_integrate(
-    f::F, z_ini::Number, z_end::Number, panel::Number, c::NTuple{7, <:Number}, ΔT_geo::Number
+    f::F,
+    z_ini::Number,
+    z_end::Number,
+    panel::Number,
+    c::NTuple{7, <:Number},
+    ΔT_geo::Union{Nothing, Number},
 ) where {F <: Function}
-    RT = promote_type(typeof(z_ini), typeof(z_end), eltype(c), typeof(ΔT_geo))
+    RT = promote_type(typeof(z_ini), typeof(z_end), eltype(c))
 
     n, h = _jacchia1977_panels(z_ini, z_end, panel)
     Δ    = h / 2
@@ -900,8 +909,9 @@ end
 """
     _jacchia1977_static(
         T∞::T1,
-        z::T2[, ΔT_geo::T3]
-    ) where {T1 <: Number, T2 <: Number, T3 <: Number} -> NTuple{6, T}, T, T
+        z::T2[, ΔT_geo::T3];
+        kwargs...
+    ) where {T1 <: Number, T2 <: Number, T3 <: Union{Nothing, Number}} -> NTuple{6, T}, T, T
 
 Compute the Jacchia 1977 static model (routine IMOWEI of [2]) for the exospheric
 temperature `T∞` [K] and altitude `z` [km].
@@ -913,10 +923,21 @@ the same results to about 1e-8 in the base-10 logarithm of the number densities)
 atomic hydrogen is anchored at 500 km and integrated with its flux term for other
 altitudes, panel by panel together with the other species.
 
-If the geomagnetic variation of the exospheric temperature `ΔT_geo` [K] is provided, the
-temperature profile is increased by `ΔT_geo` weighted by the altitude-dependent profile of
-eq. 32 of [1], and the asymptotic exospheric temperature used by the hydrogen boundary
-conditions becomes `T∞ + ΔT_geo`.
+If the geomagnetic variation of the exospheric temperature `ΔT_geo` [K] is provided (not
+`nothing`), the temperature profile is increased by `ΔT_geo` weighted by the
+altitude-dependent profile of eq. 32 of [1], and the asymptotic exospheric temperature used
+by the hydrogen boundary conditions becomes `T∞ + ΔT_geo`.
+
+# Keywords
+
+- `hydrogen::Bool`: If `false`, the hydrogen is not computed (its value in the returned
+    tuple is a placeholder), the mean molecular mass and the total density consider only
+    the heavy species, and the diffusion equations of the heavy species are integrated
+    directly to `z` without the hydrogen anchor at 500 km. This option is used to obtain
+    the heavy species at their own pseudo exospheric temperatures in the diurnal variation.
+    (**Default**: `true`)
+- `panel::NamedTuple`: Panel lengths [km] of the quadrature, see `_JACCHIA1977_CONSTANTS`.
+    (**Default**: `_JACCHIA1977_CONSTANTS.panel`)
 
 # Returns
 
@@ -934,8 +955,12 @@ conditions becomes `T∞ + ΔT_geo`.
     1977 model*. INPE, São José dos Campos, BR.
 """
 function _jacchia1977_static(
-    T∞::T1, z::T2, ΔT_geo::T3 = zero(T1); panel = _JACCHIA1977_CONSTANTS.panel
-) where {T1 <: Number, T2 <: Number, T3 <: Number}
+    T∞::T1,
+    z::T2,
+    ΔT_geo::T3 = nothing;
+    hydrogen::Bool = true,
+    panel = _JACCHIA1977_CONSTANTS.panel,
+) where {T1 <: Number, T2 <: Number, T3 <: Union{Nothing, Number}}
     Av    = _JACCHIA1977_CONSTANTS.Av
     M₀    = _JACCHIA1977_CONSTANTS.M₀
     qi    = _JACCHIA1977_CONSTANTS.qi
@@ -949,7 +974,7 @@ function _jacchia1977_static(
     z_hyd = _JACCHIA1977_CONSTANTS.z_hyd
     z_ref = _JACCHIA1977_CONSTANTS.z_ref
 
-    RT = float(promote_type(T1, T2, T3))
+    RT = float(promote_type(T1, T2, (T3 === Nothing) ? T1 : T3))
 
     ln10 = log(RT(10))
 
@@ -957,7 +982,8 @@ function _jacchia1977_static(
 
     # Hydrogen flux and number density at 500 km (mks), Section 7 [1]. The asymptotic
     # exospheric temperature includes the geomagnetic variation.
-    aux       = 28.9 / (T∞ + ΔT_geo)^RT(0.25)
+    T∞_H      = (ΔT_geo === nothing) ? T∞ : T∞ + ΔT_geo
+    aux       = 28.9 / T∞_H^RT(0.25)
     ϕH        = exp10(RT(6.90) + aux) / 2.0e20
     ln_nH_500 = (RT(5.94) + aux) * ln10
 
@@ -1011,7 +1037,25 @@ function _jacchia1977_static(
 
         an = _jacchia1977_diffuse(an, int, aux)
 
-        if z > z_hyd
+        if z > z_hyd && !hydrogen
+            ################################################################################
+            #         Diffusion Equations of the Heavy Species Between 140 km and z        #
+            ################################################################################
+
+            z_ini = RT(z_hyd)
+            z_end = RT(z)
+            Tᵢ    = Tf
+
+            int = _jacchia1977_integrate(
+                _jacchia1977_diffusion_integrand, z_ini, z_end, panel.mid, c, ΔT_geo
+            )
+
+            Tf  = _jacchia1977_temperature(z_end, c, ΔT_geo)
+            aux = log(Tᵢ / Tf)
+
+            an = _jacchia1977_diffuse(an, int, aux)
+
+        elseif z > z_hyd
             ################################################################################
             #     Diffusion Equations Between 140 km and 500 km (H Anchor), Eq. 16 [1]     #
             ################################################################################
@@ -1193,11 +1237,14 @@ function _jacchia1977_diurnal(
         # Pseudo exospheric temperature of the i-th species, eq. 24 [1].
         Θᵢ = T½ * (aux + RT(0.24) * cos_ϕ * (f - RT(0.5)))
 
-        an, _, _ = _jacchia1977_static(Θᵢ, z)
-
-        @reset al[i] = an[i]
-
-        if i == 6
+        # The species 1 to 5 only need their own values, which do not depend on the
+        # hydrogen. Hence, we skip the hydrogen integration for them.
+        if i < 6
+            an, _, _ = _jacchia1977_static(Θᵢ, z; hydrogen = false)
+            @reset al[i] = an[i]
+        else
+            an, _, _ = _jacchia1977_static(Θᵢ, z)
+            @reset al[i] = an[i]
             ac  = an
             Θ_H = Θᵢ
         end

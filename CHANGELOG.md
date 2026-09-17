@@ -46,6 +46,12 @@ Version 2.0.0
   of the hydrogen number density with 10 km panels. The model is 2.6 times faster at
   300 km, and the total density changes by less than 0.01 % with respect to the previous
   version.
+- ![Enhancement][badge-enhancement] The diurnal variation of the Jacchia 1977 model no
+  longer integrates the hydrogen for the five static model evaluations that only use the
+  heavy species, and the quiet temperature profile is selected by dispatch instead of a
+  test at every quadrature node. Together with the new quadrature, the model is about 12
+  times faster at 110 km, 5 times faster at 300 km, and 2.4 times faster at 1500 km than
+  the previous version.
 - ![Bugfix][badge-bugfix] The Jacchia 1977 model returned a hydrogen number density of about
   1 / m³ up to 140 km, where the model does not include the hydrogen, due to an internal
   placeholder. It now returns 0, as the JR1971 model does below 500 km. Additionally, the
