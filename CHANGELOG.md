@@ -34,6 +34,9 @@ Version 2.0.0
   factor first and skips the maximum density profile on the night side, and the minimum and
   maximum profiles share a single implementation. The model is about 24 % faster, and the
   results are unchanged.
+- ![Bugfix][badge-bugfix] The Zygote.jl rule of `nrlmsise00` now supports the 7-element
+  magnetic index vector `ap`. Previously, only the daily index was supported, and Zygote.jl
+  failed for the vector input.
 - ![Bugfix][badge-bugfix] The exponential model returned a `Float64` for `Float32` inputs.
   It now returns the floating-point type of the input.
 - ![Bugfix][badge-bugfix] The JR1971 model returned wrong densities between 90 km and
