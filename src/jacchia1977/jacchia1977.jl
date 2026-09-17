@@ -166,15 +166,9 @@ function jacchia1977(
 ) where {verbosity}
     # == Daily F10.7 With the Solar Hour Angle Dependent Lag, Eq. 23 [1] ===================
 
-    # Compute the Sun position represented in the inertial reference frame (MOD).
-    s_i = sun_position_mod(jd)
-
-    # Compute the Sun right ascension [rad].
-    Ωs = atan(s_i[2], s_i[1])
-
-    # Compute the right ascension of the selected location w.r.t. the inertial reference
-    # frame.
-    Ωp = λ + jd_to_gmst(jd)
+    # Compute the Sun right ascension and the right ascension of the selected location
+    # [rad].
+    _, Ωs, Ωp = _sun_geometry(jd, λ)
 
     # Hour angle of the Sun at the selected location [rad].
     H = Ωp - Ωs
@@ -206,15 +200,8 @@ function jacchia1977(
     # Lag of the geomagnetic index [days].
     τ = 0.1 + 0.2 * (1 - sin_ϕᵢ^2)
 
-    instant_delayed = julian2datetime(jd - τ)
-    Kp_vect = space_index(Val(:Kp), instant_delayed)
-
-    # Get the number of seconds elapsed since the beginning of the day of the delayed
-    # instant and select the related 3-hour interval.
-    day = Date(instant_delayed) |> DateTime
-    Δts = Dates.value(instant_delayed - day) / 1000
-    id  = clamp(floor(Int, Δts / 10_800) + 1, 1, 8)
-    Kp  = Kp_vect[id]
+    # Select the Kp of the 3-hour interval containing the delayed instant.
+    Kp = _kp_3h(julian2datetime(jd - τ))
 
     verbosity && @debug """
     Jacchia 1977 - Fetched Space Indices
@@ -299,18 +286,9 @@ function jacchia1977(
         ArgumentError("The keyword `variant` must be `Val(:sr375)` or `Val(:stela)`.")
     )
 
-    # Compute the Sun position represented in the inertial reference frame (MOD).
-    s_i = sun_position_mod(jd)
-
-    # Compute the Sun declination [rad].
-    δs = atan(s_i[3], √(s_i[1] * s_i[1] + s_i[2] * s_i[2]))
-
-    # Compute the Sun right ascension [rad].
-    Ωs = atan(s_i[2], s_i[1])
-
-    # Compute the right ascension of the selected location w.r.t. the inertial reference
-    # frame.
-    Ωp = λ + jd_to_gmst(jd)
+    # Compute the Sun declination, the Sun right ascension, and the right ascension of the
+    # selected location [rad].
+    δs, Ωs, Ωp = _sun_geometry(jd, λ)
 
     if variant === Val(:stela)
         geomagnetic_profile === Val(:constant) || throw(

@@ -222,7 +222,7 @@ function nrlmsise00(
         #
         # The documentation also states that the F10.7 values must be the observed flux at
         # the actual distance of the Earth from the Sun, and not the flux adjusted to 1 AU.
-        F10ₐ = sum(space_index(Val(:F10obs), jd + k) for k in -40:40) / 81
+        F10ₐ = _f10_81day_mean(Val(:F10obs), jd)
         F10  = space_index(Val(:F10obs), jd - 1)
         ap   = sum(space_index(Val(:Ap), jd)) / 8
 

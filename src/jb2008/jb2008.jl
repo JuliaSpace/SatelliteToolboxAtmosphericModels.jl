@@ -126,7 +126,7 @@ function jb2008(
 ) where {verbosity}
     # Get the data in the desired Julian Day considering the tabular time of the model.
     F10    = space_index(Val(:F10obs), jd - 1)
-    F10ₐ   = sum(space_index(Val(:F10obs), jd + k) for k in -41:39) / 81
+    F10ₐ   = _f10_81day_mean(Val(:F10obs), jd - 1)
     S10    = space_index(Val(:S10), jd - 1)
     S10ₐ   = space_index(Val(:S81a), jd - 1)
     M10    = space_index(Val(:M10), jd - 2)
@@ -284,18 +284,9 @@ function jb2008(
 
     (h < 90) && throw(ArgumentError("The altitude must not be lower than 90 km."))
 
-    # Compute the Sun position represented in the inertial reference frame (MOD).
-    s_i = sun_position_mod(jd)
-
-    # Compute the Sun declination [rad].
-    δs = atan(s_i[3], √(s_i[1] * s_i[1] + s_i[2] * s_i[2]))
-
-    # Compute the Sun right ascension [rad].
-    Ωs = atan(s_i[2], s_i[1])
-
-    # Compute the right ascension of the selected location w.r.t. the inertial reference
-    # frame.
-    Ωp = λ + jd_to_gmst(jd)
+    # Compute the Sun declination, the Sun right ascension, and the right ascension of the
+    # selected location [rad].
+    δs, Ωs, Ωp = _sun_geometry(jd, λ)
 
     # Compute the hour angle at the selected location, which is the angle measured at the XY
     # plane between the right ascension of the selected position and the right ascension of

@@ -79,7 +79,7 @@ function harrispriester_modified(
     jd::Number, ϕ_gd::Number, λ::Number, h::Number; n::Number = 4
 )
     # Fetch the 81-day centered average of F10.7 solar flux.
-    F10ₐ = sum(space_index(Val(:F10obs), jd + k) for k in -40:40) / 81
+    F10ₐ = _f10_81day_mean(Val(:F10obs), jd)
 
     @debug """
     Modified Harris-Priester - Fetched Space Indices
@@ -176,18 +176,9 @@ function harrispriester_modified(
         ρ_max_h = ρ_maxᵢ * exp((hᵢ - h_km) / H_ρ_maxᵢ)
     end
 
-    # Compute the Sun position represented in the inertial reference frame (MOD).
-    s_i = sun_position_mod(jd)
-
-    # Compute the Sun declination [rad].
-    δs = atan(s_i[3], √(s_i[1]^2 + s_i[2]^2))
-
-    # Compute the Sun right ascension [rad].
-    Ωs = atan(s_i[2], s_i[1])
-
-    # Compute the right ascension of the selected location w.r.t. the inertial reference
-    # frame.
-    Ωp = λ + jd_to_gmst(jd)
+    # Compute the Sun declination, the Sun right ascension, and the right ascension of the
+    # selected location [rad].
+    δs, Ωs, Ωp = _sun_geometry(jd, λ)
 
     # Compute the cosine of the angle between the diurnal bulge apex and the satellite.
     #

@@ -82,18 +82,9 @@ function harrispriester(
         return RT(0)
     end
 
-    # Compute the Sun position represented in the inertial reference frame (MOD).
-    s_i = sun_position_mod(jd)
-
-    # Compute the Sun declination [rad].
-    δs = atan(s_i[3], √(s_i[1]^2 + s_i[2]^2))
-
-    # Compute the Sun right ascension [rad].
-    Ωs = atan(s_i[2], s_i[1])
-
-    # Compute the right ascension of the selected location w.r.t. the inertial reference
-    # frame.
-    Ωp = λ + jd_to_gmst(jd)
+    # Compute the Sun declination, the Sun right ascension, and the right ascension of the
+    # selected location [rad].
+    δs, Ωs, Ωp = _sun_geometry(jd, λ)
 
     # Compute the cosine of the angle between the diurnal bulge apex and the satellite.
     #
