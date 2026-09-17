@@ -33,8 +33,9 @@ altitudes that are not sorted in ascending order.
 
 # Keywords
 
-- `n::Int`: Cosine exponent in the diurnal bulge modeling (`2 <= n <= 6`). If `n` is `2`,
-    it models a smooth transition, whereas if `n` is `6`, it models a sharp transition.
+- `n::Number`: Cosine exponent in the diurnal bulge modeling (`2 <= n <= 7`). If `n` is
+    `2`, it models a smooth transition, whereas if `n` is `6`, it models a sharp transition.
+    The function throws an `ArgumentError` if `n` is outside this range.
     (**Default**: `4`)
 - `alt_ρ::AbstractMatrix`: Matrix containing the minimum and maximum density profiles,
     where the columns are the altitude [m], the minimum density [kg / m³], and the maximum
@@ -51,7 +52,7 @@ function harrispriester(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
-    n::Int = 4,
+    n::Number = 4,
     alt_ρ::AbstractMatrix{<:Number} = _HARRIS_PRIESTER_ALT_RHO,
 )
     return harrispriester(datetime2julian(instant), ϕ_gd, λ, h; n = n, alt_ρ = alt_ρ)
@@ -62,10 +63,10 @@ function harrispriester(
     ϕ_gd::PT,
     λ::LT,
     h::HT;
-    n::Int = 4,
+    n::Number = 4,
     alt_ρ::AbstractMatrix{DT} = _HARRIS_PRIESTER_ALT_RHO,
 ) where {JT <: Number, PT <: Number, LT <: Number, HT <: Number, DT <: Number}
-    (2 <= n <= 6) || throw(ArgumentError("The cosine exponent must be between 2 and 6."))
+    (2 <= n <= 7) || throw(ArgumentError("The cosine exponent must be between 2 and 7."))
 
     # Validate the density profile table and the altitude.
     ((size(alt_ρ, 1) >= 2) && (size(alt_ρ, 2) >= 3)) || throw(

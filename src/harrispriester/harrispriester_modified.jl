@@ -47,12 +47,13 @@ if the altitude `h` is outside this range.
 
 # Keywords
 
-- `n::Number`: Cosine exponent in the diurnal bulge modeling. The original Fortran
-    implementation computes `n` from the orbital inclination as
+- `n::Number`: Cosine exponent in the diurnal bulge modeling (`2 <= n <= 7`). The original
+    Fortran implementation computes `n` from the orbital inclination as
     `n = 2.001 + 4 sin²(inclination)`. Hence, use `n = 2.001` for equatorial orbits,
     `n = 6.001` for polar orbits, and interpolate for intermediate inclinations. If the
     orbital inclination is unknown, the default provides a reasonable approximation. This
     functionality was purposefully removed here to avoid needing an additional dependency.
+    The function throws an `ArgumentError` if `n` is outside this range.
     (**Default**: `4`)
 
 # Returns
@@ -97,9 +98,11 @@ end
 function harrispriester_modified(
     jd::JT, ϕ_gd::PT, λ::LT, h::HT, F10ₐ::FT; n::Number = 4
 ) where {JT <: Number, PT <: Number, LT <: Number, HT <: Number, FT <: Number}
+    (2 <= n <= 7) || throw(ArgumentError("The cosine exponent must be between 2 and 7."))
+
     _check_altitude(h, _HARRIS_PRIESTER_MOD_H_MIN, _HARRIS_PRIESTER_MOD_H_MAX)
 
-    RT = float(promote_type(JT, PT, LT, HT, FT, typeof(n)))
+    RT = float(promote_type(JT, PT, LT, HT, FT))
 
     # Convert inputs to kilometers for consistency with the original Fortran model.
     h_km = h / 1000

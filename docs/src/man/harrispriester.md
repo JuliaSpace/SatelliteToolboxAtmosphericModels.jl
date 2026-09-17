@@ -43,7 +43,7 @@ where:
 
 The following keywords are available:
 
-- `n::Int`: Cosine exponent for the diurnal bulge (`2` ≤ `n` ≤ `6`). A value of `2`
+- `n::Number`: Cosine exponent for the diurnal bulge (`2` ≤ `n` ≤ `7`). A value of `2`
     produces a smooth day-night transition; `6` produces a sharp transition.
     (**Default** = `4`)
 - `alt_ρ::AbstractMatrix`: Custom density profile table with columns `[altitude [m],
@@ -92,9 +92,9 @@ where:
 - `λ::Number`: Longitude [rad].
 - `h::Number`: Altitude [m].
 - `F10ₐ::Number`: 81-day centered average of the F10.7 solar flux index [sfu].
-- `n::Number`: Cosine exponent for the diurnal bulge. The original Fortran implementation
-    computes this from orbital inclination as `n = 2.001 + 4sin²(i)`, yielding `n ≈ 2` for
-    equatorial orbits and `n ≈ 6` for polar orbits.
+- `n::Number`: Cosine exponent for the diurnal bulge (`2` ≤ `n` ≤ `7`). The original
+    Fortran implementation computes this from orbital inclination as `n = 2.001 + 4sin²(i)`,
+    yielding `n ≈ 2` for equatorial orbits and `n ≈ 6` for polar orbits.
     (**Default** = `4`)
 
 If we omit `F10ₐ`, the system tries to obtain it automatically for the selected day `jd` or

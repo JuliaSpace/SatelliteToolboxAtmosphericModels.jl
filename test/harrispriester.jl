@@ -711,9 +711,29 @@ end
     @test result == expected
 
     # The cosine exponent validation must throw an ArgumentError, which cannot be disabled
-    # by compiler options like the previous @assert.
-    @test_throws ArgumentError AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 7)
+    # by compiler options like the previous @assert. Both models accept any number in the
+    # interval [2, 7].
+    @test_throws ArgumentError AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 7.1)
     @test_throws ArgumentError AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 1)
+    @test_throws ArgumentError AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = NaN)
+    @test AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 2.001) > 0
+    @test AtmosphericModels.harrispriester(jd, 0, 0, 300e3; n = 7) > 0
+
+    @test_throws ArgumentError AtmosphericModels.harrispriester_modified(
+        jd, 0, 0, 300e3, 100; n = 7.1
+    )
+    @test_throws ArgumentError AtmosphericModels.harrispriester_modified(
+        jd, 0, 0, 300e3, 100; n = -1
+    )
+    @test_throws ArgumentError AtmosphericModels.harrispriester_modified(
+        jd, 0, 0, 300e3, 100; n = NaN
+    )
+    @test AtmosphericModels.harrispriester_modified(jd, 0, 0, 300e3, 100; n = 6.001) > 0
+
+    # A fractional exponent must not change the output type of the modified model.
+    @test AtmosphericModels.harrispriester_modified(
+        2460000.0f0, 0.0f0, 0.0f0, 300f3, 100.0f0; n = 2.001
+    ) isa Float32
 end
 
 @testset "Float32 Output Type (Modified)" begin

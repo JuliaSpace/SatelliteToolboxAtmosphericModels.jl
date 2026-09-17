@@ -18,6 +18,11 @@ Version 2.0.0
   outside its range (returning, e.g., 7.5 kg / m³ at the sea level), and JR1971 and JB2008
   had no upper bound. The classic Harris-Priester model also validates the density profile
   passed with the keyword `alt_ρ`.
+- ![BREAKING][badge-breaking] The keyword `n` (cosine exponent of the diurnal bulge) of both
+  Harris-Priester models now accepts any `Number` in the interval `[2, 7]`, throwing an
+  `ArgumentError` otherwise. Previously, the classic model required an `Int` in `[2, 6]`,
+  and the modified model accepted any value without validation. The exponent no longer
+  participates in the output type promotion of the modified model.
 - ![Enhancement][badge-enhancement] The output structures of the models are now subtypes of
   the new abstract type `AbstractAtmosphericModelOutput`, and their `show` methods share a
   single implementation. The dependency on Crayons.jl was removed.
