@@ -111,78 +111,11 @@ function harrispriester_modified(
     # Convert inputs to kilometers for consistency with the original Fortran model.
     h_km = h / 1000
 
-    # Get altitude index.
+    # Get the altitude layer index. At the top of the table, we use the last layer.
     i = searchsortedlast(_HARRIS_PRIESTER_MOD_HVEC, h_km)
+    i = min(i, length(_HARRIS_PRIESTER_MOD_HVEC) - 1)
 
-    if i < length(_HARRIS_PRIESTER_MOD_HVEC)
-        ρ_maxᵢ   = _harris_priester_mod_density_poly(F10ₐ, i, 1)
-        ρ_minᵢ   = _harris_priester_mod_density_poly(F10ₐ, i, 5)
-        ρ_maxᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i + 1, 1)
-        ρ_minᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i + 1, 5)
-        hᵢ       = _HARRIS_PRIESTER_MOD_HVEC[i]
-        hᵢ₊₁     = _HARRIS_PRIESTER_MOD_HVEC[i + 1]
-    else # Above nominal altitude max
-        ρ_maxᵢ   = _harris_priester_mod_density_poly(F10ₐ, i - 1, 1)
-        ρ_minᵢ   = _harris_priester_mod_density_poly(F10ₐ, i - 1, 5)
-        ρ_maxᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i, 1)
-        ρ_minᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i, 5)
-        hᵢ       = _HARRIS_PRIESTER_MOD_HVEC[i - 1]
-        hᵢ₊₁     = _HARRIS_PRIESTER_MOD_HVEC[i]
-    end
-
-    Δhᵢ = hᵢ₊₁ - hᵢ
-
-    # Scale heights are calculated by exponential interpolation to maintain continuity in
-    # density between altitude layers [1, Eq. 4, 5].
-    H_ρ_minᵢ = -Δhᵢ / log(ρ_minᵢ₊₁ / ρ_minᵢ)
-    H_ρ_maxᵢ = -Δhᵢ / log(ρ_maxᵢ₊₁ / ρ_maxᵢ)
-
-    # A polynomial weighting function is used to ensure third-order continuity of scale
-    # heights when passing through altitude boundaries [1, Section 3.2].
-    α = _HARRIS_PRIESTER_MOD_α
-
-    if (h_km <= hᵢ + α) && (i > 1) # Near lower boundary
-        hᵢ₋₁ = _HARRIS_PRIESTER_MOD_HVEC[i - 1]
-        ρ_maxᵢ₋₁ = _harris_priester_mod_density_poly(F10ₐ, i - 1, 1)
-        ρ_minᵢ₋₁ = _harris_priester_mod_density_poly(F10ₐ, i - 1, 5)
-
-        Δhᵢ₋₁ = hᵢ - hᵢ₋₁
-        xbar = SVector{2}(hᵢ - α, hᵢ + α)
-
-        H_ρ_minᵢ₋₁ = -Δhᵢ₋₁ / log(ρ_minᵢ / ρ_minᵢ₋₁)
-        H_ρ_maxᵢ₋₁ = -Δhᵢ₋₁ / log(ρ_maxᵢ / ρ_maxᵢ₋₁)
-
-        H_ρ_min_vec = SVector{2}(H_ρ_minᵢ₋₁, H_ρ_minᵢ)
-        H_ρ_max_vec = SVector{2}(H_ρ_maxᵢ₋₁, H_ρ_maxᵢ)
-
-        _, H_ρ_min′ᵢ, H_ρ_max′ᵢ = _scale_height_junk(xbar, h_km, H_ρ_min_vec, H_ρ_max_vec)
-
-        ρ_min_h = ρ_minᵢ * exp((hᵢ - h_km) / H_ρ_min′ᵢ)
-        ρ_max_h = ρ_maxᵢ * exp((hᵢ - h_km) / H_ρ_max′ᵢ)
-
-    elseif (h_km >= hᵢ₊₁ - α) && (i < length(_HARRIS_PRIESTER_MOD_HVEC) - 1) # Near upper boundary
-        hᵢ₊₂ = _HARRIS_PRIESTER_MOD_HVEC[i + 2]
-        ρ_maxᵢ₊₂ = _harris_priester_mod_density_poly(F10ₐ, i + 2, 1)
-        ρ_minᵢ₊₂ = _harris_priester_mod_density_poly(F10ₐ, i + 2, 5)
-
-        Δhᵢ₊₁ = hᵢ₊₂ - hᵢ₊₁
-        xbar = SVector{2}(hᵢ₊₁ - α, hᵢ₊₁ + α)
-
-        H_ρ_minᵢ₊₁ = -Δhᵢ₊₁ / log(ρ_minᵢ₊₂ / ρ_minᵢ₊₁)
-        H_ρ_maxᵢ₊₁ = -Δhᵢ₊₁ / log(ρ_maxᵢ₊₂ / ρ_maxᵢ₊₁)
-
-        H_ρ_min_vec = SVector{2}(H_ρ_minᵢ, H_ρ_minᵢ₊₁)
-        H_ρ_max_vec = SVector{2}(H_ρ_maxᵢ, H_ρ_maxᵢ₊₁)
-
-        _, H_ρ_min′ᵢ, H_ρ_max′ᵢ = _scale_height_junk(xbar, h_km, H_ρ_min_vec, H_ρ_max_vec)
-
-        ρ_min_h = ρ_minᵢ₊₁ * exp((hᵢ₊₁ - h_km) / H_ρ_min′ᵢ)
-        ρ_max_h = ρ_maxᵢ₊₁ * exp((hᵢ₊₁ - h_km) / H_ρ_max′ᵢ)
-
-    else # Not near a boundary, no weighting needed.
-        ρ_min_h = ρ_minᵢ * exp((hᵢ - h_km) / H_ρ_minᵢ)
-        ρ_max_h = ρ_maxᵢ * exp((hᵢ - h_km) / H_ρ_maxᵢ)
-    end
+    # == Diurnal Variation =================================================================
 
     # Compute the Sun declination, the Sun right ascension, and the right ascension of the
     # selected location [rad].
@@ -214,11 +147,80 @@ function harrispriester_modified(
         cos_ψ_by_2_pow_n = RT(w1 * c1)
     end
 
+    # == Density ===========================================================================
+
+    # Minimum density profile at the altitude. On the night side, the diurnal factor is 0
+    # and the maximum density profile is not required.
+    ρ_min_h = _harris_priester_mod_profile_density(F10ₐ, h_km, i, 5)
+
+    iszero(cos_ψ_by_2_pow_n) && return RT(ρ_min_h * 1e-12)
+
+    ρ_max_h = _harris_priester_mod_profile_density(F10ₐ, h_km, i, 1)
+
     # Final density calculation [1, Eq. 1].
     ρ = ρ_min_h + (ρ_max_h - ρ_min_h) * cos_ψ_by_2_pow_n
 
     # Convert from g/km³ to kg/m³.
     return RT(ρ * 1e-12)
+end
+
+############################################################################################
+#                                    Private Functions                                     #
+############################################################################################
+
+"""
+    _harris_priester_mod_profile_density(
+        F10ₐ::Number,
+        h_km::Number,
+        i::Integer,
+        c::Integer
+    ) -> Number
+
+Compute the density [g / km³] of the minimum (`c = 5`) or maximum (`c = 1`) density profile
+at the altitude `h_km` [km] inside the layer `i` of `_HARRIS_PRIESTER_MOD_HVEC` for the
+81-day averaged F10.7 flux `F10ₐ` [sfu], where `c` is the first column of the polynomial
+coefficients of the profile in `_HARRIS_PRIESTER_MOD_COEFS`.
+
+The scale heights are obtained by exponential interpolation between the layer boundaries
+[1, eqs. 4 and 5], and they are blended with the scale heights of the adjacent layers near
+the boundaries using the Junkins / Jancaitis weighting for third-order continuity [1,
+Section 3.2].
+"""
+function _harris_priester_mod_profile_density(
+    F10ₐ::Number, h_km::Number, i::Integer, c::Integer
+)
+    HVEC = _HARRIS_PRIESTER_MOD_HVEC
+    α    = _HARRIS_PRIESTER_MOD_α
+
+    ρᵢ   = _harris_priester_mod_density_poly(F10ₐ, i, c)
+    ρᵢ₊₁ = _harris_priester_mod_density_poly(F10ₐ, i + 1, c)
+    hᵢ   = HVEC[i]
+    hᵢ₊₁ = HVEC[i + 1]
+
+    # Scale height of the layer by exponential interpolation [1, Eq. 4, 5].
+    Hᵢ = -(hᵢ₊₁ - hᵢ) / log(ρᵢ₊₁ / ρᵢ)
+
+    if (h_km <= hᵢ + α) && (i > 1)
+        # Near the lower boundary, blend with the scale height of the previous layer.
+        ρᵢ₋₁ = _harris_priester_mod_density_poly(F10ₐ, i - 1, c)
+        hᵢ₋₁ = HVEC[i - 1]
+        Hᵢ₋₁ = -(hᵢ - hᵢ₋₁) / log(ρᵢ / ρᵢ₋₁)
+        H′   = _scale_height_junk(hᵢ - α, hᵢ + α, h_km, Hᵢ₋₁, Hᵢ)
+
+        return ρᵢ * exp((hᵢ - h_km) / H′)
+
+    elseif (h_km >= hᵢ₊₁ - α) && (i < length(HVEC) - 1)
+        # Near the upper boundary, blend with the scale height of the next layer.
+        ρᵢ₊₂ = _harris_priester_mod_density_poly(F10ₐ, i + 2, c)
+        hᵢ₊₂ = HVEC[i + 2]
+        Hᵢ₊₁ = -(hᵢ₊₂ - hᵢ₊₁) / log(ρᵢ₊₂ / ρᵢ₊₁)
+        H′   = _scale_height_junk(hᵢ₊₁ - α, hᵢ₊₁ + α, h_km, Hᵢ, Hᵢ₊₁)
+
+        return ρᵢ₊₁ * exp((hᵢ₊₁ - h_km) / H′)
+    end
+
+    # Not near a boundary, no blending needed.
+    return ρᵢ * exp((hᵢ - h_km) / Hᵢ)
 end
 
 """
@@ -235,39 +237,17 @@ function _harris_priester_mod_density_poly(F10ₐ::Number, i::Integer, c::Intege
 end
 
 """
-    _scale_height_junk(
-        xbar::AbstractVector{<:Number},
-        h::Number,
-        H_ρ_min::AbstractVector{<:Number},
-        H_ρ_max::AbstractVector{<:Number}
-    ) -> Number, Number, Number
+    _scale_height_junk(x₁::Number, x₂::Number, h::Number, H₁::Number, H₂::Number) -> Number
 
-Compute the scale heights at the altitude `h` [km] using the Junkins / Jancaitis weighting
-method for third-order continuity [1, Section 3.2], given the abscissas `xbar` [km] of the
-blending interval and the minimum and maximum density scale heights `H_ρ_min` and
-`H_ρ_max` [km] at its borders.
-
-# Returns
-
-- `Number`: Weighting function value [-].
-- `Number`: Blended minimum density scale height [km].
-- `Number`: Blended maximum density scale height [km].
+Blend the scale heights `H₁` and `H₂` [km] defined at the borders `x₁` and `x₂` [km] of the
+blending interval at the altitude `h` [km] using the Junkins / Jancaitis weighting method
+for third-order continuity [1, Section 3.2].
 """
-function _scale_height_junk(
-    xbar::AbstractVector{<:Number},
-    h::Number,
-    H_ρ_min::AbstractVector{<:Number},
-    H_ρ_max::AbstractVector{<:Number},
-)
-    xbardiff = xbar[2] - xbar[1]
-    ξ = (h - xbar[1]) / xbardiff
+function _scale_height_junk(x₁::Number, x₂::Number, h::Number, H₁::Number, H₂::Number)
+    ξ = (h - x₁) / (x₂ - x₁)
 
     # Weighting function for third-order continuity [1, Eq. 20].
-    t1 = @evalpoly(ξ, 35, -84, 70, -20)
-    w1 = ξ^4 * t1
+    w = ξ^4 * @evalpoly(ξ, 35, -84, 70, -20)
 
-    H_ρ_min′ = H_ρ_min[1] + w1 * (H_ρ_min[2] - H_ρ_min[1])
-    H_ρ_max′ = H_ρ_max[1] + w1 * (H_ρ_max[2] - H_ρ_max[1])
-
-    return w1, H_ρ_min′, H_ρ_max′
+    return H₁ + w * (H₂ - H₁)
 end

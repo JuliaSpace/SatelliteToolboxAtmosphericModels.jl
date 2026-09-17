@@ -30,6 +30,10 @@ Version 2.0.0
   are now static arrays instead of mutable global vectors and matrices, and the density
   profile of the classic Harris-Priester model is searched with a row-indexed binary search
   that works for any matrix type without allocating.
+- ![Enhancement][badge-enhancement] The modified Harris-Priester model evaluates the diurnal
+  factor first and skips the maximum density profile on the night side, and the minimum and
+  maximum profiles share a single implementation. The model is about 24 % faster, and the
+  results are unchanged.
 - ![Bugfix][badge-bugfix] The exponential model returned a `Float64` for `Float32` inputs.
   It now returns the floating-point type of the input.
 - ![Bugfix][badge-bugfix] The JR1971 model returned wrong densities between 90 km and
