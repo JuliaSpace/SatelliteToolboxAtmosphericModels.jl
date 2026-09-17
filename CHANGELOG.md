@@ -28,6 +28,11 @@ Version 2.0.0
   density used to blend the thermospheric and lower atmosphere profiles was not computed.
 - ![Bugfix][badge-bugfix] The NRLMSISE-00 model now throws an `ArgumentError` if the vector
   `ap` does not have 7 elements, instead of a `BoundsError` from a private function.
+- ![Bugfix][badge-bugfix] The NRLMSISE-00 model converted the input latitude and longitude
+  to degrees using the truncated internal constant of the reference implementation
+  (`1.74533e-2`) instead of the exact conversion, introducing a relative error of `4e-7` in
+  the angles. The inputs are now converted exactly, changing the results by a negligible
+  amount (about `1e-7` relative).
 - ![Bugfix][badge-bugfix] The NRLMSISE-00 model threw an `InexactError` when all the inputs
   were integers. The output element type is now the promotion of the input types converted
   to a floating-point type, as in the other models.

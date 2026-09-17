@@ -348,17 +348,21 @@ function nrlmsise00(
     #
     # None for flags.time_independent = false.
     g_lat, r_lat = _gravity_and_effective_radius(
-        (!flags.time_independent) ? RT(_REFERENCE_LATITUDE) : RT(ϕ_gd / _DEG_TO_RAD)
+        (!flags.time_independent) ? RT(_REFERENCE_LATITUDE) : RT(rad2deg(ϕ_gd))
     )
 
     # == Create the NRLMSISE00 Structure ===================================================
+    #
+    # The reference implementation receives the latitude and longitude in degrees. Hence,
+    # we convert the inputs exactly here and keep the truncated internal constant
+    # `_DEG_TO_RAD` only where the reference uses it.
 
     nrlmsise00d = Nrlmsise00Structure{RT, T_AP, typeof(plg)}(
         floor(doy),
         Δds,
         h / 1000,
-        ϕ_gd / _DEG_TO_RAD,
-        λ / _DEG_TO_RAD,
+        rad2deg(ϕ_gd),
+        rad2deg(λ),
         lst,
         ap,
         flags,
