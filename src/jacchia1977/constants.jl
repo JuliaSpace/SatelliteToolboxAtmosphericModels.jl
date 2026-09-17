@@ -40,7 +40,7 @@ const _JACCHIA1977_CONSTANTS = (;
 
     # == Layer Boundaries of the Static Model ==============================================
 
-    z_bar = 100.0, # ...................... Top of the barometric region (mixing) [km], eq. 8
+    z_bar = 100.0, # ........................... Top of the barometric region [km], eq. 8
     z_hyd = 140.0, # ................ Altitude above which the hydrogen is modeled [km], §7
     z_ref = 500.0, # ................. Altitude of the hydrogen boundary conditions [km], §7
 
@@ -67,9 +67,13 @@ const _JACCHIA1977_CONSTANTS = (;
 
     ci = (-0.79, 0.0, 0.0, 0.0, -0.16, 0.0),
 
-    # == Boole's Rule Integration Weights ==================================================
+    # == Quadrature Panel Lengths [km] =====================================================
+    #
+    # Lengths of the panels of the composite Gauss-Legendre quadrature used by the static
+    # model between 90 km and 100 km (`bar`), 100 km and 140 km (`low`), 140 km and 500 km
+    # (`mid`), and above 500 km or between the altitude and 500 km (`high`).
 
-    Wb = (14 / 45, 64 / 45, 24 / 45, 64 / 45, 14 / 45),
+    panel = (bar = 10.0, low = 10.0, mid = 45.0, high = 10.0),
 )
 
 # Altitude bounds of the model [m].

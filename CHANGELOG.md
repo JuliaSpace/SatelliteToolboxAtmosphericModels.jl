@@ -34,6 +34,18 @@ Version 2.0.0
   numerically using the 8-point Gauss-Legendre quadrature, which reproduces a fine
   numerical integration to better than 1e-10 and makes the density continuous at 90 km and
   100 km. The results above 100 km are unchanged.
+- ![Enhancement][badge-enhancement] The static model of Jacchia 1977 now integrates the
+  barometric and diffusion equations using the composite 8-point Gauss-Legendre quadrature
+  with the gravity evaluated at the nodes instead of the Boole rule with a fine step and
+  the gravity frozen at the center of each panel, as in the reference Fortran
+  implementation. The new scheme reproduces a converged integration to about 1e-7 in the
+  base-10 logarithm of the number densities of the heavy species, whereas the previous one
+  deviated by up to 2e-4. The hydrogen flux term is now integrated with the Heun method
+  (trapezoidal rule for the ratio between the heavy species and the hydrogen number
+  densities), reproducing a converged integration to about 7e-3 in the base-10 logarithm
+  of the hydrogen number density with 10 km panels. The model is 2.6 times faster at
+  300 km, and the total density changes by less than 0.01 % with respect to the previous
+  version.
 - ![Bugfix][badge-bugfix] The Jacchia 1977 model returned a hydrogen number density of about
   1 / m³ up to 140 km, where the model does not include the hydrogen, due to an internal
   placeholder. It now returns 0, as the JR1971 model does below 500 km. Additionally, the

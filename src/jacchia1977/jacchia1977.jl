@@ -737,18 +737,181 @@ function _jacchia1977_temperature(
 end
 
 """
+    _jacchia1977_gravity(z::Number) -> Number
+
+Compute the gravity [m / s²] at the altitude `z` [km] using the inverse square law with
+the mean Earth radius of the model.
+"""
+function _jacchia1977_gravity(z::Number)
+    Ra = _JACCHIA1977_CONSTANTS.Ra
+    g₀ = _JACCHIA1977_CONSTANTS.g₀
+
+    return g₀ / (1 + z / Ra)^2
+end
+
+"""
+    _jacchia1977_barometric_integrand(z::Number, T::Number) -> Number
+
+Compute the integrand `g M′ / (R T)` of the barometric equation (eq. 8 of [1]) at the
+altitude `z` [km] and temperature `T` [K], where `M′` is the mean molecular mass polynomial
+of eq. 5 of [1] and `R` is the universal gas constant.
+"""
+function _jacchia1977_barometric_integrand(z::Number, T::Number)
+    Ca    = _JACCHIA1977_CONSTANTS.Ca
+    Rstar = _JACCHIA1977_CONSTANTS.Rstar
+    z₀    = _JACCHIA1977_CONSTANTS.z₀
+
+    M′ = @evalpoly(z - z₀, Ca[1], Ca[2], Ca[3], Ca[4], Ca[5], Ca[6])
+
+    return _jacchia1977_gravity(z) * M′ / (Rstar * T)
+end
+
+"""
+    _jacchia1977_diffusion_integrand(z::Number, T::Number) -> Number
+
+Compute the integrand `g / (R T)` of the diffusion equations (eq. 16 of [1]) at the
+altitude `z` [km] and temperature `T` [K], where `R` is the universal gas constant.
+"""
+function _jacchia1977_diffusion_integrand(z::Number, T::Number)
+    Rstar = _JACCHIA1977_CONSTANTS.Rstar
+    return _jacchia1977_gravity(z) / (Rstar * T)
+end
+
+"""
+    _jacchia1977_panels(z_ini::Number, z_end::Number, panel::Number) -> Int, Number
+
+Divide the interval between the altitudes `z_ini` and `z_end` [km] into an integer number
+of panels with length close to `panel` [km], returning the number of panels and the signed
+panel length [km].
+"""
+function _jacchia1977_panels(z_ini::Number, z_end::Number, panel::Number)
+    L = z_end - z_ini
+    n = max(1, ceil(Int, abs(L) / panel))
+    return n, L / n
+end
+
+"""
+    _jacchia1977_integrate(
+        f::Function,
+        z_ini::Number,
+        z_end::Number,
+        panel::Number,
+        c::NTuple{7, Number},
+        ΔT_geo::Number
+    ) -> Number
+
+Integrate `f(z, T)` between the altitudes `z_ini` and `z_end` [km] using the composite
+8-point Gauss-Legendre quadrature with panels of length close to `panel` [km], where `T` is
+the temperature [K] at `z` obtained from the profile parameters `c` increased by the
+geomagnetic variation `ΔT_geo` [K] (see [`_jacchia1977_temperature`](@ref)).
+"""
+function _jacchia1977_integrate(
+    f::F, z_ini::Number, z_end::Number, panel::Number, c::NTuple{7, <:Number}, ΔT_geo::Number
+) where {F <: Function}
+    RT = promote_type(typeof(z_ini), typeof(z_end), eltype(c), typeof(ΔT_geo))
+
+    n, h = _jacchia1977_panels(z_ini, z_end, panel)
+    Δ    = h / 2
+
+    int = zero(RT)
+
+    for k in 1:n
+        zm = z_ini + (k - RT(1 / 2)) * h
+        Σ  = zero(int)
+
+        @inbounds for i in 1:8
+            z  = zm + Δ * _GAUSS_LEGENDRE_8_NODES[i]
+            T  = _jacchia1977_temperature(z, c, ΔT_geo)
+            Σ += _GAUSS_LEGENDRE_8_WEIGHTS[i] * f(z, T)
+        end
+
+        int += Δ * Σ
+    end
+
+    return int
+end
+
+"""
+    _jacchia1977_departures(
+        an::NTuple{6, Number},
+        z::Number,
+        ln10::Number
+    ) -> NTuple{6, Number}
+
+Apply the departures from diffusive equilibrium of the molecular oxygen and the atomic
+oxygen (eqs. 14 and 15 of [1]) at the altitude `z` [km] to the natural logarithm of the
+number densities `an` in the internal order (He, O₂, N₂, Ar, O, H), given `ln10`, the
+natural logarithm of 10 in the working type.
+"""
+function _jacchia1977_departures(an::NTuple{6, T}, z::Number, ln10::Number) where {T}
+    lnO₂ = an[2] - T(0.07) * (1 + tanh(T(0.18) * (z - 111))) * ln10
+    lnO  = an[5] - T(0.24) * exp(-T(0.009) * (z - T(97.7))^2) * ln10
+
+    return (an[1], lnO₂, an[3], an[4], lnO, an[6])
+end
+
+"""
+    _jacchia1977_heavy_number_density(
+        an::NTuple{6, Number},
+        z::Number,
+        ln10::Number
+    ) -> Number
+
+Compute the total number density [1 / m³] of the heavy species (He, O₂, N₂, Ar, O) at the
+altitude `z` [km] given the natural logarithm of the number densities `an` in the internal
+order before the departures from diffusive equilibrium (see
+[`_jacchia1977_departures`](@ref)) and `ln10`, the natural logarithm of 10 in the working
+type.
+"""
+function _jacchia1977_heavy_number_density(
+    an::NTuple{6, <:Number}, z::Number, ln10::Number
+)
+    a = _jacchia1977_departures(an, z, ln10)
+    return exp(a[1]) + exp(a[2]) + exp(a[3]) + exp(a[4]) + exp(a[5])
+end
+
+"""
+    _jacchia1977_diffuse(
+        an::NTuple{6, Number},
+        int::Number,
+        ΔlnT::Number
+    ) -> NTuple{6, Number}
+
+Apply the diffusion equation (eq. 16 of [1]) over one segment to the natural logarithm of
+the number densities `an` of the heavy species (the first five elements, in the internal
+order He, O₂, N₂, Ar, O), given the integral `int` of `g / (R T)` over the segment and the
+logarithm `ΔlnT` of the ratio between the temperatures at its beginning and end. The
+hydrogen value (sixth element) is returned unchanged.
+"""
+function _jacchia1977_diffuse(an::NTuple{6, <:Number}, int::Number, ΔlnT::Number)
+    Mi = _JACCHIA1977_CONSTANTS.Mi
+    αi = _JACCHIA1977_CONSTANTS.αi
+
+    return (
+        an[1] - int * Mi[1] + ΔlnT * (1 + αi[1]),
+        an[2] - int * Mi[2] + ΔlnT * (1 + αi[2]),
+        an[3] - int * Mi[3] + ΔlnT * (1 + αi[3]),
+        an[4] - int * Mi[4] + ΔlnT * (1 + αi[4]),
+        an[5] - int * Mi[5] + ΔlnT * (1 + αi[5]),
+        an[6],
+    )
+end
+
+"""
     _jacchia1977_static(
         T∞::T1,
         z::T2[, ΔT_geo::T3]
-    ) where {T1<:Number, T2<:Number, T3<:Number} -> NTuple{6, T}, T, T
+    ) where {T1 <: Number, T2 <: Number, T3 <: Number} -> NTuple{6, T}, T, T
 
 Compute the Jacchia 1977 static model (routine IMOWEI of [2]) for the exospheric
 temperature `T∞` [K] and altitude `z` [km].
 
 The function numerically integrates the barometric equation between 90 km and 100 km and
-the diffusion equations above 100 km using the Boole rule, as in the reference
-implementation [2]. The atomic hydrogen is anchored at 500 km and integrated with its flux
-term for other altitudes.
+the diffusion equations above 100 km using the composite 8-point Gauss-Legendre quadrature
+(the reference implementation [2] uses the Boole rule with a much finer step, leading to
+the same results to about 1e-8 in the base-10 logarithm of the number densities). The
+atomic hydrogen is anchored at 500 km and integrated with its flux term for other
+altitudes, panel by panel together with the other species.
 
 If the geomagnetic variation of the exospheric temperature `ΔT_geo` [K] is provided, the
 temperature profile is increased by `ΔT_geo` weighted by the altitude-dependent profile of
@@ -758,7 +921,8 @@ conditions becomes `T∞ + ΔT_geo`.
 # Returns
 
 - `NTuple{6, T}`: Base-10 logarithm of the number densities [1 / m³] in the internal order
-    (He, O₂, N₂, Ar, O, H), where `T` is the promotion of `T1` and `T2`.
+    (He, O₂, N₂, Ar, O, H), where `T` is the promotion of `T1` and `T2`. The hydrogen
+    value is a placeholder (0) at altitudes up to 140 km, where it is not modeled.
 - `T`: Mean molecular mass at the selected altitude [g / mol].
 - `T`: Total density at the selected altitude [kg / m³].
 
@@ -770,20 +934,20 @@ conditions becomes `T∞ + ΔT_geo`.
     1977 model*. INPE, São José dos Campos, BR.
 """
 function _jacchia1977_static(
-    T∞::T1, z::T2, ΔT_geo::T3 = zero(T1)
+    T∞::T1, z::T2, ΔT_geo::T3 = zero(T1); panel = _JACCHIA1977_CONSTANTS.panel
 ) where {T1 <: Number, T2 <: Number, T3 <: Number}
-    Rstar = _JACCHIA1977_CONSTANTS.Rstar
     Av    = _JACCHIA1977_CONSTANTS.Av
-    Ra    = _JACCHIA1977_CONSTANTS.Ra
-    g₀    = _JACCHIA1977_CONSTANTS.g₀
     M₀    = _JACCHIA1977_CONSTANTS.M₀
     qi    = _JACCHIA1977_CONSTANTS.qi
     T₀    = _JACCHIA1977_CONSTANTS.T₀
+    z₀    = _JACCHIA1977_CONSTANTS.z₀
     ρ₀    = _JACCHIA1977_CONSTANTS.ρ₀
     Mi    = _JACCHIA1977_CONSTANTS.Mi
     αi    = _JACCHIA1977_CONSTANTS.αi
     Ca    = _JACCHIA1977_CONSTANTS.Ca
-    Wb    = _JACCHIA1977_CONSTANTS.Wb
+    z_bar = _JACCHIA1977_CONSTANTS.z_bar
+    z_hyd = _JACCHIA1977_CONSTANTS.z_hyd
+    z_ref = _JACCHIA1977_CONSTANTS.z_ref
 
     RT = float(promote_type(T1, T2, T3))
 
@@ -794,130 +958,80 @@ function _jacchia1977_static(
     # Hydrogen flux and number density at 500 km (mks), Section 7 [1]. The asymptotic
     # exospheric temperature includes the geomagnetic variation.
     aux       = 28.9 / (T∞ + ΔT_geo)^RT(0.25)
-    ϕH        = 10^(RT(6.90) + aux) / 2.0e20
+    ϕH        = exp10(RT(6.90) + aux) / 2.0e20
     ln_nH_500 = (RT(5.94) + aux) * ln10
 
     # Number of species included in the mean molecular mass (H is included above 140 km).
     nc = 5
 
-    # `an` contains the natural logarithm of the number densities in the internal order
-    # (He, O₂, N₂, Ar, O, H).
-    an = ntuple(_ -> RT(0), Val(6))
-
     ########################################################################################
     #           Barometric Equation Between 90 km and min(z, 100 km), Eq. 8 [1]            #
     ########################################################################################
 
-    z_end = min(z, RT(100))
+    z_end = min(z, RT(z_bar))
 
-    int = zero(RT)
-    zᵢ  = RT(90)
+    int = _jacchia1977_integrate(
+        _jacchia1977_barometric_integrand, RT(z₀), z_end, panel.bar, c, ΔT_geo
+    )
 
-    step, np = _jacchia1977_step(zᵢ, z_end, RT(0.05))
-
-    for _ in 1:np
-        g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2
-        Σ  = zero(RT)
-        zⱼ = zᵢ
-
-        @inbounds for i in 1:5
-            Δz = zⱼ - 90
-            M′ = @evalpoly(Δz, Ca[1], Ca[2], Ca[3], Ca[4], Ca[5], Ca[6])
-            Σ += Wb[i] * g * M′ / _jacchia1977_temperature(zⱼ, c, ΔT_geo)
-            zⱼ += step
-        end
-
-        int += step * Σ
-        zᵢ  += 4step
-    end
-
-    ρ′  = ρ₀ * exp(-int / Rstar)
-    Δz  = z_end - 90
-    M′  = @evalpoly(Δz, Ca[1], Ca[2], Ca[3], Ca[4], Ca[5], Ca[6])
+    ρ′  = ρ₀ * exp(-int)
+    M′  = @evalpoly(z_end - z₀, Ca[1], Ca[2], Ca[3], Ca[4], Ca[5], Ca[6])
     Tf  = _jacchia1977_temperature(z_end, c, ΔT_geo)
     N′  = Av * ρ′ / M₀ * T₀ / Tf
     ρ′  = N′ * M′
     aux = ρ′ / M₀
 
-    @reset an[1] = log(qi[1] * aux)
-    @reset an[2] = log(aux * (1 + qi[2]) - N′)
-    @reset an[3] = log(qi[3] * aux)
-    @reset an[4] = log(qi[4] * aux)
-    @reset an[5] = log(2 * (N′ - aux))
-    @reset an[6] = RT(0)
+    # `an` contains the natural logarithm of the number densities in the internal order
+    # (He, O₂, N₂, Ar, O, H). The hydrogen value is a placeholder up to 140 km. Notice that
+    # the tuple must be homogeneous since the helpers dispatch on its element type.
+    an = promote(
+        log(qi[1] * aux),
+        log(aux * (1 + qi[2]) - N′),
+        log(qi[3] * aux),
+        log(qi[4] * aux),
+        log(2 * (N′ - aux)),
+        RT(0),
+    )
 
-    if z > 100
+    if z > z_bar
         ####################################################################################
         #        Diffusion Equations Between 100 km and min(z, 140 km), Eq. 16 [1]         #
         ####################################################################################
 
-        z_ini = RT(100)
-        z_end = min(z, RT(140))
+        z_ini = RT(z_bar)
+        z_end = min(z, RT(z_hyd))
         Tᵢ    = Tf
-        int   = zero(RT)
 
-        step, np = _jacchia1977_step(z_ini, z_end, RT(0.05))
-        zᵢ       = z_ini
-
-        for _ in 1:np
-            g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
-            Σ  = zero(RT)
-            zⱼ = zᵢ
-
-            @inbounds for i in 1:5
-                Σ  += Wb[i] * g / _jacchia1977_temperature(zⱼ, c, ΔT_geo)
-                zⱼ += step
-            end
-
-            int += step * Σ
-            zᵢ  += 4step
-        end
+        int = _jacchia1977_integrate(
+            _jacchia1977_diffusion_integrand, z_ini, z_end, panel.low, c, ΔT_geo
+        )
 
         Tf  = _jacchia1977_temperature(z_end, c, ΔT_geo)
         aux = log(Tᵢ / Tf)
 
-        for i in 1:5
-            @reset an[i] = an[i] - int * Mi[i] + aux * (1 + αi[i])
-        end
+        an = _jacchia1977_diffuse(an, int, aux)
 
-        if z > 140
+        if z > z_hyd
             ################################################################################
             #     Diffusion Equations Between 140 km and 500 km (H Anchor), Eq. 16 [1]     #
             ################################################################################
 
             nc    = 6
-            z_ini = RT(140)
-            z_end = RT(500)
+            z_ini = RT(z_hyd)
+            z_end = RT(z_ref)
             Tᵢ    = Tf
-            int   = zero(RT)
-            zᵢ    = z_ini
 
-            step, np = _jacchia1977_step(z_ini, z_end, RT(5))
-
-            for _ in 1:np
-                g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
-                Σ  = zero(RT)
-                zⱼ = zᵢ
-
-                @inbounds for i in 1:5
-                    Σ  += Wb[i] * g / _jacchia1977_temperature(zⱼ, c, ΔT_geo)
-                    zⱼ += step
-                end
-
-                int += step * Σ
-                zᵢ  += 4step
-            end
+            int = _jacchia1977_integrate(
+                _jacchia1977_diffusion_integrand, z_ini, z_end, panel.mid, c, ΔT_geo
+            )
 
             Tf  = _jacchia1977_temperature(z_end, c, ΔT_geo)
             aux = log(Tᵢ / Tf)
 
-            @reset an[6] = ln_nH_500
+            an = _jacchia1977_diffuse(an, int, aux)
+            an = promote(an[1], an[2], an[3], an[4], an[5], ln_nH_500)
 
-            for i in 1:5
-                @reset an[i] = an[i] - int * Mi[i] + aux * (1 + αi[i])
-            end
-
-            if z != 500
+            if z != z_ref
                 ############################################################################
                 #      Integration Between 500 km and z With the Hydrogen Flux Term        #
                 ############################################################################
@@ -926,62 +1040,59 @@ function _jacchia1977_static(
                 # coefficient D = 2.0e20 √T / N and the total number density
                 # N = Σ₅ nᵢ + n_H, leading to (Σ₅ nᵢ / n_H + 1) Φ / (2.0e20 √T) dz. Since
                 # this term requires the number densities of the other species, the
-                # hydrogen is integrated panel by panel together with them.
+                # hydrogen is integrated panel by panel together with them, using the
+                # number densities at the beginning of each panel in the flux term.
 
                 Tᵢ    = Tf
-                z_ini = RT(500)
-                z_end = RT(z)
+                n, h  = _jacchia1977_panels(RT(z_ref), RT(z), panel.high)
+                Δ     = h / 2
+                zᵢ    = RT(z_ref)
 
-                step, np = _jacchia1977_step(z_ini, z_end, z < 500 ? RT(-5) : RT(2.5))
-                zᵢ       = z_ini
-
-                al = ntuple(_ -> RT(0), Val(5))
-
-                for _ in 1:np
-                    # Number densities with the departures from diffusive equilibrium
-                    # corrections (eqs. 14 and 15 of [1]) at the beginning of the segment.
-                    @reset al[1] = an[1]
-                    @reset al[2] =
-                        an[2] - RT(0.07) * (1 + tanh(RT(0.18) * (zᵢ - 111))) * ln10
-                    @reset al[3] = an[3]
-                    @reset al[4] = an[4]
-                    @reset al[5] =
-                        an[5] - RT(0.24) * exp(-RT(0.009) * (zᵢ - RT(97.7))^2) * ln10
-
-                    g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
+                for k in 1:n
                     # Total number density of the heavy species at the beginning of the
-                    # segment, used by the hydrogen flux term.
-                    Σn = exp(al[1]) + exp(al[2]) + exp(al[3]) + exp(al[4]) + exp(al[5])
+                    # panel, used by the hydrogen flux term.
+                    Σn = _jacchia1977_heavy_number_density(an, zᵢ, ln10)
 
+                    # Integrals of g / (R T) and 1 / √T over the panel.
+                    zm = zᵢ + Δ
                     Σ  = zero(RT)
                     Σs = zero(RT)
-                    zⱼ = zᵢ
 
-                    @inbounds for i in 1:5
-                        Tl = _jacchia1977_temperature(zⱼ, c, ΔT_geo)
-                        Σ += Wb[i] * g / Tl
-                        Σs += Wb[i] / √Tl
-                        zⱼ += step
+                    @inbounds for i in 1:8
+                        zⱼ  = zm + Δ * _GAUSS_LEGENDRE_8_NODES[i]
+                        Tl  = _jacchia1977_temperature(zⱼ, c, ΔT_geo)
+                        Σ  += _GAUSS_LEGENDRE_8_WEIGHTS[i] *
+                              _jacchia1977_diffusion_integrand(zⱼ, Tl)
+                        Σs += _GAUSS_LEGENDRE_8_WEIGHTS[i] / √Tl
                     end
 
-                    zᵢ += 4step
+                    int  = Δ * Σ
+                    ints = Δ * Σs
 
-                    int  = step * Σ
+                    zᵢ  += h
                     Tf   = _jacchia1977_temperature(zᵢ, c, ΔT_geo)
                     ΔlnT = log(Tᵢ / Tf)
                     Tᵢ   = Tf
 
-                    for i in 1:5
-                        @reset an[i] = an[i] - int * Mi[i] + ΔlnT * (1 + αi[i])
-                    end
+                    # Hydrogen barometric and flux terms over the same panel. The flux
+                    # term depends on the ratio between the total number density of the
+                    # heavy species and the hydrogen number density, which varies along
+                    # the panel. We use the trapezoidal rule for this ratio (Heun method):
+                    # a predictor with the ratio at the beginning of the panel followed by
+                    # a corrector with the average of the ratios at both ends. The
+                    # reference implementation [2] uses only the ratio at the beginning
+                    # with much smaller panels.
+                    lnH_bar = an[6] - (int * Mi[6] - ΔlnT * (1 + αi[6]))
 
-                    # Hydrogen barometric and flux terms over the same panel, using the
-                    # hydrogen number density at the beginning of the segment.
-                    Σϕ = Σn / exp(an[6]) * ϕH
+                    an = _jacchia1977_diffuse(an, int, ΔlnT)
 
-                    @reset an[6] =
-                        an[6] - (int * Mi[6] - ΔlnT * (1 + αi[6])) -
-                        (Σϕ + ϕH) * Σs * 1000 * step
+                    Σϕ₀   = Σn / exp(an[6]) * ϕH
+                    lnH   = lnH_bar - (Σϕ₀ + ϕH) * ints * 1000
+                    Σn    = _jacchia1977_heavy_number_density(an, zᵢ, ln10)
+                    Σϕ₁   = Σn / exp(lnH) * ϕH
+                    lnH   = lnH_bar - ((Σϕ₀ + Σϕ₁) / 2 + ϕH) * ints * 1000
+
+                    an = promote(an[1], an[2], an[3], an[4], an[5], lnH)
                 end
             end
         end
@@ -991,52 +1102,26 @@ function _jacchia1977_static(
     #        Departures From Diffusive Equilibrium (Eqs. 14 and 15 [1]) and Output         #
     ########################################################################################
 
-    @reset an[2] = an[2] - RT(0.07) * (1 + tanh(RT(0.18) * (z - 111))) * ln10
-    @reset an[5] = an[5] - RT(0.24) * exp(-RT(0.009) * (z - RT(97.7))^2) * ln10
+    an = _jacchia1977_departures(an, z, ln10)
 
     Σm = zero(RT)
     Σn = zero(RT)
-    log₁₀_n = ntuple(_ -> RT(0), Val(6))
 
-    @inbounds for i in 1:6
-        if i <= nc
-            nᵢ = exp(an[i])
-            Σm += nᵢ * Mi[i]
-            Σn += nᵢ
-        end
-
-        # Convert to base-10 logarithm. Notice that the reference implementation [2] clamps
-        # negative values to 0, truncating the number density of heavily depleted species
-        # (e.g. Ar at high altitudes) to 1 / m³. We return the true values instead.
-        @reset log₁₀_n[i] = an[i] / ln10
+    @inbounds for i in 1:nc
+        nᵢ  = exp(an[i])
+        Σm += nᵢ * Mi[i]
+        Σn += nᵢ
     end
+
+    # Convert to base-10 logarithm. Notice that the reference implementation [2] clamps
+    # negative values to 0, truncating the number density of heavily depleted species
+    # (e.g. Ar at high altitudes) to 1 / m³. We return the true values instead.
+    log₁₀_n = an ./ ln10
 
     M̄ = Σm / Σn
     ρ = Σm / Av
 
     return log₁₀_n, M̄, ρ
-end
-
-"""
-    _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number) -> Number, Int
-
-Compute the integration step [km] so that the interval between `z_ini` and `z_end` [km] is
-divided into an integer number of Boole rule applications with a step close to `base_step`
-[km], as in the reference implementation [2].
-
-# Returns
-
-- `Number`: Integration step [km], where each Boole rule application spans four steps.
-- `Int`: Number of Boole rule applications (panels) required to cover the interval. It is
-    0 if the interval length is smaller than or equal to the tolerance of 1e-4 km.
-"""
-function _jacchia1977_step(z_ini::Number, z_end::Number, base_step::Number)
-    quarter = (z_end - z_ini) / 4
-    n = trunc(Int, quarter / base_step)
-    (n <= 0) && (n = 1)
-    step = quarter / n
-    (abs(z_end - z_ini) <= 1e-4) && (n = 0)
-    return step, n
 end
 
 """

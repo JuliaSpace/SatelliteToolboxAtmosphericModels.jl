@@ -44,14 +44,21 @@
 #
 # The static model is compared against the file ja77_stat.dat, which contains the output of
 # the reference implementation [2] for F10 = F10ₐ = 100 sfu and altitudes from 90 km to
-# 2000 km. The tolerances are the half-ULP of the fixed-width format used to generate the
-# file, except for the values affected by the hydrogen number density. Here, we depart from
-# the reference implementation [2], which integrates the hydrogen over a window displaced
-# by one Boole panel below 500 km and omits the total number density factor of the flux
-# term of eq. 16 [1] above 500 km. The observed deviations from the file are at most
-# 0.024 in the hydrogen log-density (at 150 km), 0.0010 in the total log-density (at
-# 1990 km, where the hydrogen dominates the mass), and 0.0061 in the mean molecular mass
-# (at 1590 km).
+# 2000 km. The tolerances account for the half-ULP of the fixed-width format used to
+# generate the file and for the numerical integration scheme of the reference: the
+# reference uses the Boole rule with the gravity frozen at the center of each panel, whereas
+# we use the Gauss-Legendre quadrature with the gravity evaluated at the nodes, which
+# reproduces a converged integration to about 1e-7 in the base-10 logarithm of the number
+# densities. The observed deviations from the file are at most 0.00065 in the log-density
+# of the heavy species (at 90 km, where the file rounding dominates), 0.0010 in the total
+# log-density, and 0.0061 in the mean molecular mass.
+#
+# The hydrogen requires a larger tolerance since we also depart from the reference
+# implementation [2], which integrates the hydrogen over a window displaced by one Boole
+# panel below 500 km, omits the total number density factor of the flux term of eq. 16 [1]
+# above 500 km, and evaluates the flux term only at the beginning of each panel (we use the
+# Heun method). The observed deviation from the file is at most 0.038 in the hydrogen
+# log-density (at 150 km).
 #
 ############################################################################################
 
@@ -89,11 +96,11 @@
         # printing, whereas we return the true values. Hence, we apply the same clamp
         # before comparing.
         for i in 1:5
-            @test max(log₁₀_n[i], 0.0) ≈ an[i] atol = 0.0006
+            @test max(log₁₀_n[i], 0.0) ≈ an[i] atol = 0.001
         end
 
         # See the explanation about the hydrogen tolerance in the comment above.
-        @test max(log₁₀_n[6], 0.0) ≈ an[6] atol = 0.03
+        @test max(log₁₀_n[6], 0.0) ≈ an[6] atol = 0.05
 
         count += 1
     end
