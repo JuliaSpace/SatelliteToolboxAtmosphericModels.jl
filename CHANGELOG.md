@@ -18,6 +18,9 @@ Version 2.0.0
   outside its range (returning, e.g., 7.5 kg / m³ at the sea level), and JR1971 and JB2008
   had no upper bound. The classic Harris-Priester model also validates the density profile
   passed with the keyword `alt_ρ`.
+- ![BREAKING][badge-breaking] The field `turbo_scale_height` of `Nrlmsise00Flags` was
+  removed since it had no effect on the model (it is also unused in the reference
+  implementation).
 - ![BREAKING][badge-breaking] The keyword `n` (cosine exponent of the diurnal bulge) of both
   Harris-Priester models now accepts any `Number` in the interval `[2, 7]`, throwing an
   `ArgumentError` otherwise. Previously, the classic model required an `Int` in `[2, 6]`,

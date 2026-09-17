@@ -35,7 +35,6 @@ Flags to configure NRLMSISE-00.
 - `all_tn2_var::Bool`: All TN2 variations.
 - `all_nlb_var::Bool`: All NLB variations.
 - `all_tn3_var::Bool`: All TN3 variations.
-- `turbo_scale_height::Bool`: Turbo scale height variations.
 """
 Base.@kwdef struct Nrlmsise00Flags
     F10_Mean::Bool            = true
@@ -60,7 +59,6 @@ Base.@kwdef struct Nrlmsise00Flags
     all_tn2_var::Bool         = true
     all_nlb_var::Bool         = true
     all_tn3_var::Bool         = true
-    turbo_scale_height::Bool  = true
 end
 
 """
