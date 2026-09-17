@@ -29,24 +29,17 @@ end
 end
 
 if isempty(VERSION.prerelease)
-    using Pkg
-    Pkg.add("JET")
-    Pkg.add("AllocCheck")
-    Pkg.add("Aqua")
-
-    using JET
     using AllocCheck
     using Aqua
+    using JET
 
     @testset "Performance Tests" verbose = true begin
         include("./performance.jl")
     end
 
-    # ForwardDiff, Mooncake, ChainRulesCore, and Zygote are already declared in the test
-    # target of the Project.toml.
+    using ChainRulesCore
     using ForwardDiff
     using Mooncake
-    using ChainRulesCore
     using Zygote
 
     @testset "Extension Tests" verbose = true begin

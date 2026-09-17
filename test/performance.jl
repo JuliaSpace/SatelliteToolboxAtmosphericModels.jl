@@ -8,7 +8,6 @@
     Aqua.test_all(
         SatelliteToolboxAtmosphericModels;
         ambiguities = (recursive = false),
-        deps_compat = (check_extras = false),
     )
 end
 
