@@ -143,7 +143,7 @@ end
 # the debug message they emit is reported as a potential allocation even when the logging
 # is disabled.
 if Sys.isapple() && (VERSION >= v"1.12")
-    @warn "Allocation tests skipped on macOS with Julia 1.12+ due to AllocCheck limitations."
+    @warn "Allocation tests skipped on macOS with Julia 1.12+ (AllocCheck.jl limitation)."
 else
     @testset "Allocation Check" begin
         @test length(check_allocs(AtmosphericModels.exponential, (Float64,))) == 0
