@@ -26,7 +26,10 @@ end
 
 # Measure the allocations of a call after compiling it. The function and its arguments
 # are passed explicitly to avoid capturing global variables in closures, which allocate.
-function _measure_allocations(f::F, args...) where {F}
+# The number of arguments is a type parameter so that the splatted call is inferred on
+# Julia 1.10, where an untyped `args...` boxes the returned value, reporting spurious
+# allocations.
+function _measure_allocations(f::F, args::Vararg{Any, N}) where {F, N}
     f(args...)
     return @allocated f(args...)
 end
