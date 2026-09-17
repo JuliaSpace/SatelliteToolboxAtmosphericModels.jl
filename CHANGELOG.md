@@ -34,6 +34,9 @@ Version 2.0.0
   factor first and skips the maximum density profile on the night side, and the minimum and
   maximum profiles share a single implementation. The model is about 24 % faster, and the
   results are unchanged.
+- ![Info][badge-info] The allocation tests now verify at runtime that every model is
+  allocation-free, including the methods that fetch the space indices automatically, and
+  the static checks with AllocCheck.jl cover the methods with explicit space indices.
 - ![Bugfix][badge-bugfix] The Zygote.jl rule of `nrlmsise00` now supports the 7-element
   magnetic index vector `ap`. Previously, only the daily index was supported, and Zygote.jl
   failed for the vector input.
