@@ -34,6 +34,11 @@ Version 2.0.0
   numerically using the 8-point Gauss-Legendre quadrature, which reproduces a fine
   numerical integration to better than 1e-10 and makes the density continuous at 90 km and
   100 km. The results above 100 km are unchanged.
+- ![Bugfix][badge-bugfix] The Jacchia 1977 model returned a hydrogen number density of about
+  1 / m³ up to 140 km, where the model does not include the hydrogen, due to an internal
+  placeholder. It now returns 0, as the JR1971 model does below 500 km. Additionally, the
+  local temperature computed exactly at 90 km now keeps the type of the altitude, fixing
+  the derivative with respect to the altitude at that point in automatic differentiation.
 - ![Bugfix][badge-bugfix] The number densities of the species returned by the JR1971 model
   between 90 km and 100 km were computed from the total density using the constituent
   fractions of the model without the molecular mass factor used above 100 km. Hence, the

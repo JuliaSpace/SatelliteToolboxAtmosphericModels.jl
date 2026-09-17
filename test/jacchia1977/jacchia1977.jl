@@ -620,6 +620,23 @@ end
     @test isfinite(out.total_density)
 end
 
+@testset "Hydrogen Below 140 km" begin
+    # The model does not include the hydrogen up to 140 km. Hence, its number density must
+    # be 0 there (previously, a placeholder led to 1 / m³) and positive above.
+    jd = 2460000.5
+
+    for variant in (Val(:sr375), Val(:stela))
+        for h in (90e3, 120e3, 140e3)
+            out = AtmosphericModels.jacchia1977(jd, 0.3, 0.1, h, 100, 100, 3; variant)
+            @test out.H_number_density == 0
+            @test out.total_density > 0
+        end
+
+        out = AtmosphericModels.jacchia1977(jd, 0.3, 0.1, 140.001e3, 100, 100, 3; variant)
+        @test out.H_number_density > 1e11
+    end
+end
+
 @testset "Show" begin
     result = AtmosphericModels.jacchia1977(
         DateTime("2023-01-01T10:00:00"), 0, 0, 500e3, 100, 100, 3

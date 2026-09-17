@@ -38,6 +38,12 @@ const _JACCHIA1977_CONSTANTS = (;
 
     zx = 125.0, # .................................... Altitude of the inflection point [km]
 
+    # == Layer Boundaries of the Static Model ==============================================
+
+    z_bar = 100.0, # ...................... Top of the barometric region (mixing) [km], eq. 8
+    z_hyd = 140.0, # ................ Altitude above which the hydrogen is modeled [km], §7
+    z_ref = 500.0, # ................. Altitude of the hydrogen boundary conditions [km], §7
+
     # == Molecular Mass [g / mol] (He, O₂, N₂, Ar, O, H) ===================================
 
     Mi = (4.0026, 31.9988, 28.0134, 39.948, 15.9994, 1.00797),

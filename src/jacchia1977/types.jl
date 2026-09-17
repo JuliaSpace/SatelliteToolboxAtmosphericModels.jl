@@ -25,7 +25,8 @@ Output of the atmospheric model Jacchia 1977.
 - `O_number_density::T`: Number density of O [1 / m³].
 - `Ar_number_density::T`: Number density of Ar [1 / m³].
 - `He_number_density::T`: Number density of He [1 / m³].
-- `H_number_density::T`: Number density of H [1 / m³].
+- `H_number_density::T`: Number density of H [1 / m³]. It is 0 at altitudes up to 140 km,
+    where the model does not include the hydrogen.
 """
 struct Jacchia1977Output{T <: Number} <: AbstractAtmosphericModelOutput
     total_density::T

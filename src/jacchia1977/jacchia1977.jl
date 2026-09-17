@@ -486,10 +486,7 @@ function _jacchia1977_dynamic(
 
     # == Assemble the Output ===============================================================
 
-    n = 10 .^ ad
-    ρ = sum(n .* Mi) / Av
-
-    return Jacchia1977Output{RT}(ρ, Tz, T½, n[3], n[2], n[5], n[4], n[1], n[6])
+    return _jacchia1977_output(RT, ad, Tz, T½, z)
 end
 
 """
@@ -621,13 +618,46 @@ function _jacchia1977_stela_dynamic(
 
     # == Assemble the Output ===============================================================
 
-    n = 10 .^ ad
-    ρ = sum(n .* Mi) / Av
-
     # Local temperature from the profile related to the local exospheric temperature.
     Tz = _jacchia1977_temperature(z, _jacchia1977_profile_params(T∞))
 
-    return Jacchia1977Output{RT}(ρ, Tz, T∞, n[3], n[2], n[5], n[4], n[1], n[6])
+    return _jacchia1977_output(RT, ad, Tz, T∞, z)
+end
+
+"""
+    _jacchia1977_output(
+        ::Type{RT},
+        log₁₀_n::NTuple{6, Number},
+        Tz::Number,
+        T∞::Number,
+        z::Number
+    ) where {RT <: Number} -> Jacchia1977Output{RT}
+
+Build the output structure with element type `RT` given the base-10 logarithm of the
+number densities `log₁₀_n` [1 / m³] in the internal order (He, O₂, N₂, Ar, O, H), the
+local temperature `Tz` [K], the exospheric temperature `T∞` [K], and the altitude `z`
+[km]. The hydrogen number density is set to 0 at altitudes in which the hydrogen is not
+modeled (`z <= 140 km`), where `log₁₀_n[6]` holds a placeholder.
+"""
+function _jacchia1977_output(
+    ::Type{RT}, log₁₀_n::NTuple{6, <:Number}, Tz::Number, T∞::Number, z::Number
+) where {RT <: Number}
+    Mi    = _JACCHIA1977_CONSTANTS.Mi
+    Av    = _JACCHIA1977_CONSTANTS.Av
+    z_hyd = _JACCHIA1977_CONSTANTS.z_hyd
+
+    nHe = exp10(log₁₀_n[1])
+    nO₂ = exp10(log₁₀_n[2])
+    nN₂ = exp10(log₁₀_n[3])
+    nAr = exp10(log₁₀_n[4])
+    nO  = exp10(log₁₀_n[5])
+    nH  = (z > z_hyd) ? exp10(log₁₀_n[6]) : zero(RT)
+
+    # Total mass density [kg / m³].
+    ρ = (nHe * Mi[1] + nO₂ * Mi[2] + nN₂ * Mi[3] + nAr * Mi[4] + nO * Mi[5] + nH * Mi[6])
+    ρ /= Av
+
+    return Jacchia1977Output{RT}(ρ, Tz, T∞, nN₂, nO₂, nO, nAr, nHe, nH)
 end
 
 """
@@ -674,7 +704,9 @@ function _jacchia1977_temperature(z::Number, c::NTuple{7, T}) where {T <: Number
     Δzx = z - zx
     Δz₀ = z - z₀
 
-    (Δz₀ == 0) && return T(T₀)
+    # At the lower boundary, the profile tends to `T₀` with a vanishing derivative. We add
+    # `zero(Δz₀)` to keep the type of the altitude (e.g. dual numbers).
+    (Δz₀ == 0) && return zero(Δz₀) + T(T₀)
 
     if Δzx > 0
         return c[7] + c[4] * atan(c[5] * Δzx + c[6] * Δzx^3)
@@ -917,16 +949,18 @@ function _jacchia1977_static(
                         an[5] - RT(0.24) * exp(-RT(0.009) * (zᵢ - RT(97.7))^2) * ln10
 
                     g  = g₀ / (1 + (zᵢ + 2step) / Ra)^2 / Rstar
+                    # Total number density of the heavy species at the beginning of the
+                    # segment, used by the hydrogen flux term.
+                    Σn = exp(al[1]) + exp(al[2]) + exp(al[3]) + exp(al[4]) + exp(al[5])
+
                     Σ  = zero(RT)
                     Σs = zero(RT)
-                    Σn = zero(RT)
                     zⱼ = zᵢ
 
                     @inbounds for i in 1:5
                         Tl = _jacchia1977_temperature(zⱼ, c, ΔT_geo)
                         Σ += Wb[i] * g / Tl
                         Σs += Wb[i] / √Tl
-                        Σn += exp(al[i])
                         zⱼ += step
                     end
 
