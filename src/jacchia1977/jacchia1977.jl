@@ -187,9 +187,8 @@ function jacchia1977(
 
     # == Kp Delayed by the Geomagnetic Latitude Dependent Lag, Eq. 30 [1] ==================
 
-    # Compute the sine of the geomagnetic (invariant) latitude using the dipole
-    # approximation in [2].
-    sin_ϕᵢ = 0.9792 * sin(ϕ_gd) + 0.2028 * cos(ϕ_gd) * cos(λ - deg2rad(291))
+    # Compute the sine of the geomagnetic (invariant) latitude.
+    sin_ϕᵢ = _jacchia1977_sin_geomagnetic_latitude(ϕ_gd, λ)
 
     # Lag of the geomagnetic index [days].
     τ = 0.1 + 0.2 * (1 - sin_ϕᵢ^2)
@@ -296,7 +295,7 @@ function jacchia1977(
         days    = Dates.value(Date(instant) - Date(year(instant), 1, 1))
         Φ       = days / RT(365.2422)
 
-        return _jacchia1977_stela_dynamic(RT(z), ϕ_gd, Ωp, Ωs, δs, λ, Φ, F10, F10ₐ, Kp)
+        return _jacchia1977_stela_dynamic(RT, z, ϕ_gd, Ωp, Ωs, δs, λ, Φ, F10, F10ₐ, Kp)
     end
 
     # Fraction of the tropic year starting on January 1st, as in [2] (the epoch is the
@@ -304,7 +303,7 @@ function jacchia1977(
     Φ = mod((jd - 2433282.5) / 365.2422, 1)
 
     return _jacchia1977_dynamic(
-        RT(z), ϕ_gd, Ωp, Ωs, δs, λ, Φ, F10, F10ₐ, Kp, geomagnetic_profile
+        RT, z, ϕ_gd, Ωp, Ωs, δs, λ, Φ, F10, F10ₐ, Kp, geomagnetic_profile
     )
 end
 
@@ -385,6 +384,7 @@ end
 
 """
     _jacchia1977_dynamic(
+        ::Type{RT},
         z::Number,
         ϕ::Number,
         Ωp::Number,
@@ -397,7 +397,8 @@ end
         Kp::Number[, geomagnetic_profile::Val]
     ) -> Jacchia1977Output
 
-Compute the Jacchia 1977 dynamic model (routine ISDAMO of [2]).
+Compute the Jacchia 1977 dynamic model (routine ISDAMO of [2]), returning the output with
+element type `RT`.
 
 The optional argument `geomagnetic_profile` selects the profile of the geomagnetic
 variation of the temperature (see [`_jacchia1977_geomagnetic`](@ref)).
@@ -418,10 +419,10 @@ variation of the temperature (see [`_jacchia1977_geomagnetic`](@ref)).
 
 # Returns
 
-- `Jacchia1977Output`: Structure containing the results obtained from the model. Its
-    element type is the promotion of the types of the numeric inputs.
+- `Jacchia1977Output{RT}`: Structure containing the results obtained from the model.
 """
 function _jacchia1977_dynamic(
+    ::Type{RT},
     z::Number,
     ϕ::Number,
     Ωp::Number,
@@ -433,25 +434,7 @@ function _jacchia1977_dynamic(
     F10ₐ::Number,
     Kp::Number,
     geomagnetic_profile::Val = Val(:constant),
-)
-    Mi = _JACCHIA1977_CONSTANTS.Mi
-    Av = _JACCHIA1977_CONSTANTS.Av
-
-    RT = float(
-        promote_type(
-            typeof(z),
-            typeof(ϕ),
-            typeof(Ωp),
-            typeof(Ωs),
-            typeof(δs),
-            typeof(λ),
-            typeof(Φ),
-            typeof(F10),
-            typeof(F10ₐ),
-            typeof(Kp),
-        ),
-    )
-
+) where {RT <: Number}
     # == Static Model at the Mean Exospheric Temperature, Eq. 20 [1] =======================
 
     T½ = 5.48 * F10ₐ^RT(0.8) + 101.8 * F10^RT(0.4)
@@ -491,6 +474,7 @@ end
 
 """
     _jacchia1977_stela_dynamic(
+        ::Type{RT},
         z::Number,
         ϕ::Number,
         Ωp::Number,
@@ -504,7 +488,7 @@ end
     ) -> Jacchia1977Output
 
 Compute the Jacchia 1977 dynamic model using the simplified assembly of the CNES tools
-STELA and PATRIUS [3].
+STELA and PATRIUS [3], returning the output with element type `RT`.
 
 The static model is evaluated at a single local exospheric temperature computed with the
 hydrogen phase angle (-60°) of eq. 27 of [1] and a fixed diurnal exponent of 3, increased
@@ -531,10 +515,9 @@ behaviors to match its output.
 
 # Returns
 
-- `Jacchia1977Output`: Structure containing the results obtained from the model. Its
-    element type is the promotion of the types of the numeric inputs. The field
-    `exospheric_temperature` holds the local exospheric temperature used to evaluate the
-    static model, including the diurnal and geomagnetic variations.
+- `Jacchia1977Output{RT}`: Structure containing the results obtained from the model. The
+    field `exospheric_temperature` holds the local exospheric temperature used to evaluate
+    the static model, including the diurnal and geomagnetic variations.
 
 # References
 
@@ -545,6 +528,7 @@ behaviors to match its output.
     PATRIUS 4.16). Available in https://github.com/CNES/patrius.
 """
 function _jacchia1977_stela_dynamic(
+    ::Type{RT},
     z::Number,
     ϕ::Number,
     Ωp::Number,
@@ -555,25 +539,7 @@ function _jacchia1977_stela_dynamic(
     F10::Number,
     F10ₐ::Number,
     Kp::Number,
-)
-    Mi = _JACCHIA1977_CONSTANTS.Mi
-    Av = _JACCHIA1977_CONSTANTS.Av
-
-    RT = float(
-        promote_type(
-            typeof(z),
-            typeof(ϕ),
-            typeof(Ωp),
-            typeof(Ωs),
-            typeof(δs),
-            typeof(λ),
-            typeof(Φ),
-            typeof(F10),
-            typeof(F10ₐ),
-            typeof(Kp),
-        ),
-    )
-
+) where {RT <: Number}
     # == Local Exospheric Temperature ======================================================
 
     # Local solar time [h], wrapped to the interval (3.66, 27.66] as in the reference
@@ -594,8 +560,8 @@ function _jacchia1977_stela_dynamic(
     factor =
         1 + RT(0.15) * (δs / deg2rad(RT(23.44))) * sin_ϕ + RT(0.24) * cos_ϕ * (f - RT(0.5))
 
-    # Sine of the geomagnetic (invariant) latitude using the dipole approximation [2].
-    sin_ϕᵢ  = 0.9792 * sin_ϕ + 0.2028 * cos_ϕ * cos(λ - 5.0789081)
+    # Sine of the geomagnetic (invariant) latitude.
+    sin_ϕᵢ  = _jacchia1977_sin_geomagnetic_latitude(ϕ, λ)
     sin²_ϕᵢ = sin_ϕᵢ * sin_ϕᵢ
 
     # Geomagnetic variation of the exospheric temperature (eq. 31 [1]) weighted by the
@@ -612,7 +578,7 @@ function _jacchia1977_stela_dynamic(
 
     # == Static Model and Semiannual Variation =============================================
 
-    ad, ~, ~ = _jacchia1977_static(T∞, z)
+    ad, _, _ = _jacchia1977_static(T∞, z)
 
     ad = ad .+ _jacchia1977_semiannual(Φ, z)
 
@@ -1219,6 +1185,8 @@ function _jacchia1977_diurnal(
     # Exponent of the diurnal variation, eq. 26 [1].
     n = 2 + cos(ϕ * ϕ / (π / 2))^2
 
+    # The coefficient of the seasonal term is 0.15 divided by the obliquity of the ecliptic
+    # in radians, as in the reference implementation [2].
     aux = 1 + RT(0.3666069) * δs * sin(ϕ)
     cos_ϕ = cos(ϕ)
 
@@ -1229,10 +1197,10 @@ function _jacchia1977_diurnal(
     @inbounds for i in 1:6
         # Phase angle of the diurnal variation, eq. 27 [1]. For the hydrogen, the phase
         # angle is -60°.
-        β = (i == 6) ? -RT(1.0471976) : deg2rad(27 * (M̄ / Mi[i] - 1) - 35)
+        β = (i == 6) ? deg2rad(RT(-60)) : deg2rad(27 * (M̄ / Mi[i] - 1) - 35)
 
         A = H + β
-        f = RT(0.08) * cos(3A - RT(1.3089969)) + abs(cos(A / 2))^n
+        f = RT(0.08) * cos(3A - deg2rad(RT(75))) + abs(cos(A / 2))^n
 
         # Pseudo exospheric temperature of the i-th species, eq. 24 [1].
         Θᵢ = T½ * (aux + RT(0.24) * cos_ϕ * (f - RT(0.5)))
@@ -1260,7 +1228,7 @@ end
         ϕ::Number,
         λ::Number,
         z::Number[, geomagnetic_profile::Val]
-    ) -> NTuple{6, T}
+    ) -> NTuple{6, T}, T
 
 Compute the base-10 logarithm of the number densities of the static model evaluated at the
 exospheric temperature increased by the geomagnetic activity `Kp` [-], together with the
@@ -1289,8 +1257,8 @@ function _jacchia1977_geomagnetic(
     # Amplitude of the geomagnetic effect, eq. 31 [1].
     A = 57.5 * Kp * (1 + 0.027 * exp(0.4 * Kp))
 
-    # Sine of the geomagnetic (invariant) latitude using the dipole approximation [2].
-    sin_ϕᵢ  = 0.9792 * sin(ϕ) + 0.2028 * cos(ϕ) * cos(λ - 5.0789081)
+    # Sine of the geomagnetic (invariant) latitude.
+    sin_ϕᵢ  = _jacchia1977_sin_geomagnetic_latitude(ϕ, λ)
     sin²_ϕᵢ = sin_ϕᵢ * sin_ϕᵢ
     cos²_ϕᵢ = 1 - sin²_ϕᵢ
 
@@ -1311,6 +1279,18 @@ function _jacchia1977_geomagnetic(
     Δe = 5.2e-4 * A * cos²_ϕᵢ * cos²_ϕᵢ
 
     return ntuple(i -> dn[i] + ai[i] * Δz_H + Δe, Val(6)), ΔT∞
+end
+
+"""
+    _jacchia1977_sin_geomagnetic_latitude(ϕ::Number, λ::Number) -> Number
+
+Compute the sine of the geomagnetic (invariant) latitude [-] of the location with geodetic
+latitude `ϕ` [rad] and longitude `λ` [rad] using the dipole approximation of the reference
+implementation [2], whose pole is at 291° of longitude.
+"""
+function _jacchia1977_sin_geomagnetic_latitude(ϕ::Number, λ::Number)
+    sin_ϕ, cos_ϕ = sincos(ϕ)
+    return 0.9792 * sin_ϕ + 0.2028 * cos_ϕ * cos(λ - deg2rad(291))
 end
 
 """

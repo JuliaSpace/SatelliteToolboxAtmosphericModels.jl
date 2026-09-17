@@ -175,7 +175,7 @@ end
 
         for (i, ϕ) in enumerate(lats)
             out = AtmosphericModels._jacchia1977_dynamic(
-                z, ϕ, ra, 0.0, 0.0, ra - gst, Φ, F10, F10ₐ, Kp
+                Float64, z, ϕ, ra, 0.0, 0.0, ra - gst, Φ, F10, F10ₐ, Kp
             )
 
             n = (
