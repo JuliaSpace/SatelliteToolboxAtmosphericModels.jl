@@ -276,11 +276,38 @@ end
     ϕ_gd = 0.0
     λ    = 0.0
 
-    # Above maximum altitude returns 0.
-    @test AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 1500e3) == 0.0
-
-    # Below minimum altitude throws.
+    # Altitudes outside the profile range throw.
+    @test_throws ArgumentError AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 1500e3)
     @test_throws ArgumentError AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 50e3)
+    @test_throws ArgumentError AtmosphericModels.harrispriester(jd, ϕ_gd, λ, NaN)
+
+    # The limits of the profile are valid.
+    @test AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 100e3) > 0
+    @test AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 1000e3) > 0
+
+    # Malformed density profiles throw.
+    @test_throws ArgumentError AtmosphericModels.harrispriester(
+        jd, ϕ_gd, λ, 300e3; alt_ρ = [100e3 1.0 2.0]
+    )
+    @test_throws ArgumentError AtmosphericModels.harrispriester(
+        jd, ϕ_gd, λ, 300e3; alt_ρ = [100e3 1.0; 1000e3 2.0]
+    )
+    @test_throws ArgumentError AtmosphericModels.harrispriester(
+        jd, ϕ_gd, λ, 300e3; alt_ρ = [1000e3 1.0 2.0; 100e3 1.0 2.0]
+    )
+
+    # The modified model is valid only between 100 km and 1000 km.
+    @test_throws ArgumentError AtmosphericModels.harrispriester_modified(
+        jd, ϕ_gd, λ, 99.9e3, 150.0
+    )
+    @test_throws ArgumentError AtmosphericModels.harrispriester_modified(
+        jd, ϕ_gd, λ, 1000.1e3, 150.0
+    )
+    @test_throws ArgumentError AtmosphericModels.harrispriester_modified(
+        jd, ϕ_gd, λ, NaN, 150.0
+    )
+    @test AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 100e3, 150.0) > 0
+    @test AtmosphericModels.harrispriester_modified(jd, ϕ_gd, λ, 1000e3, 150.0) > 0
 end
 
 @testset "Custom Density Table" begin
@@ -355,9 +382,10 @@ end
     rho = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 1500e3; alt_ρ = user_tab)
     @test rho > 0
 
-    # Above max altitude (2000 km) should return 0.
-    rho_above = AtmosphericModels.harrispriester(jd, ϕ_gd, λ, 2500e3; alt_ρ = user_tab)
-    @test rho_above == 0.0
+    # Above the maximum altitude of the user table (2000 km), the function must throw.
+    @test_throws ArgumentError AtmosphericModels.harrispriester(
+        jd, ϕ_gd, λ, 2500e3; alt_ρ = user_tab
+    )
 end
 
 # == Harris-Priester Modified Model (Hatten & Russell 2017) ================================

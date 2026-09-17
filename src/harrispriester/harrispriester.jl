@@ -20,8 +20,8 @@ Compute the atmospheric density [kg / m³] using the Harris-Priester model.
 
 The model is valid only inside the altitude range of the density profile `alt_ρ` (100 km to
 1000 km for the default profile). The function throws an `ArgumentError` if the altitude `h`
-is lower than the minimum altitude in the profile, and returns zero if it is higher than the
-maximum altitude.
+is outside this range or if the profile has less than two rows, less than three columns, or
+altitudes that are not sorted in ascending order.
 
 # Arguments
 
@@ -67,20 +67,20 @@ function harrispriester(
 ) where {JT <: Number, PT <: Number, LT <: Number, HT <: Number, DT <: Number}
     (2 <= n <= 6) || throw(ArgumentError("The cosine exponent must be between 2 and 6."))
 
+    # Validate the density profile table and the altitude.
+    ((size(alt_ρ, 1) >= 2) && (size(alt_ρ, 2) >= 3)) || throw(
+        ArgumentError("The density profile must have at least 2 rows and 3 columns.")
+    )
+
+    alt_col = @view alt_ρ[:, 1]
+
+    issorted(alt_col) || throw(
+        ArgumentError("The altitudes in the density profile must be in ascending order.")
+    )
+
+    _check_altitude(h, first(alt_col), last(alt_col))
+
     RT = float(promote_type(JT, PT, LT, HT, DT))
-
-    min_alt = alt_ρ[1, 1]
-    max_alt = alt_ρ[end, 1]
-
-    if h < min_alt
-        throw(
-            ArgumentError(
-                "The altitude is lower than the minimum altitude in the density profile."
-            ),
-        )
-    elseif h > max_alt
-        return RT(0)
-    end
 
     # Compute the Sun declination, the Sun right ascension, and the right ascension of the
     # selected location [rad].
@@ -110,7 +110,6 @@ function harrispriester(
     cos_pow = cψ2 > _HARRIS_PRIESTER_MIN_COS ? RT(cψ2^n) : RT(0)
 
     # Search for the altitude index in the density table.
-    alt_col = @view alt_ρ[:, 1]
     ia = searchsortedlast(alt_col, h)
     ia = max(1, min(ia, size(alt_ρ, 1) - 1))
 

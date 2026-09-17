@@ -591,6 +591,15 @@ end
 end
 
 @testset "Errors" begin
+    # == Negative Altitude =================================================================
+
+    @test_throws ArgumentError AtmosphericModels.nrlmsise00(
+        now() |> datetime2julian, -1.0, 0, 0, 100, 100, 20
+    )
+    @test_throws ArgumentError AtmosphericModels.nrlmsise00(
+        now() |> datetime2julian, NaN, 0, 0, 100, 100, 20
+    )
+
     # == Wrong Size in Matrix `P` ==========================================================
 
     P = zeros(8, 3)

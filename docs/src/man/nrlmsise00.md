@@ -53,6 +53,8 @@ If we omit all space indices, the system tries to obtain them automatically for 
 day `jd` or `instant`. However, the indices must be already initialized using the function
 `SpaceIndices.init()`.
 
+The functions throw an `ArgumentError` if the altitude is negative.
+
 These functions return an object of type `Nrlmsise00Output` that contains the
 following fields:
 

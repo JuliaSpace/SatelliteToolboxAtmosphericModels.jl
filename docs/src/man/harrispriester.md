@@ -52,8 +52,7 @@ The following keywords are available:
 
 These functions return the atmospheric density [kg/m³]. Notice that the model is valid
 only inside the altitude range of the density profile (100 km to 1000 km for the default
-table). The functions throw an `ArgumentError` if the altitude is lower than the minimum
-altitude in the profile, and return zero if it is higher than the maximum altitude.
+table). The functions throw an `ArgumentError` if the altitude is outside this range.
 
 ### Examples
 
@@ -102,7 +101,9 @@ If we omit `F10ₐ`, the system tries to obtain it automatically for the selecte
 `instant`. However, the space indices must be already initialized using the function
 `SpaceIndices.init()`.
 
-These functions return the atmospheric density [kg/m³].
+These functions return the atmospheric density [kg/m³]. The model is valid only between
+100 km and 1000 km, and the functions throw an `ArgumentError` if the altitude is outside
+this range.
 
 ### Examples
 

@@ -80,3 +80,23 @@ function _kp_3h(instant::DateTime)
 
     return Kp_vect[id]
 end
+
+"""
+    _check_altitude(h::Number, h_min::Number, h_max::Number) -> Nothing
+
+Throw an `ArgumentError` if the altitude `h` [m] is not inside the interval `[h_min, h_max]`
+[m], which also happens if `h` is `NaN`. `h_max` can be `Inf` for models without an upper
+bound.
+"""
+function _check_altitude(h::Number, h_min::Number, h_max::Number)
+    (h_min <= h <= h_max) && return nothing
+
+    # Print the bounds in km, avoiding the decimal part when they are integers.
+    km(x) = isinteger(x / 1000) ? string(Int(x ÷ 1000)) : string(x / 1000)
+
+    if isinf(h_max)
+        throw(ArgumentError("The altitude must be greater than or equal to $(km(h_min)) km."))
+    end
+
+    throw(ArgumentError("The altitude must be between $(km(h_min)) km and $(km(h_max)) km."))
+end

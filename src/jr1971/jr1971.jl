@@ -52,7 +52,8 @@ If we omit all space indices, the system tries to obtain them automatically for 
 day `jd` or `instant`. However, the indices must be already initialized using the function
 `SpaceIndices.init()`.
 
-The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
+The function throws an `ArgumentError` if the altitude `h` is outside the interval
+[90, 3000] km.
 
 # Arguments
 
@@ -77,6 +78,8 @@ function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number)
 end
 
 function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
+    _check_altitude(h, _JR1971_H_MIN, _JR1971_H_MAX)
+
     # Get the data in the desired Julian Day. The Jacchia models were fitted with the
     # 10.7-cm flux adjusted to 1 AU, so we must not use the observed values here.
     F10  = space_index(Val(:F10adj), jd)
@@ -125,6 +128,8 @@ function jr1971(
     FT2 <: Number,
     KT <: Number,
 }
+    _check_altitude(h, _JR1971_H_MIN, _JR1971_H_MAX)
+
     RT = float(promote_type(JT, PT, LT, HT, FT, FT2, KT))
 
     # == Constants =========================================================================

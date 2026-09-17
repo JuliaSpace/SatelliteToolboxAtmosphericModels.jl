@@ -24,10 +24,12 @@ the exponential atmospheric model:
                     └            ┘
 
 in which `ρ₀`, `h₀`, and `H` are parameters obtained from tables that depend only on `h`.
+
+The function throws an `ArgumentError` if the altitude `h` is negative. Above 1000 km, the
+parameters of the last layer of the table are used.
 """
 function exponential(h::Number)
-    # Check the bounds.
-    h < 0 && throw(ArgumentError("The height must be non-negative."))
+    _check_altitude(h, 0, Inf)
 
     # Transform `h` to km.
     h /= 1000

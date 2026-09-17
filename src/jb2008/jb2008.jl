@@ -77,7 +77,8 @@ If we omit all space indices, the system tries to obtain them automatically for 
 day `jd` or `instant`. However, the indices must be already initialized using the function
 `SpaceIndices.init()`.
 
-The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
+The function throws an `ArgumentError` if the altitude `h` is outside the interval
+[90, 3000] km.
 
 # Arguments
 
@@ -107,6 +108,8 @@ function jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number)
 end
 
 function jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
+    _check_altitude(h, _JB2008_H_MIN, _JB2008_H_MAX)
+
     # Get the data in the desired Julian Day considering the tabular time of the model.
     F10    = space_index(Val(:F10obs), jd - 1)
     F10ₐ   = _f10_81day_mean(Val(:F10obs), jd - 1)
@@ -210,6 +213,8 @@ function jb2008(
     YT2 <: Number,
     DT <: Number,
 }
+    _check_altitude(h, _JB2008_H_MIN, _JB2008_H_MAX)
+
     RT = float(promote_type(JT, PT, LT, HT, FT, FT2, ST, ST2, MT, MT2, YT, YT2, DT))
 
     ########################################################################################
@@ -259,8 +264,6 @@ function jb2008(
 
     # Convert the altitude from [m] to [km].
     h /= 1000
-
-    (h < 90) && throw(ArgumentError("The altitude must not be lower than 90 km."))
 
     # Compute the Sun declination, the Sun right ascension, and the right ascension of the
     # selected location [rad].

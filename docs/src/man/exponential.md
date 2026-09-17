@@ -24,10 +24,11 @@ obtained after evaluation of some accurate models.
 In this package, we can compute the model using the following function:
 
 ```julia
-AtmosphericModels.exponential(h::T) where T<:Number -> Number
+AtmosphericModels.exponential(h::Number) -> Number
 ```
 
-where `h` is the desired height [m].
+where `h` is the desired height [m], which must be non-negative. Above 1000 km, the
+parameters of the last layer of the table are used.
 
 !!! warning
 

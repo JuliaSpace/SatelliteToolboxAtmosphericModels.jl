@@ -67,3 +67,8 @@
         end
     end
 end
+
+@testset "Errors" begin
+    @test_throws ArgumentError AtmosphericModels.exponential(-1.0)
+    @test_throws ArgumentError AtmosphericModels.exponential(NaN)
+end

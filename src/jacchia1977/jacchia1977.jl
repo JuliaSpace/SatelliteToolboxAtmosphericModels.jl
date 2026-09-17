@@ -156,6 +156,8 @@ function jacchia1977(
     geomagnetic_profile::Val = Val(:constant),
     variant::Val = Val(:sr375),
 )
+    _check_altitude(h, _JACCHIA1977_H_MIN, _JACCHIA1977_H_MAX)
+
     # == Daily F10.7 With the Solar Hour Angle Dependent Lag, Eq. 23 [1] ===================
 
     # Compute the Sun right ascension and the right ascension of the selected location
@@ -258,15 +260,14 @@ function jacchia1977(
     FT2 <: Number,
     KT <: Number,
 }
+    _check_altitude(h, _JACCHIA1977_H_MIN, _JACCHIA1977_H_MAX)
+
     RT = float(promote_type(JT, PT, LT, HT, FT, FT2, KT))
 
     # == Preliminaries =====================================================================
 
-    # Convert the altitude from [m] to [km] and check the bounds.
+    # Convert the altitude from [m] to [km].
     z = h / 1000
-
-    !(90 <= z <= 2000) &&
-        throw(ArgumentError("The altitude must be between 90 km and 2000 km."))
 
     geomagnetic_profile isa Union{Val{:constant}, Val{:tanh}} || throw(
         ArgumentError(

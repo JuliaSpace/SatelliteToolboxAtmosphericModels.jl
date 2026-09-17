@@ -65,3 +65,7 @@ const _JACCHIA1977_CONSTANTS = (;
 
     Wb = (14 / 45, 64 / 45, 24 / 45, 64 / 45, 14 / 45),
 )
+
+# Altitude bounds of the model [m].
+const _JACCHIA1977_H_MIN = 90_000
+const _JACCHIA1977_H_MAX = 2_000_000

@@ -136,3 +136,7 @@ const _JR1971_CONSTANTS = (;
         ),
     ),
 )
+
+# Altitude bounds of the model [m].
+const _JR1971_H_MIN = 90_000
+const _JR1971_H_MAX = 3_000_000

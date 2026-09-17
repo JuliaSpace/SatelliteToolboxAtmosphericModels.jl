@@ -9,6 +9,15 @@ Version 2.0.0
   through the logging system, which can be configured to show or hide them.
 - ![BREAKING][badge-breaking] The deprecated keyword `roots_container` of `jr1971`, which had
   no effect since v1.3.0, was removed.
+- ![BREAKING][badge-breaking] All the models now validate the altitude at their entry points,
+  throwing an `ArgumentError` outside their validity ranges: `[0, ∞)` for the exponential
+  and NRLMSISE-00 models, `[100, 1000]` km for the Harris-Priester models (the range of the
+  density profile for the classic model), `[90, 3000]` km for JR1971 and JB2008, and
+  `[90, 2000]` km for Jacchia 1977. Previously, the classic Harris-Priester model returned
+  zero above 1000 km, the modified Harris-Priester model silently extrapolated the density
+  outside its range (returning, e.g., 7.5 kg / m³ at the sea level), and JR1971 and JB2008
+  had no upper bound. The classic Harris-Priester model also validates the density profile
+  passed with the keyword `alt_ρ`.
 - ![Enhancement][badge-enhancement] The output structures of the models are now subtypes of
   the new abstract type `AbstractAtmosphericModelOutput`, and their `show` methods share a
   single implementation. The dependency on Crayons.jl was removed.

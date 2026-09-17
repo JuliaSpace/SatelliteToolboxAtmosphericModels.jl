@@ -323,6 +323,8 @@ end
 
 @testset "Errors" begin
     @test_throws ArgumentError AtmosphericModels.jr1971(now(), 0, 0, 89.9e3, 100, 100, 3)
+    @test_throws ArgumentError AtmosphericModels.jr1971(now(), 0, 0, 3000.1e3, 100, 100, 3)
+    @test_throws ArgumentError AtmosphericModels.jr1971(now(), 0, 0, NaN, 100, 100, 3)
 end
 
 @testset "Integer Inputs" begin

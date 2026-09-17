@@ -33,6 +33,9 @@ If `F10ₐ` is not provided, it will be automatically fetched using the `SpaceIn
 package. In this case, the initialization of the space indices package with
 `SpaceIndices.init()` is required.
 
+The model is valid only between 100 km and 1000 km. The function throws an `ArgumentError`
+if the altitude `h` is outside this range.
+
 # Arguments
 
 - `instant::DateTime`: Instant to compute the model represented using `DateTime`.
@@ -78,6 +81,8 @@ end
 function harrispriester_modified(
     jd::Number, ϕ_gd::Number, λ::Number, h::Number; n::Number = 4
 )
+    _check_altitude(h, _HARRIS_PRIESTER_MOD_H_MIN, _HARRIS_PRIESTER_MOD_H_MAX)
+
     # Fetch the 81-day centered average of F10.7 solar flux.
     F10ₐ = _f10_81day_mean(Val(:F10obs), jd)
 
@@ -92,19 +97,15 @@ end
 function harrispriester_modified(
     jd::JT, ϕ_gd::PT, λ::LT, h::HT, F10ₐ::FT; n::Number = 4
 ) where {JT <: Number, PT <: Number, LT <: Number, HT <: Number, FT <: Number}
+    _check_altitude(h, _HARRIS_PRIESTER_MOD_H_MIN, _HARRIS_PRIESTER_MOD_H_MAX)
+
     RT = float(promote_type(JT, PT, LT, HT, FT, typeof(n)))
 
     # Convert inputs to kilometers for consistency with the original Fortran model.
     h_km = h / 1000
 
     # Get altitude index.
-    if h_km < _HARRIS_PRIESTER_MOD_HVEC[1]
-        i = 1
-    elseif h_km >= _HARRIS_PRIESTER_MOD_HVEC[end]
-        i = length(_HARRIS_PRIESTER_MOD_HVEC)
-    else
-        i = searchsortedlast(_HARRIS_PRIESTER_MOD_HVEC, h_km)
-    end
+    i = searchsortedlast(_HARRIS_PRIESTER_MOD_HVEC, h_km)
 
     if i < length(_HARRIS_PRIESTER_MOD_HVEC)
         ρ_maxᵢ   = _harris_priester_mod_density_poly(F10ₐ, i, 1)

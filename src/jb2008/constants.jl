@@ -72,3 +72,7 @@ const _JB2008_GTM = (
 
 # Coefficients for high altitude density correction.
 const _JB2008_CHT = (0.22e0, -0.20e-02, 0.115e-02, -0.211e-05)
+
+# Altitude bounds of the model [m].
+const _JB2008_H_MIN = 90_000
+const _JB2008_H_MAX = 3_000_000

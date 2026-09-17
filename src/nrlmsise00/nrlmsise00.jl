@@ -81,6 +81,8 @@ If we omit all space indices, the system tries to obtain them automatically for 
 day `jd` or `instant`. However, the indices must be already initialized using the function
 `SpaceIndices.init()`.
 
+The function throws an `ArgumentError` if the altitude `h` is negative.
+
 # Arguments
 
 - `instant::DateTime`: Instant to compute the model represented using `DateTime`.
@@ -191,6 +193,7 @@ function nrlmsise00(
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, AbstractMatrix} = nothing,
 ) where {JT <: Number, HT <: Number, PT <: Number, LT <: Number}
+    _check_altitude(h, 0, Inf)
 
     # Fetch the space indices.
     #
@@ -287,6 +290,8 @@ function nrlmsise00(
     FT2 <: Number,
     T_AP <: Union{Number, AbstractVector},
 }
+    _check_altitude(h, 0, Inf)
+
     RT = promote_type(JT, HT, PT, LT, FT, FT2)
 
     # == Compute Auxiliary Variables =======================================================

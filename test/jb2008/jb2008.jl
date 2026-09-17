@@ -157,8 +157,14 @@ end
     # The altitude validation must happen at the model entry with a clear message.
     # Previously, altitudes below 90 km emitted a spurious warning and then threw an
     # ArgumentError mentioning an altitude of 0 km from inside the temperature function.
-    @test_throws "The altitude must not be lower than 90 km." AtmosphericModels.jb2008(
+    @test_throws "The altitude must be between 90 km and 3000 km." AtmosphericModels.jb2008(
         now(), 0, 0, 89.9e3, 100, 100, 100, 100, 100, 100, 100, 100, 85
+    )
+    @test_throws ArgumentError AtmosphericModels.jb2008(
+        now(), 0, 0, 3000.1e3, 100, 100, 100, 100, 100, 100, 100, 100, 85
+    )
+    @test_throws ArgumentError AtmosphericModels.jb2008(
+        now(), 0, 0, NaN, 100, 100, 100, 100, 100, 100, 100, 100, 85
     )
 end
 
