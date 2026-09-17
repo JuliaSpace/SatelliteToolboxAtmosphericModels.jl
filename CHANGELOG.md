@@ -23,6 +23,9 @@ Version 2.0.0
   `ArgumentError` otherwise. Previously, the classic model required an `Int` in `[2, 6]`,
   and the modified model accepted any value without validation. The exponent no longer
   participates in the output type promotion of the modified model.
+- ![Bugfix][badge-bugfix] The NRLMSISE-00 model returned `NaN` for all densities below the
+  mesopause (72.5 km) when the flag `departures_from_eq` was `false` because the mixed N₂
+  density used to blend the thermospheric and lower atmosphere profiles was not computed.
 - ![Bugfix][badge-bugfix] The NRLMSISE-00 model threw an `InexactError` when all the inputs
   were integers. The output element type is now the promotion of the input types converted
   to a floating-point type, as in the other models.

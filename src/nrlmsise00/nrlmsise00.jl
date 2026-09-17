@@ -138,7 +138,7 @@ If `ap` is an `AbstractVector`, it must be a vector with 7 elements as described
 
 # Extended help
 
-1. The densities of `O`, `H`, and `N` are set to `0` below `72.5 km`.
+1. The densities of `O`, `H`, `N`, and anomalous `O` are set to `0` below `72.5 km`.
 2. The exospheric temperature is set to global average for altitudes below `120 km`. The
     `120 km` gradient is left at global average value for altitudes below `72.5 km`.
 3. Anomalous oxygen is defined as hot atomic oxygen or ionized oxygen that can become
@@ -1585,14 +1585,20 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
         zh28, db28, tinf, tlb, xmd, α[3] - 1, ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
     )
 
-    if flags.departures_from_eq && (h <= altl[3])
-        # Mixed density at desired altitude.
+    if h <= altl[3]
+        # Mixed density at desired altitude. Notice that it must be computed regardless of
+        # the flag `departures_from_eq` because `_gtd7` uses it to blend the thermospheric
+        # and the lower atmosphere densities. The reference implementation only computes it
+        # when the flag is set, leading to a division by zero below the mesopause when the
+        # flag is unset.
         dm28, meso_tn1, meso_tgn1 = _densu(
             h, b28, tinf, tlb, xmm, α[3], ptm[6], s, g_lat, r_lat, meso_tn1, meso_tgn1
         )
 
         # Net density at desired altitude.
-        N2_number_density = _dnet(N2_number_density, dm28, zhm28, xmm, T(28))
+        if flags.departures_from_eq
+            N2_number_density = _dnet(N2_number_density, dm28, zhm28, xmm, T(28))
+        end
     end
 
     # == He Density ========================================================================

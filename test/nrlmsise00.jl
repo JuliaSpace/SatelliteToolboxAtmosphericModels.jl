@@ -598,6 +598,31 @@ end
     @test result == expected
 end
 
+@testset "Departures From Diffusive Equilibrium Flag" begin
+    # Below the mesopause, the mixed N₂ density must be computed regardless of the flag
+    # `departures_from_eq` since it is used to blend the densities. Previously, the model
+    # returned NaN for all densities in this case.
+    jd    = 2460000.5
+    flags = AtmosphericModels.Nrlmsise00Flags(departures_from_eq = false)
+
+    for h in (50e3, 70e3, 100e3, 300e3)
+        out = AtmosphericModels.nrlmsise00(jd, h, -0.4, -0.8, 150.0, 150.0, 4.0; flags = flags)
+        @test isfinite(out.total_density)
+        @test out.total_density > 0
+        @test isfinite(out.N2_number_density)
+    end
+
+    # Above 72.5 km, the flag changes the result. Below it, the thermospheric N₂ density is
+    # replaced by the lower atmosphere profile, so the flag has no effect.
+    out_on  = AtmosphericModels.nrlmsise00(jd, 300e3, -0.4, -0.8, 150.0, 150.0, 4.0)
+    out_off = AtmosphericModels.nrlmsise00(jd, 300e3, -0.4, -0.8, 150.0, 150.0, 4.0; flags = flags)
+    @test out_on.total_density != out_off.total_density
+
+    out_on  = AtmosphericModels.nrlmsise00(jd, 50e3, -0.4, -0.8, 150.0, 150.0, 4.0)
+    out_off = AtmosphericModels.nrlmsise00(jd, 50e3, -0.4, -0.8, 150.0, 150.0, 4.0; flags = flags)
+    @test out_on.total_density == out_off.total_density
+end
+
 @testset "Errors" begin
     # == Negative Altitude =================================================================
 
