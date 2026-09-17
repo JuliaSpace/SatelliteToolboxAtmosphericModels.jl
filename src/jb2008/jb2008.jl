@@ -221,42 +221,29 @@ function jb2008(
     #                                      Constants                                       #
     ########################################################################################
 
-    T₁    = 183.0       # ............................... Temperature at the lower bound [K]
-    z₁    = 90.0        # ................................. Altitude of the lower bound [km]
-    zx    = 125.0       # ............................ Altitude of the inflection point [km]
-    Rstar = 8314.32     # .. Rstar is the universal gas-constant (mks) [joules / (K . kmol)]
-    ρ₁    = 3.46e-6     # ........................................ Density at `z₁` [kg / m³]
-    A     = 6.02257e26  # ..................... Avogadro's constant (mks) [molecules / kmol]
-
-    # Assumed sea-level composition.
-    Mb₀  = 28.960
-    q₀N₂ = 0.78110
-    q₀O₂ = 0.20955
-    q₀Ar = 9.3400e-3
-    q₀He = 1.2890e-5
-
-    # Molecular weights of each specie [kg / kmol].
-    MN₂ = 28.0134
-    MO₂ = 31.9988
-    MO  = 15.9994
-    MAr = 39.9480
-    MHe = 4.0026
-    MH  = 1.00797
-
-    # Thermal diffusion coefficient for each specie.
-    α_N₂ = 0.0
-    α_O₂ = 0.0
-    α_O  = 0.0
-    α_Ar = 0.0
-    α_He = -0.38
-    α_H  = 0.0
-
-    # Values used to establish height step sizes in the integration process: `R1` between
-    # 90 km and 500 km, `R2` in the hydrogen integration from the altitude to 500 km when
-    # the altitude is lower than 500 km, and `R3` above 500 km.
-    R1 = 0.010
-    R2 = 0.025
-    R3 = 0.075
+    z₁    = _JB2008_CONSTANTS.z₁
+    Rstar = _JB2008_CONSTANTS.Rstar
+    ρ₁    = _JB2008_CONSTANTS.ρ₁
+    A     = _JB2008_CONSTANTS.A
+    Mb₀   = _JB2008_CONSTANTS.Mb₀
+    q₀N₂  = _JB2008_CONSTANTS.q₀N₂
+    q₀O₂  = _JB2008_CONSTANTS.q₀O₂
+    q₀Ar  = _JB2008_CONSTANTS.q₀Ar
+    q₀He  = _JB2008_CONSTANTS.q₀He
+    MN₂   = _JB2008_CONSTANTS.MN₂
+    MO₂   = _JB2008_CONSTANTS.MO₂
+    MO    = _JB2008_CONSTANTS.MO
+    MAr   = _JB2008_CONSTANTS.MAr
+    MHe   = _JB2008_CONSTANTS.MHe
+    MH    = _JB2008_CONSTANTS.MH
+    α_N₂  = _JB2008_CONSTANTS.α_N₂
+    α_O₂  = _JB2008_CONSTANTS.α_O₂
+    α_O   = _JB2008_CONSTANTS.α_O
+    α_Ar  = _JB2008_CONSTANTS.α_Ar
+    α_He  = _JB2008_CONSTANTS.α_He
+    R1    = _JB2008_CONSTANTS.R1
+    R2    = _JB2008_CONSTANTS.R2
+    R3    = _JB2008_CONSTANTS.R3
 
     ########################################################################################
     #                                    Preliminaries                                     #
@@ -379,7 +366,7 @@ function jb2008(
     # `Mbj` and `Tlj` contain, respectively, the mean molecular mass and local temperature
     # at the boundary of the integration interval.
     #
-    # The factor 1000 converts `Rstar` to the appropriate units.
+    # The factor 1000 converts the integration variable from [km] to [m].
     ρ = ρ₁ * (Mb₂ / Mb₁) * (Tl₁ / Tl₂) * exp(-1000 * int / Rstar)
 
     # == Eq. 2 [3] =========================================================================
@@ -586,14 +573,11 @@ end
 Compute the gravity [m / s²] at altitude `z` [km] according to the model Jacchia 1971 [3].
 """
 function _jb2008_gravity(z::Number)
-    # Mean Earth radius [km].
-    Re = 6356.766
-
-    # Gravity at Earth surface [m/s²].
-    g₀ = 9.80665
+    Ra = _JB2008_CONSTANTS.Ra
+    g₀ = _JB2008_CONSTANTS.g₀
 
     # Gravity at desired altitude [m/s²].
-    return g₀ / (1 + z / Re)^2
+    return g₀ / (1 + z / Ra)^2
 end
 
 """
@@ -667,11 +651,9 @@ model Jacchia 1971 [3]. The inflection point is considered to be `z = 125 km`.
 The caller must ensure that `z` is not lower than 90 km and that `T∞` is positive.
 """
 function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
-    # == Constants =========================================================================
-
-    T₁  = 183      # .................................... Temperature at the lower bound [K]
-    z₁  = 90       # ...................................... Altitude of the lower bound [km]
-    zx  = 125      # ................................. Altitude of the inflection point [km]
+    T₁  = _JB2008_CONSTANTS.T₁
+    z₁  = _JB2008_CONSTANTS.z₁
+    zx  = _JB2008_CONSTANTS.zx
     Δz₁ = z₁ - zx
 
     # Compute the temperature gradient at the inflection point.
