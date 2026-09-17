@@ -443,6 +443,12 @@ function jr1971(
         ρHe = ρ₁₂₅_He * exp((1 + αi.He + γHe) * lnTx + γHe * lnT∞)
 
         # -- Correction of Seasonal Variations of Helium by Latitude, Eq. 4-101 [3] --------
+        #
+        # NOTE: As in [3, 4, 5], this correction is applied only above 125 km, where the
+        # helium density is obtained from its own diffusion equation. Between 100 km and
+        # 125 km, the helium density is not corrected, leading to a step of the order of
+        # 10 % in the helium number density at 125 km. The total density is essentially
+        # unaffected since the helium mass is negligible in this region.
 
         Δlog₁₀ρ_He = _jr1971_helium_seasonal_correction(ϕ_gd, δs)
 

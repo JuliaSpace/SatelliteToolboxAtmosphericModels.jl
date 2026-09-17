@@ -85,6 +85,10 @@ function harrispriester_modified(
     _check_altitude(h, _HARRIS_PRIESTER_MOD_H_MIN, _HARRIS_PRIESTER_MOD_H_MAX)
 
     # Fetch the 81-day centered average of F10.7 solar flux.
+    #
+    # NOTE: The reference [1] does not state whether the fit uses the observed flux or the
+    # flux adjusted to 1 AU. We use the observed flux, which is the series usually
+    # provided to the Harris-Priester model in orbit propagators.
     F10ₐ = _f10_81day_mean(Val(:F10obs), jd)
 
     @debug """

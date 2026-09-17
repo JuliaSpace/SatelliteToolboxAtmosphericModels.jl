@@ -1175,6 +1175,11 @@ function _jacchia1977_seasonal_latitudinal(Φ::Number, δs::Number, ϕ::Number, 
     # absolute value of the entire term due to the Fortran DSIGN intrinsic, dropping the
     # sign of `P`. We follow eq. 37 of the report [1] instead, in which only the sign of
     # the latitude multiplies the term.
+    #
+    # NOTE: The altitude offset of 91 km follows eq. 38 of [1] and the reference
+    # implementation [2]. The equivalent term of the Jacchia-Roberts 1971 model (see
+    # `jr1971`) uses an offset of 90 km, as in the 1971 report. Hence, this term does not
+    # vanish exactly at the lower bound of the model (90 km).
     Δz = z - 91
     S  = 0.014 * Δz * exp(-0.0013 * Δz * Δz)
     P  = sin(2π * Φ + 1.72)
