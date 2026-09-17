@@ -26,6 +26,14 @@ Version 2.0.0
   `ArgumentError` otherwise. Previously, the classic model required an `Int` in `[2, 6]`,
   and the modified model accepted any value without validation. The exponent no longer
   participates in the output type promotion of the modified model.
+- ![Bugfix][badge-bugfix] The JR1971 model returned wrong densities between 90 km and
+  100 km. The closed-form solution of the barometric equation presented in the reference
+  (and also implemented in GMAT) led to an almost constant density in this region and to a
+  discontinuity of a factor of about 6 at 100 km (e.g. 3.07e-6 kg / m³ at 99.999 km and
+  5.38e-7 kg / m³ at 100.001 km). The model now integrates the barometric equation
+  numerically using the 8-point Gauss-Legendre quadrature, which reproduces a fine
+  numerical integration to better than 1e-10 and makes the density continuous at 90 km and
+  100 km. The results above 100 km are unchanged.
 - ![Enhancement][badge-enhancement] The NRLMSISE-00 model computes the cubic spline of the
   lower thermosphere temperature profile once per evaluation instead of once per species,
   making the model about 13 % faster below 72.5 km. The Legendre functions are now stored in

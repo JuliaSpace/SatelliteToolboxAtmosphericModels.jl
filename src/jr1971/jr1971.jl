@@ -151,8 +151,6 @@ function jr1971(
     Aa    = _JR1971_CONSTANTS.Aa
     Ca    = _JR1971_CONSTANTS.Ca
     la    = _JR1971_CONSTANTS.la
-    α     = _JR1971_CONSTANTS.α
-    β     = _JR1971_CONSTANTS.β
     ζ     = _JR1971_CONSTANTS.ζ
     δij   = _JR1971_CONSTANTS.δij
 
@@ -272,9 +270,38 @@ function jr1971(
 
     # == Density ===========================================================================
 
-    if h == z₁
-        # Compute the total density.
-        ρ = ρ₁ * Δρ_c
+    if h <= z₂
+
+        # == Altitudes Between 90 km and 100 km ============================================
+        #
+        # The closed-form solution of the barometric equation in this region presented in
+        # [1] uses partial fractions of the temperature polynomial. Its assembly, as also
+        # implemented in [5], leads to densities almost constant between 90 km and 100 km
+        # and a discontinuity of a factor of about 6 at 100 km. Hence, we integrate the
+        # barometric equation numerically using the Gauss-Legendre quadrature, which is
+        # exact to the round-off for the smooth integrand in this short interval.
+
+        # Integral of g M / (R T) between `z₁` and `h` using the 8-point Gauss-Legendre
+        # quadrature. Notice that `g` [m / s²], `M` [g / mol], `R` [J / (K . mol)], and the
+        # altitude [km] lead to a dimensionless integral.
+        Δz = (h - z₁) / 2
+        zm = (h + z₁) / 2
+        int = zero(RT)
+
+        for i in 1:8
+            z   = zm + Δz * _GAUSS_LEGENDRE_8_NODES[i]
+            g   = g₀ * Ra² / (Ra + z)^2
+            M   = _jr1971_mean_molecular_mass(z)
+            T   = _jr1971_temperature(z, Tx, T∞)
+            int += _GAUSS_LEGENDRE_8_WEIGHTS[i] * g * M / T
+        end
+
+        int *= Δz / Rstar
+
+        # -- Compute the Density, eq. 13 [1] -----------------------------------------------
+
+        Mz = _jr1971_mean_molecular_mass(h)
+        ρ  = ρ₁ * Δρ_c * Mz * T₁ / (M₁ * Tz) * exp(-int)
 
         # Convert to SI and return.
         return JR1971Output{RT}(
@@ -289,7 +316,9 @@ function jr1971(
             (ρ * μi.H) * Av / Mi.H * 1e6,
         )
 
-    elseif z₁ < h <= zx
+    elseif h <= zx
+
+        # == Altitudes Between 100 km and 125 km ===========================================
 
         # First, we need to find the roots of the polynomial:
         #
@@ -305,158 +334,80 @@ function jr1971(
 
         k = -g₀ / (Rstar * (Tx - T₁))
 
-        # -- U(ν), V(ν), W(ν), and X — see _jr1971_U, _jr1971_V, _jr1971_W ----------------
+        # -- U(ν), V(ν), W(ν), and X — see _jr1971_U, _jr1971_V, _jr1971_W -----------------
 
         x²_plus_y² = x * x + y * y
         X = -2r₁ * r₂ * Ra * (Ra² + 2x * Ra + x²_plus_y²)
 
-        # The original paper [1] divided into two sections: 90 km to 105 km, and 105 km to
-        # 125 km. However, [3] divided into 90 to 100 km, and 100 km to 125 km.
+        # First, we need to compute the temperature and density at 100 km.
+        T₁₀₀ = _jr1971_temperature(z₂, Tx, T∞)
 
-        if h <= z₂
+        # References [3,4] suggest to compute the density using a polynomial fit, so
+        # that the computational burden can be reduced:
+        #
+        ρ₁₀₀ = @evalpoly(T∞, ζ[1], ζ[2], ζ[3], ζ[4], ζ[5], ζ[6], ζ[7]) * M₀
 
-            # == Altitudes Between 90 km and 100 km ========================================
+        # Notice that this fit is not exactly consistent with the numerical integration
+        # of the barometric equation below 100 km, leading to a small discontinuity (up to
+        # about 0.1 %) at 100 km, which is also present in [5].
 
-            # -- S(z) Polynomial, [1, p. 371] ----------------------------------------------
+        # Apply the density correction to the density at 100 km.
+        ρ₁₀₀ *= Δρ_c
 
-            Tx_ratio = Tx / (Tx - T₁)
+        # -- Auxiliary Variables, [1, p. 374] ----------------------------------------------
 
-            B₀ = α[1] + β[1] * Tx_ratio
-            B₁ = α[2] + β[2] * Tx_ratio
-            B₂ = α[3] + β[3] * Tx_ratio
-            B₃ = α[4] + β[4] * Tx_ratio
-            B₄ = α[5] + β[5] * Tx_ratio
-            B₅ = α[6] + β[6] * Tx_ratio
+        q₂ = 1 / _jr1971_U(r₁, Ra, x, y, r₁, r₂)
+        q₃ = -1 / _jr1971_U(r₂, Ra, x, y, r₁, r₂)
+        q₅ = 1 / _jr1971_V(-Ra, x, y, r₁, r₂)
+        q₄ =
+            (
+                1 +
+                r₁ * r₂ * (Ra² - x²_plus_y²) * q₅ +
+                _jr1971_W(r₁, Ra, x, y, r₁, r₂) * q₂ +
+                _jr1971_W(r₂, Ra, x, y, r₁, r₂) * q₃
+            ) / X
+        q₆ = -q₅ - 2 * (x + Ra) * q₄ - (r₂ + Ra) * q₃ - (r₁ + Ra) * q₂
+        q₁ = -2q₄ - q₃ - q₂
 
-            # -- Auxiliary Variables, [1. p. 372] ------------------------------------------
+        # -- F₃ and F₄, [1, p. 374] --------------------------------------------------------
 
-            p₂ = _jr1971_S(r₁, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_U(r₁, Ra, x, y, r₁, r₂)
-            p₃ = -_jr1971_S(r₂, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_U(r₂, Ra, x, y, r₁, r₂)
-            p₅ = _jr1971_S(-Ra, B₀, B₁, B₂, B₃, B₄, B₅) / _jr1971_V(-Ra, x, y, r₁, r₂)
+        log_F₃ =
+            q₁ * log((h + Ra) / (z₂ + Ra)) +
+            q₂ * log((h - r₁) / (z₂ - r₁)) +
+            q₃ * log((h - r₂) / (z₂ - r₂)) +
+            q₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₂^2 - 2x * z₂ + x²_plus_y²))
 
-            # There is a typo in the fourth term in [1] that was corrected in [3].
+        F₄ =
+            q₅ * (h - z₂) / ((h + Ra) * (Ra + z₂)) +
+            q₆ / y * atan(y * (h - z₂) / (y^2 + (h - x) * (z₂ - x)))
 
-            p₄ = (
-                B₀ - r₁ * r₂ * Ra² * (B₄ + (2x + r₁ + r₂ - Ra) * B₅) -
-                r₁ * r₂ * Ra * x²_plus_y² * B₅ +
-                r₁ * r₂ * (Ra² - x²_plus_y²) * p₅ +
-                _jr1971_W(r₁, Ra, x, y, r₁, r₂) * p₂ +
-                _jr1971_W(r₂, Ra, x, y, r₁, r₂) * p₃
-            )
+        # -- Compute the Density of Each Specie [3] ----------------------------------------
 
-            p₄ = p₄ / X
+        # `f` is defined in [1, p. 371].
+        f = 35^4 * Ra² / Ca[5]
 
-            p₆ =
-                B₄ + (2x + r₁ + r₂ - Ra) * B₅ - p₅ - 2(x + Ra) * p₄ - (r₂ + Ra) * p₃ -
-                (r₁ + Ra) * p₂
-            p₁ = B₅ - 2p₄ - p₃ - p₂
+        expk = k * f * (log_F₃ + F₄)
+        ρN₂  = ρ₁₀₀ * Mi[1] / M₀ * μi[1] * (T₁₀₀ / Tz)^(1 + αi.N₂) * exp(Mi[1] * expk)
+        ρO₂  = ρ₁₀₀ * Mi[2] / M₀ * μi[2] * (T₁₀₀ / Tz)^(1 + αi.O₂) * exp(Mi[2] * expk)
+        ρO   = ρ₁₀₀ * Mi[3] / M₀ * μi[3] * (T₁₀₀ / Tz)^(1 + αi.O) * exp(Mi[3] * expk)
+        ρAr  = ρ₁₀₀ * Mi[4] / M₀ * μi[4] * (T₁₀₀ / Tz)^(1 + αi.Ar) * exp(Mi[4] * expk)
+        ρHe  = ρ₁₀₀ * Mi[5] / M₀ * μi[5] * (T₁₀₀ / Tz)^(1 + αi.He) * exp(Mi[5] * expk)
 
-            # -- F₁ and F₂, [1, p. 372-373] ------------------------------------------------
+        # Compute the total density.
+        ρ = ρN₂ + ρO₂ + ρO + ρAr + ρHe
 
-            log_F₁ =
-                p₁ * log((h + Ra) / (z₁ + Ra)) +
-                p₂ * log((h - r₁) / (z₁ - r₁)) +
-                p₃ * log((h - r₂) / (z₁ - r₂)) +
-                p₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₁^2 - 2x * z₁ + x²_plus_y²))
-
-            # This equation in [4] is wrong, since `f` is multiplying `A₆`. We will use the
-            # one in [3].
-            F₂ =
-                (h - z₁) * (Aa[7] + p₅ / ((h + Ra) * (z₁ + Ra))) +
-                p₆ / y * atan(y * (h - z₁) / (y^2 + (h - x) * (z₁ - x)))
-
-            # -- Compute the Density, eq. 13 [1] -------------------------------------------
-
-            Mz = _jr1971_mean_molecular_mass(h)
-            ρ  = ρ₁ * Δρ_c * Mz * T₁ / (M₁ * Tz) * exp(k * (log_F₁ + F₂))
-
-            # Convert to SI and return.
-            return JR1971Output{RT}(
-                1000ρ,
-                Tz,
-                T∞,
-                (ρ * μi.N₂) * Av / Mi.N₂ * 1e6,
-                (ρ * μi.O₂) * Av / Mi.O₂ * 1e6,
-                (ρ * μi.O) * Av / Mi.O * 1e6,
-                (ρ * μi.Ar) * Av / Mi.Ar * 1e6,
-                (ρ * μi.He) * Av / Mi.He * 1e6,
-                (ρ * μi.H) * Av / Mi.H * 1e6,
-            )
-        else
-
-            # == Altitudes Between 100 km and 125 km =======================================
-
-            # First, we need to compute the temperature and density at 100 km.
-            T₁₀₀ = _jr1971_temperature(z₂, Tx, T∞)
-
-            # References [3,4] suggest to compute the density using a polynomial fit, so
-            # that the computational burden can be reduced:
-            #
-            ρ₁₀₀ = @evalpoly(T∞, ζ[1], ζ[2], ζ[3], ζ[4], ζ[5], ζ[6], ζ[7]) * M₀
-
-            # However, it turns out that this approach leads to discontinuity at 100 km.
-            # This was also seen by GMAT [5].
-            #
-            # TODO: Check if we need to fix this.
-
-            # Apply the density correction to the density at 100 km.
-            ρ₁₀₀ *= Δρ_c
-
-            # -- Auxiliary Variables, [1, p. 374] ------------------------------------------
-
-            q₂ = 1 / _jr1971_U(r₁, Ra, x, y, r₁, r₂)
-            q₃ = -1 / _jr1971_U(r₂, Ra, x, y, r₁, r₂)
-            q₅ = 1 / _jr1971_V(-Ra, x, y, r₁, r₂)
-            q₄ =
-                (
-                    1 +
-                    r₁ * r₂ * (Ra² - x²_plus_y²) * q₅ +
-                    _jr1971_W(r₁, Ra, x, y, r₁, r₂) * q₂ +
-                    _jr1971_W(r₂, Ra, x, y, r₁, r₂) * q₃
-                ) / X
-            q₆ = -q₅ - 2 * (x + Ra) * q₄ - (r₂ + Ra) * q₃ - (r₁ + Ra) * q₂
-            q₁ = -2q₄ - q₃ - q₂
-
-            # -- F₃ and F₄, [1, p. 374] ----------------------------------------------------
-
-            log_F₃ =
-                q₁ * log((h + Ra) / (z₂ + Ra)) +
-                q₂ * log((h - r₁) / (z₂ - r₁)) +
-                q₃ * log((h - r₂) / (z₂ - r₂)) +
-                q₄ * log((h^2 - 2x * h + x²_plus_y²) / (z₂^2 - 2x * z₂ + x²_plus_y²))
-
-            F₄ =
-                q₅ * (h - z₂) / ((h + Ra) * (Ra + z₂)) +
-                q₆ / y * atan(y * (h - z₂) / (y^2 + (h - x) * (z₂ - x)))
-
-            # -- Compute the Density of Each Specie [3] ------------------------------------
-
-            # `f` is defined in [1, p. 371].
-            f = 35^4 * Ra² / Ca[5]
-
-            expk = k * f * (log_F₃ + F₄)
-            ρN₂  = ρ₁₀₀ * Mi[1] / M₀ * μi[1] * (T₁₀₀ / Tz)^(1 + αi.N₂) * exp(Mi[1] * expk)
-            ρO₂  = ρ₁₀₀ * Mi[2] / M₀ * μi[2] * (T₁₀₀ / Tz)^(1 + αi.O₂) * exp(Mi[2] * expk)
-            ρO   = ρ₁₀₀ * Mi[3] / M₀ * μi[3] * (T₁₀₀ / Tz)^(1 + αi.O) * exp(Mi[3] * expk)
-            ρAr  = ρ₁₀₀ * Mi[4] / M₀ * μi[4] * (T₁₀₀ / Tz)^(1 + αi.Ar) * exp(Mi[4] * expk)
-            ρHe  = ρ₁₀₀ * Mi[5] / M₀ * μi[5] * (T₁₀₀ / Tz)^(1 + αi.He) * exp(Mi[5] * expk)
-
-            # Compute the total density.
-            ρ = ρN₂ + ρO₂ + ρO + ρAr + ρHe
-
-            # Convert to SI and return.
-            return JR1971Output{RT}(
-                1000ρ,
-                Tz,
-                T∞,
-                ρN₂ * Av / Mi.N₂ * 1e6,
-                ρO₂ * Av / Mi.O₂ * 1e6,
-                ρO * Av / Mi.O * 1e6,
-                ρAr * Av / Mi.Ar * 1e6,
-                ρHe * Av / Mi.He * 1e6,
-                zero(RT),
-            )
-        end
+        # Convert to SI and return.
+        return JR1971Output{RT}(
+            1000ρ,
+            Tz,
+            T∞,
+            ρN₂ * Av / Mi.N₂ * 1e6,
+            ρO₂ * Av / Mi.O₂ * 1e6,
+            ρO * Av / Mi.O * 1e6,
+            ρAr * Av / Mi.Ar * 1e6,
+            ρHe * Av / Mi.He * 1e6,
+            zero(RT),
+        )
 
     else
 
@@ -473,10 +424,8 @@ function jr1971(
         ρ₁₂₅_Ar = Δρ_c * Mi[4] * 10^(@evalpoly(T∞, δij.Ar...)) / Av
         ρ₁₂₅_He = Δρ_c * Mi[5] * 10^(@evalpoly(T∞, δij.He...)) / Av
 
-        # However, it turns out that this approach leads to discontinuity at 125 km. This
-        # was also seen by GMAT [5].
-        #
-        # TODO: Check if we need to fix this.
+        # Notice that this fit leads to a very small discontinuity (about 0.002 %) at
+        # 125 km, which is also present in [5].
 
         # -- Compute `l` According to eq. 4-136 [3] ----------------------------------------
 
@@ -573,22 +522,6 @@ and `y` [km] of the complex root of the quartic polynomial. Notice that the equa
 `W` in [1] is incorrect and the corrected form from [3, 4] is used.
 """
 @inline _jr1971_W(ν, Ra, x, y, r₁, r₂) = r₁ * r₂ * Ra * (Ra + ν) * (Ra + (x^2 + y^2) / ν)
-
-"""
-    _jr1971_S(
-        z::Number,
-        B₀::Number,
-        B₁::Number,
-        B₂::Number,
-        B₃::Number,
-        B₄::Number,
-        B₅::Number
-    ) -> Number
-
-Compute the `S(z)` polynomial [1, p. 371] at the altitude `z` [km] given its coefficients
-`B₀` to `B₅`.
-"""
-@inline _jr1971_S(z, B₀, B₁, B₂, B₃, B₄, B₅) = @evalpoly(z, B₀, B₁, B₂, B₃, B₄, B₅)
 
 ############################################################################################
 
@@ -782,7 +715,7 @@ function _jr1971_temperature(z::Number, Tx::Number, T∞::Number)
     (z < z₁) && throw(ArgumentError("The altitude must not be lower than $(z₁) km."))
     (T∞ < 0) && throw(ArgumentError("The exospheric temperature must be positive."))
 
-    # == Compute the Temperature at Desired Altitude ========================================
+    # == Compute the Temperature at Desired Altitude =======================================
 
     if z <= zx
         Ca = _JR1971_CONSTANTS.Ca

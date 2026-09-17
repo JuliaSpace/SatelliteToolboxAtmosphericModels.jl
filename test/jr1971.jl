@@ -10,6 +10,15 @@
 #                                       Test Results                                       #
 ############################################################################################
 #
+# NOTE: The values at 92 km and 100 km in the tables below were obtained with this
+# implementation after fixing the density between 90 km and 100 km, and not from GMAT
+# R2018a. GMAT reproduces the closed-form solution of the reference, which yields an almost
+# constant density in this region (e.g. 3.87506e-09 g/cm³ at 92 km and 3.96585e-09 g/cm³ at
+# 100 km in the scenario 01, both higher than the density at 90 km) and a discontinuity of a
+# factor of about 6 at 100 km. The corrected values are validated by the numerical
+# integration of the barometric equation in the testset "Density Between 90 km and 100 km".
+# They are marked with (*) below.
+#
 # == Scenario 01 ===========================================================================
 #
 #   Values obtained from GMAT R2018a using the following inputs:
@@ -25,8 +34,8 @@
 #
 #       | Altitude [km]  | Density [g/cm³] |
 #       |----------------|------------------|
-#       |             92 | 3.87506e-09      |
-#       |            100 | 3.96585e-09      |
+#       |             92 | 2.70372e-09 (*)  |
+#       |            100 | 6.95226e-10 (*)  |
 #       |          100.1 | 6.8354e-10       |
 #       |          110.5 | 1.2124e-10       |
 #       |            125 | 1.60849e-11      |
@@ -50,8 +59,8 @@
 #
 #       | Altitude [km]  | Density [g/cm³] |
 #       |----------------|------------------|
-#       |             92 | 3.56187e-09      |
-#       |            100 | 3.65299e-09      |
+#       |             92 | 2.48519e-09 (*)  |
+#       |            100 | 6.39684e-10 (*)  |
 #       |          100.1 | 6.28941e-10      |
 #       |          110.5 | 1.11456e-10      |
 #       |            125 | 1.46126e-11      |
@@ -75,8 +84,8 @@
 #
 #       | Altitude [km]  | Density [g/cm³] |
 #       |----------------|------------------|
-#       |             92 | 5.55597e-09      |
-#       |            100 | 5.63386e-09      |
+#       |             92 | 3.87664e-09 (*)  |
+#       |            100 | 9.92375e-10 (*)  |
 #       |          100.1 | 9.75634e-10      |
 #       |          110.5 | 1.73699e-10      |
 #       |            125 | 2.41828e-11      |
@@ -104,8 +113,8 @@
     # Results in [kg/m³].
     results =
         [
-            3.87506e-09
-            3.96585e-09
+            2.70372e-09
+            6.95226e-10
             6.83540e-10
             1.21240e-10
             1.60849e-11
@@ -127,8 +136,8 @@
     # Results in [kg/m³].
     results =
         [
-            3.56187e-09
-            3.65299e-09
+            2.48519e-09
+            6.39684e-10
             6.28941e-10
             1.11456e-10
             1.46126e-11
@@ -150,8 +159,8 @@
     # Results in [kg/m³].
     results =
         [
-            5.55597e-09
-            5.63386e-09
+            3.87664e-09
+            9.92375e-10
             9.75634e-10
             1.73699e-10
             2.41828e-11
@@ -180,9 +189,63 @@ end
 # term. The values below are regression snapshots obtained from this implementation after
 # fixing the formula, using F10 = 150, F10ₐ = 100, and Kp = 4. For reference, the buggy
 # formula (3.24 F10) leads to T∞ ≈ 1056 K at 300 km, whereas the correct one yields
-# T∞ ≈ 894.35 K.
+# T∞ ≈ 894.35 K. The snapshot at 100 km was updated after fixing the density between 90 km
+# and 100 km.
 #
 ############################################################################################
+
+@testset "Density Between 90 km and 100 km" begin
+    # The closed-form solution of the barometric equation between 90 km and 100 km in the
+    # reference [1] (and in GMAT) leads to a density almost constant in this region and a
+    # discontinuity of a factor of about 6 at 100 km. The model now integrates the
+    # barometric equation numerically. Hence, the density must decrease monotonically and
+    # must be continuous at the limits of the region.
+    jd   = date_to_jd(2017, 1, 1, 0, 0, 0)
+    ϕ_gd = deg2rad(45)
+    λ    = 0.0
+
+    for Kp in (0, 4, 9), F10 in (70.0, 150.0, 250.0)
+        ρ = [
+            AtmosphericModels.jr1971(jd, ϕ_gd, λ, h, F10, F10, Kp).total_density for
+            h in 90e3:500:100e3
+        ]
+
+        @test all(diff(ρ) .< 0)
+
+        # The density must drop by a factor between 4 and 8 in this region.
+        @test 4 < ρ[1] / ρ[end] < 8
+
+        # Continuity at 90 km and 100 km (the tolerance accounts for the density gradient
+        # and for the polynomial fit of the density at 100 km used above this altitude).
+        for h in (90e3, 100e3)
+            ρ₋ = AtmosphericModels.jr1971(jd, ϕ_gd, λ, h, F10, F10, Kp).total_density
+            ρ₊ = AtmosphericModels.jr1971(jd, ϕ_gd, λ, h + 1e-3, F10, F10, Kp).total_density
+            @test ρ₊ ≈ ρ₋ rtol = 2e-3
+        end
+    end
+
+    # The 8-point Gauss-Legendre quadrature of the integrand of the barometric equation
+    # must match a fine midpoint integration between 90 km and 100 km.
+    out = AtmosphericModels.jr1971(jd, ϕ_gd, λ, 95e3, 100.0, 100.0, 4)
+    T∞  = out.exospheric_temperature
+    Tx  = 371.6678 + 0.0518806 * T∞ - 294.3505 * exp(-0.00216222 * T∞)
+    C   = AtmosphericModels._JR1971_CONSTANTS
+
+    f(z) =
+        C.g₀ * C.Ra^2 / (C.Ra + z)^2 * AtmosphericModels._jr1971_mean_molecular_mass(z) /
+        AtmosphericModels._jr1971_temperature(z, Tx, T∞) / C.Rstar
+
+    n  = 200_000
+    Δh = 10 / n
+    I  = sum(f(90 + (i + 0.5) * Δh) for i in 0:(n - 1)) * Δh
+
+    G = 5 * sum(
+        AtmosphericModels._GAUSS_LEGENDRE_8_WEIGHTS[i] *
+        f(95 + 5 * AtmosphericModels._GAUSS_LEGENDRE_8_NODES[i]) for i in 1:8
+    )
+
+    @test G ≈ I rtol = 1e-9
+end
 
 @testset "Exospheric Temperature When F10 != F10ₐ" begin
     jd      = date_to_jd(2017, 1, 1, 0, 0, 0)
@@ -196,7 +259,7 @@ end
     h = [100, 125.1, 300, 700, 1500] * 1000
 
     expected_ρ = [
-        3.953810506307218e-6
+        6.941830425832428e-7
         1.615563485591969e-8
         1.647659416350587e-11
         2.0027542699016525e-14
