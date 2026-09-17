@@ -10,8 +10,9 @@ const _HARRIS_PRIESTER_LAG_ANGLE = deg2rad(30.0)
 """
     const _HARRIS_PRIESTER_ALT_RHO
 
-Harris-Priester density profile [1] for a mean solar activity, where the columns are the
-altitude [m], the minimum density [kg / m³], and the maximum density [kg / m³].
+Harris-Priester density profile for a mean solar activity (see the references in
+`harrispriester.jl`), where the columns are the altitude [m], the minimum density
+[kg / m³], and the maximum density [kg / m³].
 """
 const _HARRIS_PRIESTER_ALT_RHO = SMatrix{50, 3, Float64, 150}(Tuple([
     100000.0 4.974e-07 4.974e-07
@@ -130,7 +131,7 @@ const _HARRIS_PRIESTER_MOD_H_MAX = 1000 * last(_HARRIS_PRIESTER_MOD_HVEC)
 
 # Coefficients of the cubic polynomials in the 81-day averaged F10.7 flux that give the
 # maximum (columns 1 to 4) and minimum (columns 5 to 8) densities [g / km³] at each altitude
-# of `_HARRIS_PRIESTER_MOD_HVEC` [1].
+# of `_HARRIS_PRIESTER_MOD_HVEC` (see the reference in `harrispriester_modified.jl`).
 const _HARRIS_PRIESTER_MOD_COEFS = SMatrix{50, 8, Float64, 400}(Tuple([
     687106.6098658189 -241.0377219880128 0.1486562739870937 -9.924023252663081e-5 439463.0624495309 -156.2606427080542 0.09360308920783865 -6.527111566792589e-5
     22651.20824497528 9.803270503713808 0.006683282018076352 -1.509596050086901e-5 15829.48731253604 6.545013973704011 0.003177592754286279 -1.026730477215192e-5

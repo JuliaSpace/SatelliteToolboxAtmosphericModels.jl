@@ -2,6 +2,18 @@
 #
 # Harris-Priester atmospheric density model.
 #
+## References ##############################################################################
+#
+# [1] Harris, I., Priester, W (1962). Time-dependent structure of the upper atmosphere.
+#     Journal of the Atmospheric Sciences, 19(4), pp. 286-301.
+#
+# [2] Montenbruck, O., Gill, E (2000). Satellite Orbits: Models, Methods and Applications.
+#     Springer-Verlag, Berlin, Germany, Section 3.5.1.
+#
+# [3] Long, A. C., Cappellari Jr., J. O., Velez, C. E., Fuchs, A. J (editors) (1989).
+#     Goddard Trajectory Determination System (GTDS) Mathematical Theory (Revision 1).
+#     FDD/552-89/0001 and CSC/TR-89/6001, Section 4.4.
+#
 ############################################################################################
 
 export harrispriester
@@ -16,7 +28,12 @@ export harrispriester
     ) -> Number
     harrispriester(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> Number
 
-Compute the atmospheric density [kg / m³] using the Harris-Priester model.
+Compute the atmospheric density [kg / m³] using the Harris-Priester model [1] with the
+diurnal bulge modeling and the density profile for the mean solar activity of [2, 3].
+
+The angle between the diurnal bulge apex and the position is computed using the geodetic
+latitude `ϕ_gd` in place of the geocentric declination, as in [2]. The difference is lower
+than 0.2° and its effect on the density is negligible for the accuracy of the model.
 
 The model is valid only inside the altitude range of the density profile `alt_ρ` (100 km to
 1000 km for the default profile). The function throws an `ArgumentError` if the altitude `h`
@@ -46,6 +63,16 @@ altitudes that are not sorted in ascending order.
 
 - `Number`: Atmospheric density [kg / m³]. The type is the promotion of the types of the
     numeric inputs.
+
+# References
+
+- **[1]** Harris, I., Priester, W (1962). *Time-dependent structure of the upper
+    atmosphere*. **Journal of the Atmospheric Sciences**, 19(4), pp. 286-301.
+- **[2]** Montenbruck, O., Gill, E (2000). *Satellite Orbits: Models, Methods and
+    Applications*. **Springer-Verlag**, Berlin, Germany, Section 3.5.1.
+- **[3]** Long, A. C., Cappellari Jr., J. O., Velez, C. E., Fuchs, A. J (editors) (1989).
+    *Goddard Trajectory Determination System (GTDS) Mathematical Theory (Revision 1)*.
+    FDD/552-89/0001 and CSC/TR-89/6001, Section 4.4.
 """
 function harrispriester(
     instant::DateTime,

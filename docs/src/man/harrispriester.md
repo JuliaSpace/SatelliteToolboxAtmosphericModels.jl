@@ -11,7 +11,13 @@ using SatelliteToolboxAtmosphericModels
 The Harris-Priester model is a simple, computationally efficient atmospheric density model
 for altitudes between 100 km and 1000 km. It models the diurnal density variation using a
 cosine power law and exponential interpolation between tabulated minimum and maximum density
-profiles.
+profiles:
+
+> **Harris, I., Priester, W** (1962). *Time-dependent structure of the upper atmosphere*.
+> **Journal of the Atmospheric Sciences**, 19(4), pp. 286-301.
+
+The implementation follows the formulation and the density profile for the mean solar
+activity of Montenbruck and Gill (2000), *Satellite Orbits*, Section 3.5.1.
 
 This package provides two variants of the model: the classic Harris-Priester and a modified
 version published in:
