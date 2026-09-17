@@ -111,11 +111,6 @@ The function throws an `ArgumentError` if the altitude `h` is outside the interv
     an `ArgumentError` for other values and when `geomagnetic_profile` is set to
     `Val(:tanh)` together with `Val(:stela)`.
     (**Default**: `Val(:sr375)`)
-- `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
-    index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
-    `Val` object, not a `Bool`, and it is only available in the methods that fetch the
-    space indices automatically.
-    (**Default**: `Val(true)`)
 
 # Returns
 
@@ -142,8 +137,7 @@ function jacchia1977(
     h::Number;
     geomagnetic_profile::Val = Val(:constant),
     variant::Val = Val(:sr375),
-    verbose::Val{verbosity} = Val(true),
-) where {verbosity}
+)
     return jacchia1977(
         datetime2julian(instant),
         ϕ_gd,
@@ -151,7 +145,6 @@ function jacchia1977(
         h;
         geomagnetic_profile = geomagnetic_profile,
         variant = variant,
-        verbose = verbose,
     )
 end
 
@@ -162,8 +155,7 @@ function jacchia1977(
     h::Number;
     geomagnetic_profile::Val = Val(:constant),
     variant::Val = Val(:sr375),
-    verbose::Val{verbosity} = Val(true),
-) where {verbosity}
+)
     # == Daily F10.7 With the Solar Hour Angle Dependent Lag, Eq. 23 [1] ===================
 
     # Compute the Sun right ascension and the right ascension of the selected location
@@ -203,7 +195,7 @@ function jacchia1977(
     # Select the Kp of the 3-hour interval containing the delayed instant.
     Kp = _kp_3h(julian2datetime(jd - τ))
 
-    verbosity && @debug """
+    @debug """
     Jacchia 1977 - Fetched Space Indices
       Lagged daily F10.7      : $(F10) sfu (lag = $(Δt) days)
       Gaussian averaged F10.7 : $(F10ₐ) sfu (window = [$(k_min), $(k_max)] days)

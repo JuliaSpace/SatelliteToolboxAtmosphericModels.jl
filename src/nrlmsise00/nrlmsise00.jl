@@ -106,11 +106,6 @@ day `jd` or `instant`. However, the indices must be already initialized using th
     reducing allocations and improving the performance. If it is `nothing`, the matrix is
     allocated inside the function.
     (**Default**: `nothing`)
-- `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
-    index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
-    `Val` object, not a `Bool`, and it is only available in the methods that fetch the
-    space indices automatically.
-    (**Default**: `Val(true)`)
 
 # Returns
 
@@ -175,8 +170,7 @@ function nrlmsise00(
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, AbstractMatrix} = nothing,
-    verbose::Val{verbosity} = Val(true),
-) where {verbosity}
+)
     return nrlmsise00(
         datetime2julian(instant),
         h,
@@ -185,7 +179,6 @@ function nrlmsise00(
         flags = flags,
         include_anomalous_oxygen = include_anomalous_oxygen,
         P = P,
-        verbose = Val(verbosity),
     )
 end
 
@@ -197,8 +190,7 @@ function nrlmsise00(
     flags::Nrlmsise00Flags = Nrlmsise00Flags(),
     include_anomalous_oxygen::Bool = true,
     P::Union{Nothing, AbstractMatrix} = nothing,
-    verbose::Val{verbosity} = Val(true),
-) where {JT <: Number, HT <: Number, PT <: Number, LT <: Number, verbosity}
+) where {JT <: Number, HT <: Number, PT <: Number, LT <: Number}
 
     # Fetch the space indices.
     #
@@ -209,7 +201,7 @@ function nrlmsise00(
         F10  = 150.0
         ap   = 4.0
 
-        verbosity && @debug """
+        @debug """
         NRLMSISE00 - Using default indices since h < 80 km
           Daily F10.7           : $(F10) sfu
           81-day averaged F10.7 : $(F10ₐ) sfu
@@ -226,7 +218,7 @@ function nrlmsise00(
         F10  = space_index(Val(:F10obs), jd - 1)
         ap   = sum(space_index(Val(:Ap), jd)) / 8
 
-        verbosity && @debug """
+        @debug """
         NRLMSISE00 - Fetched Space Indices
           Daily F10.7           : $(F10) sfu
           81-day averaged F10.7 : $(F10ₐ) sfu

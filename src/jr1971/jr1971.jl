@@ -82,10 +82,6 @@ The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
 
 # Keywords
 
-- `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
-    index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
-    `Val` object, not a `Bool`.
-    (**Default**: `Val(true)`)
 - `roots_container::Union{Nothing, AbstractVector}`: This keyword is not used anymore and
     is kept only for backward compatibility. The quartic polynomial roots are now computed
     using a closed-form algorithm that does not allocate.
@@ -101,10 +97,9 @@ function jr1971(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
-    verbose::Val{verbosity} = Val(true),
     roots_container::Union{Nothing, AbstractVector} = nothing,
-) where {verbosity}
-    return jr1971(datetime2julian(instant), ϕ_gd, λ, h; verbose = verbose)
+)
+    return jr1971(datetime2julian(instant), ϕ_gd, λ, h)
 end
 
 function jr1971(
@@ -112,9 +107,8 @@ function jr1971(
     ϕ_gd::Number,
     λ::Number,
     h::Number;
-    verbose::Val{verbosity} = Val(true),
     roots_container::Union{Nothing, AbstractVector} = nothing,
-) where {verbosity}
+)
     # Get the data in the desired Julian Day. The Jacchia models were fitted with the
     # 10.7-cm flux adjusted to 1 AU, so we must not use the observed values here.
     F10  = space_index(Val(:F10adj), jd)
@@ -124,14 +118,14 @@ function jr1971(
     # inside each 3-hour interval provided by the space index vector.
     Kp = _kp_3h(julian2datetime(jd) - Hour(3))
 
-    verbosity && @debug """
+    @debug """
     JR1971 - Fetched Space Indices
       Daily F10.7           : $(F10) sfu
       81-day averaged F10.7 : $(F10ₐ) sfu
       3-hour delayed Kp     : $(Kp)
     """
 
-    return jr1971(jd, ϕ_gd, λ, h, F10, F10ₐ, Kp; verbose = Val(verbosity))
+    return jr1971(jd, ϕ_gd, λ, h, F10, F10ₐ, Kp)
 end
 
 function jr1971(
@@ -142,12 +136,9 @@ function jr1971(
     F10::Number,
     F10ₐ::Number,
     Kp::Number;
-    verbose::Val{verbosity} = Val(true),
     roots_container::Union{Nothing, AbstractVector} = nothing,
-) where {verbosity}
-    return jr1971(
-        datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp; verbose = Val(verbosity)
-    )
+)
+    return jr1971(datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp)
 end
 
 function jr1971(
@@ -158,7 +149,6 @@ function jr1971(
     F10::FT,
     F10ₐ::FT2,
     Kp::KT;
-    verbose::Val{verbosity} = Val(true),
     roots_container::Union{Nothing, AbstractVector} = nothing,
 ) where {
     JT <: Number,
@@ -168,7 +158,6 @@ function jr1971(
     FT <: Number,
     FT2 <: Number,
     KT <: Number,
-    verbosity,
 }
     RT = float(promote_type(JT, PT, LT, HT, FT, FT2, KT))
 
@@ -407,7 +396,7 @@ function jr1971(
 
             # -- Compute the Density, eq. 13 [1] -------------------------------------------
 
-            Mz = _jr1971_mean_molecular_mass(h; verbose = Val(verbosity))
+            Mz = _jr1971_mean_molecular_mass(h)
             ρ  = ρ₁ * Δρ_c * Mz * T₁ / (M₁ * Tz) * exp(k * (log_F₁ + F₂))
 
             # Convert to SI and return.
@@ -649,26 +638,13 @@ function _jr1971_helium_seasonal_correction(ϕ_gd::Number, δs::Number)
 end
 
 """
-    _jr1971_mean_molecular_mass(z::Number; kwargs...) -> Number
+    _jr1971_mean_molecular_mass(z::Number) -> Number
 
 Compute the mean molecular mass [g / mol] at the altitude `z` [km] using the empirical
-profile in eq. 1 [3, 4], which is valid only between 90 km and 100 km.
-
-# Keywords
-
-- `verbose::Val`: Set to `Val(true)` to emit a warning when the altitude is outside the
-    validity range, or to `Val(false)` to suppress it.
-    (**Default**: `Val(true)`)
+profile in eq. 1 [3, 4], which is valid only between 90 km and 100 km. The caller must
+ensure that `z` is inside this range.
 """
-function _jr1971_mean_molecular_mass(
-    z::Number; verbose::Val{verbosity} = Val(true)
-) where {verbosity}
-    verbosity &&
-        !(90 <= z <= 100) &&
-        @warn(
-            "The empirical model for the mean molecular mass is valid only for 90 <= z <= 100 km."
-        )
-
+function _jr1971_mean_molecular_mass(z::Number)
     Aa = _JR1971_CONSTANTS.Aa
     molecular_mass = @evalpoly(z, Aa[1], Aa[2], Aa[3], Aa[4], Aa[5], Aa[6], Aa[7])
 

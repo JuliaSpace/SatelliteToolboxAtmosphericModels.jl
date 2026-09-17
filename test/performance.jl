@@ -37,7 +37,7 @@ else
         @test length(
             check_allocs(
                 (x1, x2, x3, x4) -> begin
-                    AtmosphericModels.jr1971(x1, x2, x3, x4; verbose = Val(false))
+                    AtmosphericModels.jr1971(x1, x2, x3, x4)
                 end,
                 (DateTime, Float64, Float64, Float64),
             ),
@@ -55,7 +55,7 @@ else
         @test length(
             check_allocs(
                 (x1, x2, x3, x4) -> begin
-                    AtmosphericModels.jb2008(x1, x2, x3, x4; verbose = Val(false))
+                    AtmosphericModels.jb2008(x1, x2, x3, x4)
                 end,
                 (DateTime, Float64, Float64, Float64),
             ),
@@ -64,7 +64,7 @@ else
         @test length(
             check_allocs(
                 (x1, x2, x3, x4, P) -> begin
-                    AtmosphericModels.nrlmsise00(x1, x2, x3, x4; P = P, verbose = Val(false))
+                    AtmosphericModels.nrlmsise00(x1, x2, x3, x4; P = P)
                 end,
                 (DateTime, Float64, Float64, Float64, Matrix{Float64}),
             ),

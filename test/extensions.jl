@@ -15,7 +15,7 @@
     # which the roots of the quartic polynomial are required.
     for h in (95e3, 110e3, 500e3)
         g = ForwardDiff.gradient(
-            x -> AtmosphericModels.jr1971(x...; verbose = Val(false)).total_density,
+            x -> AtmosphericModels.jr1971(x...).total_density,
             [instant, ϕ_gd, λ, h],
         )
         @test all(isfinite, g)

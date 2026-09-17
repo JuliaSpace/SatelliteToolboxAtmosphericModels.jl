@@ -33,7 +33,7 @@
 export jb2008
 
 """
-    jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> JB2008Output
+    jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number) -> JB2008Output
     jb2008(
         instant::DateTime,
         ϕ_gd::Number,
@@ -47,10 +47,9 @@ export jb2008
         M10ₐ::Number,
         Y10::Number,
         Y10ₐ::Number,
-        DstΔTc::Number;
-        kwargs...
+        DstΔTc::Number,
     ) -> JB2008Output
-    jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> JB2008Output
+    jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number) -> JB2008Output
     jb2008(
         jd::Number,
         ϕ_gd::Number,
@@ -64,8 +63,7 @@ export jb2008
         M10ₐ::Number,
         Y10::Number,
         Y10ₐ::Number,
-        DstΔTc::Number;
-        kwargs...
+        DstΔTc::Number,
     ) -> JB2008Output
 
 Compute the atmospheric density using the Jacchia-Bowman 2008 (JB2008) model.
@@ -99,31 +97,16 @@ The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
 - `Y10ₐ`: Solar X-ray & Ly-α 81-day averaged centered index obtained 5 days before `jd`.
 - `DstΔTc`: Temperature variation related to the Dst.
 
-# Keywords
-
-- `verbose::Val`: Set to `Val(true)` to emit debug messages related to the automatic space
-    index fetching, or to `Val(false)` to suppress them. Notice that this keyword must be a
-    `Val` object, not a `Bool`.
-    (**Default**: `Val(true)`)
-
 # Returns
 
 - `JB2008Output`: Structure containing the results obtained from the model. Its element
     type is the promotion of the types of the numeric inputs.
 """
-function jb2008(
-    instant::DateTime,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number;
-    verbose::Val{verbosity} = Val(true),
-) where {verbosity}
-    return jb2008(datetime2julian(instant), ϕ_gd, λ, h; verbose = Val(verbosity))
+function jb2008(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number)
+    return jb2008(datetime2julian(instant), ϕ_gd, λ, h)
 end
 
-function jb2008(
-    jd::Number, ϕ_gd::Number, λ::Number, h::Number; verbose::Val{verbosity} = Val(true)
-) where {verbosity}
+function jb2008(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
     # Get the data in the desired Julian Day considering the tabular time of the model.
     F10    = space_index(Val(:F10obs), jd - 1)
     F10ₐ   = _f10_81day_mean(Val(:F10obs), jd - 1)
@@ -135,7 +118,7 @@ function jb2008(
     Y10ₐ   = space_index(Val(:Y81a), jd - 5)
     DstΔTc = space_index(Val(:DTC), jd)
 
-    verbosity && @debug """
+    @debug """
     JB2008 - Fetched Space Indices
       Daily F10.7           : $(F10) sfu
       81-day averaged F10.7 : $(F10ₐ) sfu
@@ -161,8 +144,7 @@ function jb2008(
         M10ₐ,
         Y10,
         Y10ₐ,
-        DstΔTc;
-        verbose = Val(verbosity),
+        DstΔTc,
     )
 end
 
@@ -179,9 +161,8 @@ function jb2008(
     M10ₐ::Number,
     Y10::Number,
     Y10ₐ::Number,
-    DstΔTc::Number;
-    verbose::Val{verbosity} = Val(true),
-) where {verbosity}
+    DstΔTc::Number,
+)
     jd = datetime2julian(instant)
     return jb2008(
         jd,
@@ -196,8 +177,7 @@ function jb2008(
         M10ₐ,
         Y10,
         Y10ₐ,
-        DstΔTc;
-        verbose = Val(verbosity),
+        DstΔTc,
     )
 end
 
@@ -214,8 +194,7 @@ function jb2008(
     M10ₐ::MT2,
     Y10::YT,
     Y10ₐ::YT2,
-    DstΔTc::DT;
-    verbose::Val{verbosity} = Val(true),
+    DstΔTc::DT,
 ) where {
     JT <: Number,
     PT <: Number,
@@ -230,7 +209,6 @@ function jb2008(
     YT <: Number,
     YT2 <: Number,
     DT <: Number,
-    verbosity,
 }
     RT = float(promote_type(JT, PT, LT, HT, FT, FT2, ST, ST2, MT, MT2, YT, YT2, DT))
 
@@ -386,11 +364,11 @@ function jb2008(
 
     z₂ = min(h, RT(105))
 
-    int, z₂ = _jb2008_∫(z₁, z₂, R1, Tx, T∞, _jb2008_δf1; verbose = Val(verbosity))
+    int, z₂ = _jb2008_∫(z₁, z₂, R1, Tx, T∞, _jb2008_δf1)
 
-    Mb₁ = _jb2008_mean_molecular_mass(z₁; verbose = Val(verbosity))
+    Mb₁ = _jb2008_mean_molecular_mass(z₁)
     Tl₁ = _jb2008_temperature(z₁, Tx, T∞)
-    Mb₂ = _jb2008_mean_molecular_mass(z₂; verbose = Val(verbosity))
+    Mb₂ = _jb2008_mean_molecular_mass(z₂)
     Tl₂ = _jb2008_temperature(z₂, Tx, T∞)
 
     # `Mbj` and `Tlj` contain, respectively, the mean molecular mass and local temperature
@@ -449,7 +427,7 @@ function jb2008(
 
         z₃ = min(h, RT(500))
 
-        int₁, z₃ = _jb2008_∫(z₂, z₃, R1, Tx, T∞, _jb2008_δf2; verbose = Val(verbosity))
+        int₁, z₃ = _jb2008_∫(z₂, z₃, R1, Tx, T∞, _jb2008_δf2)
 
         Tl₃ = _jb2008_temperature(z₃, Tx, T∞)
 
@@ -468,9 +446,7 @@ function jb2008(
 
         z₄ = max(h, RT(500))
 
-        int₂, z₄ = _jb2008_∫(
-            z₃, z₄, (h <= 500) ? R2 : R3, Tx, T∞, _jb2008_δf2; verbose = Val(verbosity)
-        )
+        int₂, z₄ = _jb2008_∫(z₃, z₄, (h <= 500) ? R2 : R3, Tx, T∞, _jb2008_δf2)
 
         Tl₄ = _jb2008_temperature(z₄, Tx, T∞)
 
@@ -655,24 +631,13 @@ function _jb2008_high_altitude(h::Number, F10ₐ::Number)
 end
 
 """
-    _jb2008_mean_molecular_mass(z::Number; kwargs...) -> Number
+    _jb2008_mean_molecular_mass(z::Number) -> Number
 
 Compute the mean molecular mass [g / mol] at the altitude `z` [km] using the empirical
-profile in eq. 1 [3], which is valid only between 90 km and 105 km.
-
-# Keywords
-
-- `verbose::Val`: Set to `Val(true)` to emit a warning when the altitude is outside the
-    validity range, or to `Val(false)` to suppress it.
-    (**Default**: `Val(true)`)
+profile in eq. 1 [3], which is valid only between 90 km and 105 km. The caller must ensure
+that `z` is inside this range.
 """
-function _jb2008_mean_molecular_mass(
-    z::Number; verbose::Val{verbosity} = Val(true)
-) where {verbosity}
-    verbosity &&
-        !(90 <= z < 105.1) &&
-        @warn "The empirical model for the mean molecular mass is valid only for 90 <= z <= 105 km."
-
+function _jb2008_mean_molecular_mass(z::Number)
     M = @evalpoly(
         z - 100,
         +28.15204,
@@ -733,22 +698,14 @@ function _jb2008_temperature(z::Number, Tx::Number, T∞::Number)
 end
 
 """
-    _jb2008_δf1(z::Number, Tx::Number, T∞::Number; kwargs...) -> Number
+    _jb2008_δf1(z::Number, Tx::Number, T∞::Number) -> Number
 
 Compute the integrand `M̄´ g / T` used by [`_jb2008_∫`](@ref) between 90 km and 105 km at
 the altitude `z` [km] given the temperature `Tx` [K] at the inflection point and the
 exospheric temperature `T∞` [K].
-
-# Keywords
-
-- `verbose::Val`: Set to `Val(true)` to emit warnings from the internal functions, or to
-    `Val(false)` to suppress them.
-    (**Default**: `Val(true)`)
 """
-function _jb2008_δf1(
-    z::Number, Tx::Number, T∞::Number; verbose::Val{verbosity} = Val(true)
-) where {verbosity}
-    Mb = _jb2008_mean_molecular_mass(z; verbose = Val(verbosity))
+function _jb2008_δf1(z::Number, Tx::Number, T∞::Number)
+    Mb = _jb2008_mean_molecular_mass(z)
     Tl = _jb2008_temperature(z, Tx, T∞)
     g  = _jb2008_gravity(z)
 
@@ -756,21 +713,13 @@ function _jb2008_δf1(
 end
 
 """
-    _jb2008_δf2(z::Number, Tx::Number, T∞::Number; kwargs...) -> Number
+    _jb2008_δf2(z::Number, Tx::Number, T∞::Number) -> Number
 
 Compute the integrand `g / T` used by [`_jb2008_∫`](@ref) above 105 km at the altitude `z`
 [km] given the temperature `Tx` [K] at the inflection point and the exospheric temperature
 `T∞` [K].
-
-# Keywords
-
-- `verbose::Val`: Set to `Val(true)` to emit warnings from the internal functions, or to
-    `Val(false)` to suppress them.
-    (**Default**: `Val(true)`)
 """
-function _jb2008_δf2(
-    z::Number, Tx::Number, T∞::Number; verbose::Val{verbosity} = Val(true)
-) where {verbosity}
+function _jb2008_δf2(z::Number, Tx::Number, T∞::Number)
     Tl = _jb2008_temperature(z, Tx, T∞)
     g  = _jb2008_gravity(z)
 
@@ -784,20 +733,13 @@ end
         R::Number,
         Tx::Number,
         T∞::Number,
-        δf::Function;
-        kwargs...
+        δf::Function,
     ) -> Number, Number
 
 Compute the integral of the function `δf` between the altitudes `z₀` and `z₁` [km] using
 the Newton-Cotes 4th degree method, where `R` defines the step size [-], `Tx` is the
 temperature at the inflection point [K], and `T∞` is the exospheric temperature [K]. The
 integrand function `δf` must be [`_jb2008_δf1`](@ref) or [`_jb2008_δf2`](@ref).
-
-# Keywords
-
-- `verbose::Val`: Set to `Val(true)` to emit warnings from the internal functions, or to
-    `Val(false)` to suppress them.
-    (**Default**: `Val(true)`)
 
 # Returns
 
@@ -810,9 +752,8 @@ function _jb2008_∫(
     R::Number,
     Tx::Number,
     T∞::Number,
-    δf::Function;
-    verbose::Val{verbosity} = Val(true),
-) where {verbosity}
+    δf::Function,
+)
     # Compute the number of integration steps.
     #
     # This is computed so that `z₁ = z₀ * (zr)^n`. Hence, `zr` is the factor that defines
@@ -838,19 +779,19 @@ function _jb2008_∫(
 
         # Compute the Newton-Cotes 4th degree sum.
         zj    = zi₀
-        int_i = 14 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
+        int_i = 14 // 45 * δf(zj, Tx, T∞)
 
         zj    += Δz
-        int_i += 64 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
+        int_i += 64 // 45 * δf(zj, Tx, T∞)
 
         zj    += Δz
-        int_i += 24 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
+        int_i += 24 // 45 * δf(zj, Tx, T∞)
 
         zj    += Δz
-        int_i += 64 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
+        int_i += 64 // 45 * δf(zj, Tx, T∞)
 
         zj    += Δz
-        int_i += 14 // 45 * δf(zj, Tx, T∞; verbose = Val(verbosity))
+        int_i += 14 // 45 * δf(zj, Tx, T∞)
 
         # Accumulate the sum.
         int += int_i * Δz

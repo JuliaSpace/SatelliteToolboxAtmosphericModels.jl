@@ -4,6 +4,9 @@ SatelliteToolboxAtmosphericModels.jl Changelog
 Version 2.0.0
 -------------
 
+- ![BREAKING][badge-breaking] The keyword `verbose` was removed from all the models. The
+  debug messages related to the automatic space index fetching are now always emitted
+  through the logging system, which can be configured to show or hide them.
 - ![Enhancement][badge-enhancement] The output structures of the models are now subtypes of
   the new abstract type `AbstractAtmosphericModelOutput`, and their `show` methods share a
   single implementation. The dependency on Crayons.jl was removed.
