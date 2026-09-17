@@ -143,6 +143,7 @@ end
     ) where {N, T<:Number} -> float(T)
 
 Compute the interpolation of the cubic spline `y(x)` with second derivatives `∂²y` at `xᵢ`.
+The abscissas `x` must be distinct.
 
 !!! note
 
@@ -172,9 +173,6 @@ function _spline(
     end
 
     h = x[k₁] - x[k₀]
-
-    (h == 0) &&
-        throw(ArgumentError("It is not allowed to have two points with the same abscissa."))
 
     a  = (x[k₁] - xᵢ) / h
     b  = (xᵢ - x[k₀]) / h

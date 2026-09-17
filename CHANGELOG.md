@@ -26,6 +26,10 @@ Version 2.0.0
   `ArgumentError` otherwise. Previously, the classic model required an `Int` in `[2, 6]`,
   and the modified model accepted any value without validation. The exponent no longer
   participates in the output type promotion of the modified model.
+- ![Enhancement][badge-enhancement] The NRLMSISE-00 model computes the cubic spline of the
+  lower thermosphere temperature profile once per evaluation instead of once per species,
+  making the model about 13 % faster below 72.5 km. The Legendre functions are now stored in
+  a static matrix and the internal helpers were simplified. The results are unchanged.
 - ![Bugfix][badge-bugfix] The NRLMSISE-00 model returned `NaN` for all densities below the
   mesopause (72.5 km) when the flag `departures_from_eq` was `false` because the mixed N₂
   density used to blend the thermospheric and lower atmosphere profiles was not computed.

@@ -9,6 +9,15 @@
 ############################################################################################
 
 # Conversion factor from degrees to radians.
+# Atomic mass unit [g], truncated as in the reference implementation.
+const _AMU_G = 1.66e-24
+
+# Thermal diffusion coefficients for the species (He, O, N₂, O₂, Ar, H, N, anomalous O).
+const _NRLMSISE00_ALPHA = (-0.38, 0.0, 0.0, 0.0, 0.17, 0.0, -0.38, 0.0, 0.0)
+
+# Net density computation altitude limits [km] for the species.
+const _NRLMSISE00_ALTL = (200.0, 300.0, 160.0, 250.0, 240.0, 450.0, 320.0, 450.0)
+
 const _DEG_TO_RAD = 1.74533e-2
 
 # Conversion factor from day to radian.

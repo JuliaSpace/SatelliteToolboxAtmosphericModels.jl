@@ -62,12 +62,11 @@ Base.@kwdef struct Nrlmsise00Flags
 end
 
 """
-    struct Nrlmsise00Structure{T <: Number, T_AP <: Union{Number, AbstractVector}, T_P <: AbstractMatrix{T}}
+    struct Nrlmsise00Structure{T <: Number, T_AP <: Union{Number, AbstractVector}}
 
 Structure with the configuration parameters for NRLMSISE-00 model. `T` is the
-floating-number type, `T_AP` is the type of the AP information, which can be a `Number` or
-`AbstractVector`, and `T_P` is the type of the matrix with the Legendre associated
-functions.
+floating-number type and `T_AP` is the type of the AP information, which can be a `Number`
+or `AbstractVector`.
 
 # Fields
 
@@ -83,8 +82,9 @@ functions.
 - `g_lat::T`: Gravity at the latitude `ϕ_gd` [cm / s²].
 - `df::T`: Difference between the daily and the 81-day averaged F10.7 flux [sfu].
 - `dfa::T`: Difference between the 81-day averaged F10.7 flux and 150 [sfu].
-- `plg::T_P`: Unnormalized associated Legendre functions up to degree 7 and order 3, where
-    the element `[n + 1, m + 1]` holds the function of degree `n` and order `m` [-].
+- `plg::SMatrix{8, 4, T, 32}`: Unnormalized associated Legendre functions up to degree 7
+    and order 3, where the element `[n + 1, m + 1]` holds the function of degree `n` and
+    order `m` [-].
 - `ctloc::T`, `stloc::T`, `c2tloc::T`, `s2tloc::T`, `c3tloc::T`, `s3tloc::T`: Cosine and
     sine of the local solar time and its multiples [-].
 - `apt::T`, `apdf::T`: Auxiliary variables of the magnetic activity computed by
@@ -93,11 +93,7 @@ functions.
 - `meso_tn1_5::T`, `meso_tgn1_2::T`: Temperature [K] and temperature gradient [K / km] at
     the mesopause nodes shared by `_gts7` and `_gtd7`.
 """
-struct Nrlmsise00Structure{
-    T <: Number,
-    T_AP <: Union{Number, AbstractVector},
-    T_P <: AbstractMatrix{T},
-}
+struct Nrlmsise00Structure{T <: Number, T_AP <: Union{Number, AbstractVector}}
     # == Inputs ============================================================================
 
     doy::T
@@ -115,7 +111,7 @@ struct Nrlmsise00Structure{
     g_lat::T
     df::T
     dfa::T
-    plg::T_P
+    plg::SMatrix{8, 4, T, 32}
     ctloc::T
     stloc::T
     c2tloc::T
