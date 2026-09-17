@@ -43,10 +43,12 @@ The following keywords are available:
 - `include_anomalous_oxygen::Bool`: If `true`, the anomalous oxygen density will be included
     in the total density computation.
     (**Default** = `true`)
-- `P::Union{Nothing, Matrix}`: If the user passes a matrix with dimensions equal to or
-    greater than 8 × 4, it will be used when computing the Legendre associated functions,
-    reducing allocations and improving the performance. If it is `nothing`, the matrix is
-    allocated inside the function.
+- `P::Union{Nothing, AbstractMatrix}`: If the user passes a matrix with dimensions equal
+    to or greater than 8 × 4, it will be used when computing the Legendre associated
+    functions, reducing allocations and improving the performance. Its element type must
+    be the floating-point promotion of the types of the numeric inputs (e.g. `Float64`),
+    otherwise an `ArgumentError` is thrown. If it is `nothing`, the matrix is allocated
+    inside the function.
     (**Default** `nothing`)
 
 If we omit all space indices, the system tries to obtain them automatically for the selected

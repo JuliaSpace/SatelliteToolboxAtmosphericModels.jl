@@ -103,10 +103,12 @@ The function throws an `ArgumentError` if the altitude `h` is negative.
 - `include_anomalous_oxygen::Bool`: If `true`, the anomalous oxygen density will be included
     in the total density computation.
     (**Default**: `true`)
-- `P::Union{Nothing, Matrix}`: If the user passes a matrix with dimensions equal to or
-    greater than 8 × 4, it will be used when computing the Legendre associated functions,
-    reducing allocations and improving the performance. If it is `nothing`, the matrix is
-    allocated inside the function.
+- `P::Union{Nothing, AbstractMatrix}`: If the user passes a matrix with dimensions equal
+    to or greater than 8 × 4, it will be used when computing the Legendre associated
+    functions, reducing allocations and improving the performance. Its element type must
+    be the floating-point promotion of the types of the numeric inputs (e.g. `Float64`),
+    otherwise an `ArgumentError` is thrown. If it is `nothing`, the matrix is allocated
+    inside the function.
     (**Default**: `nothing`)
 
 # Returns
@@ -292,12 +294,9 @@ function nrlmsise00(
 }
     _check_altitude(h, 0, Inf)
 
-    RT = promote_type(JT, HT, PT, LT, FT, FT2)
+    RT = float(promote_type(JT, HT, PT, LT, FT, FT2))
 
     # == Compute Auxiliary Variables =======================================================
-
-    # Convert the Julian Day to Date.
-    Y, _, _, _, _, _ = jd_to_date(jd)
 
     # Get the number of days since the beginning of the year.
     doy = _get_doy(jd)
@@ -318,25 +317,25 @@ function nrlmsise00(
     s2tloc, c2tloc = sincos(2 * _HOUR_TO_RAD * lst)
     s3tloc, c3tloc = sincos(3 * _HOUR_TO_RAD * lst)
 
-    # Compute Legendre polynomials.
-    #
-    # Notice that the original NRLMSISE-00 algorithms considers that the Legendre matrix is
-    # upper triangular, whereas we use the lower triangular representation. Hence, we need
-    # to transpose it.
-    #
-    # Furthermore, the NRLMSISE-00 algorithm only uses terms with maximum degree 7 and
-    # maximum order 3.
+    # Compute the unnormalized associated Legendre functions up to degree 7 and order 3,
+    # which are the only terms used by the NRLMSISE-00 algorithm. The element `[n + 1,
+    # m + 1]` of the matrix holds the function of degree `n` and order `m`.
     if isnothing(P)
-        plg = legendre(Val(:unnormalized), π / 2 - ϕ_gd, 7, 3; ph_term = false)'
+        plg = legendre(Val(:unnormalized), RT(π / 2 - ϕ_gd), 7, 3; ph_term = false)
     else
         rows, cols = size(P)
 
-        if (rows < 8) || (cols < 4)
+        ((rows >= 8) && (cols >= 4)) ||
             throw(ArgumentError("The matrix P must have at least 8 × 4 elements."))
-        end
+
+        # The element type must match the promoted type. Otherwise, the Legendre functions
+        # would be silently truncated to the element type of `P`, which also breaks the
+        # automatic differentiation.
+        (eltype(P) == RT) ||
+            throw(ArgumentError("The element type of the matrix P must be $(RT)."))
 
         legendre!(Val(:unnormalized), P, π / 2 - ϕ_gd, 7, 3; ph_term = false)
-        plg = P'
+        plg = P
     end
 
     # == Latitude Variation of Gravity =====================================================
@@ -348,16 +347,13 @@ function nrlmsise00(
 
     # == Create the NRLMSISE00 Structure ===================================================
 
-    nrlmsise00d = Nrlmsise00Structure{RT, T_AP}(
-        Y,
+    nrlmsise00d = Nrlmsise00Structure{RT, T_AP, typeof(plg)}(
         floor(doy),
         Δds,
         h / 1000,
         ϕ_gd / _DEG_TO_RAD,
         λ / _DEG_TO_RAD,
         lst,
-        F10ₐ,
-        F10,
         ap,
         flags,
         r_lat,
@@ -808,11 +804,11 @@ function _globe7(
     # == Time Independent ==================================================================
 
     t₂ =
-        p[2] * plg[1, 3] +
-        p[3] * plg[1, 5] +
-        p[23] * plg[1, 7] +
-        p[27] * plg[1, 2] +
-        p[15] * plg[1, 3] * dfa * flags.F10_Mean
+        p[2] * plg[3, 1] +
+        p[3] * plg[5, 1] +
+        p[23] * plg[7, 1] +
+        p[27] * plg[2, 1] +
+        p[15] * plg[3, 1] * dfa * flags.F10_Mean
 
     # == Symmetrical Annual ================================================================
 
@@ -820,47 +816,47 @@ function _globe7(
 
     # == Symmetrical Semiannual ============================================================
 
-    t₄ = (p[16] + p[17] * plg[1, 3]) * cd18
+    t₄ = (p[16] + p[17] * plg[3, 1]) * cd18
 
     # == Asymmetrical Annual ===============================================================
 
-    t₅ = f1 * (p[10] * plg[1, 2] + p[11] * plg[1, 4]) * cd14
+    t₅ = f1 * (p[10] * plg[2, 1] + p[11] * plg[4, 1]) * cd14
 
     # == Asymmetrical Semiannual ===========================================================
 
-    t₆ = p[38] * plg[1, 2] * cd39
+    t₆ = p[38] * plg[2, 1] * cd39
 
     # == Diurnal ===========================================================================
 
     if flags.diurnal
-        t71 = (p[12] * plg[2, 3]) * cd14 * flags.asym_annual
-        t72 = (p[13] * plg[2, 3]) * cd14 * flags.asym_annual
+        t71 = (p[12] * plg[3, 2]) * cd14 * flags.asym_annual
+        t72 = (p[13] * plg[3, 2]) * cd14 * flags.asym_annual
 
         t₇ =
             f2 * (
-                (p[4] * plg[2, 2] + p[5] * plg[2, 4] + p[28] * plg[2, 6] + t71) * ctloc +
-                (p[7] * plg[2, 2] + p[8] * plg[2, 4] + p[29] * plg[2, 6] + t72) * stloc
+                (p[4] * plg[2, 2] + p[5] * plg[4, 2] + p[28] * plg[6, 2] + t71) * ctloc +
+                (p[7] * plg[2, 2] + p[8] * plg[4, 2] + p[29] * plg[6, 2] + t72) * stloc
             )
     end
 
     # == Semidiurnal =======================================================================
 
     if flags.semidiurnal
-        t81 = (p[24] * plg[3, 4] + p[36] * plg[3, 6]) * cd14 * flags.asym_annual
-        t82 = (p[34] * plg[3, 4] + p[37] * plg[3, 6]) * cd14 * flags.asym_annual
+        t81 = (p[24] * plg[4, 3] + p[36] * plg[6, 3]) * cd14 * flags.asym_annual
+        t82 = (p[34] * plg[4, 3] + p[37] * plg[6, 3]) * cd14 * flags.asym_annual
 
         t₈ =
             f2 * (
-                (p[6] * plg[3, 3] + p[42] * plg[3, 5] + t81) * c2tloc +
-                (p[9] * plg[3, 3] + p[43] * plg[3, 5] + t82) * s2tloc
+                (p[6] * plg[3, 3] + p[42] * plg[5, 3] + t81) * c2tloc +
+                (p[9] * plg[3, 3] + p[43] * plg[5, 3] + t82) * s2tloc
             )
     end
 
     # == Terdiurnal ========================================================================
 
     if flags.terdiurnal
-        t91 = (p[94] * plg[4, 5] + p[47] * plg[4, 7]) * cd14 * flags.asym_annual
-        t92 = (p[95] * plg[4, 5] + p[49] * plg[4, 7]) * cd14 * flags.asym_annual
+        t91 = (p[94] * plg[5, 4] + p[47] * plg[7, 4]) * cd14 * flags.asym_annual
+        t92 = (p[95] * plg[5, 4] + p[49] * plg[7, 4]) * cd14 * flags.asym_annual
 
         t₁₄ = f2 * ((p[40] * plg[4, 4] + t91) * s3tloc + (p[41] * plg[4, 4] + t92) * c3tloc)
     end
@@ -881,11 +877,11 @@ function _globe7(
 
             t₉ =
                 apt * (
-                    (p[51] + p[97] * plg[1, 3] + p[55] * plg[1, 5]) +
-                    (p[126] * plg[1, 2] + p[127] * plg[1, 4] + p[128] * plg[1, 6]) *
+                    (p[51] + p[97] * plg[3, 1] + p[55] * plg[5, 1]) +
+                    (p[126] * plg[2, 1] + p[127] * plg[4, 1] + p[128] * plg[6, 1]) *
                     cd14 *
                     flags.asym_annual +
-                    (p[129] * plg[2, 2] + p[130] * plg[2, 4] + p[131] * plg[2, 6]) *
+                    (p[129] * plg[2, 2] + p[130] * plg[4, 2] + p[131] * plg[6, 2]) *
                     aux *
                     flags.diurnal
                 )
@@ -907,11 +903,11 @@ function _globe7(
 
             t₉ =
                 apdf * (
-                    (p[33] + p[46] * plg[1, 3] + p[35] * plg[1, 5]) +
-                    (p[101] * plg[1, 2] + p[102] * plg[1, 4] + p[103] * plg[1, 6]) *
+                    (p[33] + p[46] * plg[3, 1] + p[35] * plg[5, 1]) +
+                    (p[101] * plg[2, 1] + p[102] * plg[4, 1] + p[103] * plg[6, 1]) *
                     cd14 *
                     flags.asym_annual +
-                    (p[122] * plg[2, 2] + p[123] * plg[2, 4] + p[124] * plg[2, 6]) *
+                    (p[122] * plg[2, 2] + p[123] * plg[4, 2] + p[124] * plg[6, 2]) *
                     aux *
                     flags.diurnal
                 )
@@ -926,21 +922,21 @@ function _globe7(
             sin_g_long, cos_g_long = sincos(_DEG_TO_RAD * λ)
 
             k₁ =
-                p[65] * plg[2, 3] +
-                p[66] * plg[2, 5] +
-                p[67] * plg[2, 7] +
+                p[65] * plg[3, 2] +
+                p[66] * plg[5, 2] +
+                p[67] * plg[7, 2] +
                 p[104] * plg[2, 2] +
-                p[105] * plg[2, 4] +
-                p[106] * plg[2, 6]
-            k₂ = p[110] * plg[2, 2] + p[111] * plg[2, 4] + p[112] * plg[2, 6]
+                p[105] * plg[4, 2] +
+                p[106] * plg[6, 2]
+            k₂ = p[110] * plg[2, 2] + p[111] * plg[4, 2] + p[112] * plg[6, 2]
             k₃ =
-                p[91] * plg[2, 3] +
-                p[92] * plg[2, 5] +
-                p[93] * plg[2, 7] +
+                p[91] * plg[3, 2] +
+                p[92] * plg[5, 2] +
+                p[93] * plg[7, 2] +
                 p[107] * plg[2, 2] +
-                p[108] * plg[2, 4] +
-                p[109] * plg[2, 6]
-            k₄ = p[113] * plg[2, 2] + p[114] * plg[2, 4] + p[115] * plg[2, 6]
+                p[108] * plg[4, 2] +
+                p[109] * plg[6, 2]
+            k₄ = p[113] * plg[2, 2] + p[114] * plg[4, 2] + p[115] * plg[6, 2]
 
             t₁₁ =
                 (1 + p[81] * dfa * flags.F10_Mean) * (
@@ -952,11 +948,11 @@ function _globe7(
         # == UT and Mixed UT, Longitude ====================================================
 
         if flags.ut_mixed_ut_long
-            k₁ = (1 + p[96] * plg[1, 2]) * (1 + p[82] * dfa * flags.F10_Mean)
-            k₂ = 1 + p[120] * plg[1, 2] * flags.asym_annual * cd14
-            k₃ = p[69] * plg[1, 2] + p[70] * plg[1, 4] + p[71] * plg[1, 6]
+            k₁ = (1 + p[96] * plg[2, 1]) * (1 + p[82] * dfa * flags.F10_Mean)
+            k₂ = 1 + p[120] * plg[2, 1] * flags.asym_annual * cd14
+            k₃ = p[69] * plg[2, 1] + p[70] * plg[4, 1] + p[71] * plg[6, 1]
             k₄ = 1 + p[138] * dfa * flags.F10_Mean
-            k₅ = p[77] * plg[3, 4] + p[78] * plg[3, 6] + p[79] * plg[3, 8]
+            k₅ = p[77] * plg[4, 3] + p[78] * plg[6, 3] + p[79] * plg[8, 3]
 
             aux₁ = cos(_SEC_TO_RAD * (sec - p[72]))
             aux₂ = cos(_SEC_TO_RAD * (sec - p[80]) + 2 * _DEG_TO_RAD * λ)
@@ -969,30 +965,30 @@ function _globe7(
         if flags.mixed_ap_ut_long
             if ap isa AbstractVector
                 if p[52] != 0
-                    k₁ = p[53] * plg[2, 3] + p[99] * plg[2, 5] + p[68] * plg[2, 7]
-                    k₂ = p[134] * plg[2, 2] + p[135] * plg[2, 4] + p[136] * plg[2, 6]
-                    k₃ = p[56] * plg[1, 2] + p[57] * plg[1, 4] + p[58] * plg[1, 6]
+                    k₁ = p[53] * plg[3, 2] + p[99] * plg[5, 2] + p[68] * plg[7, 2]
+                    k₂ = p[134] * plg[2, 2] + p[135] * plg[4, 2] + p[136] * plg[6, 2]
+                    k₃ = p[56] * plg[2, 1] + p[57] * plg[4, 1] + p[58] * plg[6, 1]
 
                     aux₁ = cos(_DEG_TO_RAD * (λ - p[98]))
                     aux₂ = cos(_DEG_TO_RAD * (λ - p[137]))
                     aux₃ = cos(_SEC_TO_RAD * (sec - p[59]))
 
                     t₁₃ =
-                        apt * flags.longitudinal * (1 + p[133] * plg[1, 2]) * k₁ * aux₁ +
+                        apt * flags.longitudinal * (1 + p[133] * plg[2, 1]) * k₁ * aux₁ +
                         apt * flags.longitudinal * flags.asym_annual * k₂ * cd14 * aux₂ +
                         apt * flags.ut_mixed_ut_long * k₃ * aux₃
                 end
             else
-                k₁ = p[61] * plg[2, 3] + p[62] * plg[2, 5] + p[63] * plg[2, 7]
-                k₂ = p[116] * plg[2, 2] + p[117] * plg[2, 4] + p[118] * plg[2, 6]
-                k₃ = p[84] * plg[1, 2] + p[85] * plg[1, 4] + p[86] * plg[1, 6]
+                k₁ = p[61] * plg[3, 2] + p[62] * plg[5, 2] + p[63] * plg[7, 2]
+                k₂ = p[116] * plg[2, 2] + p[117] * plg[4, 2] + p[118] * plg[6, 2]
+                k₃ = p[84] * plg[2, 1] + p[85] * plg[4, 1] + p[86] * plg[6, 1]
 
                 aux₁ = cos(_DEG_TO_RAD * (λ - p[64]))
                 aux₂ = cos(_DEG_TO_RAD * (λ - p[119]))
                 aux₃ = cos(_SEC_TO_RAD * (sec - p[76]))
 
                 t₁₃ =
-                    apdf * flags.longitudinal * (1 + p[121] * plg[1, 2]) * k₁ * aux₁ +
+                    apdf * flags.longitudinal * (1 + p[121] * plg[2, 1]) * k₁ * aux₁ +
                     apdf * flags.longitudinal * flags.asym_annual * k₂ * cd14 * aux₂ +
                     apdf * flags.ut_mixed_ut_long * k₃ * aux₃
             end
@@ -1093,43 +1089,43 @@ function _glob7s(
     # == Time Independent ==================================================================
 
     t₂ =
-        p[2] * plg[1, 3] +
-        p[3] * plg[1, 5] +
-        p[23] * plg[1, 7] +
-        p[27] * plg[1, 2] +
-        p[15] * plg[1, 4] +
-        p[60] * plg[1, 6]
+        p[2] * plg[3, 1] +
+        p[3] * plg[5, 1] +
+        p[23] * plg[7, 1] +
+        p[27] * plg[2, 1] +
+        p[15] * plg[4, 1] +
+        p[60] * plg[6, 1]
 
     # == Symmetrical Annual ================================================================
 
-    t₃ = (p[19] + p[48] * plg[1, 3] + p[30] * plg[1, 5]) * cd32
+    t₃ = (p[19] + p[48] * plg[3, 1] + p[30] * plg[5, 1]) * cd32
 
     # == Symmetrical Semiannual ============================================================
 
-    t₄ = (p[16] + p[17] * plg[1, 3] + p[31] * plg[1, 5]) * cd18
+    t₄ = (p[16] + p[17] * plg[3, 1] + p[31] * plg[5, 1]) * cd18
 
     # == Asymmetrical Annual ===============================================================
 
-    t₅ = (p[10] * plg[1, 2] + p[11] * plg[1, 4] + p[21] * plg[1, 6]) * cd14
+    t₅ = (p[10] * plg[2, 1] + p[11] * plg[4, 1] + p[21] * plg[6, 1]) * cd14
 
     # == Asymmetrical Semiannual ===========================================================
 
-    t₆ = p[38] * plg[1, 2] * cd39
+    t₆ = p[38] * plg[2, 1] * cd39
 
     # == Diurnal ===========================================================================
 
     if flags.diurnal
-        t71 = p[12] * plg[2, 3] * cd14 * flags.asym_annual
-        t72 = p[13] * plg[2, 3] * cd14 * flags.asym_annual
-        t₇  = (p[4] * plg[2, 2] + p[5] * plg[2, 4] + t71) * ctloc + (p[7] * plg[2, 2] + p[8] * plg[2, 4] + t72) * stloc
+        t71 = p[12] * plg[3, 2] * cd14 * flags.asym_annual
+        t72 = p[13] * plg[3, 2] * cd14 * flags.asym_annual
+        t₇  = (p[4] * plg[2, 2] + p[5] * plg[4, 2] + t71) * ctloc + (p[7] * plg[2, 2] + p[8] * plg[4, 2] + t72) * stloc
     end
 
     # == Semidiurnal =======================================================================
 
     if flags.semidiurnal
-        t81 = (p[24] * plg[3, 4] + p[36] * plg[3, 6]) * cd14 * flags.asym_annual
-        t82 = (p[34] * plg[3, 4] + p[37] * plg[3, 6]) * cd14 * flags.asym_annual
-        t₈  = (p[6] * plg[3, 3] + p[42] * plg[3, 5] + t81) * c2tloc + (p[9] * plg[3, 3] + p[43] * plg[3, 5] + t82) * s2tloc
+        t81 = (p[24] * plg[4, 3] + p[36] * plg[6, 3]) * cd14 * flags.asym_annual
+        t82 = (p[34] * plg[4, 3] + p[37] * plg[6, 3]) * cd14 * flags.asym_annual
+        t₈  = (p[6] * plg[3, 3] + p[42] * plg[5, 3] + t81) * c2tloc + (p[9] * plg[3, 3] + p[43] * plg[5, 3] + t82) * s2tloc
     end
 
     # == Terdiurnal ========================================================================
@@ -1141,10 +1137,10 @@ function _glob7s(
     # == Magnetic Activity =================================================================
 
     if flags.daily_ap
-        t₉ = p[51] * apt + p[97] * plg[1, 3] * apt * flags.time_independent
+        t₉ = p[51] * apt + p[97] * plg[3, 1] * apt * flags.time_independent
         if ap isa AbstractVector
         else
-            t₉ = apdf * (p[33] + p[46] * plg[1, 3] * flags.time_independent)
+            t₉ = apdf * (p[33] + p[46] * plg[3, 1] * flags.time_independent)
         end
     end
 
@@ -1154,24 +1150,24 @@ function _glob7s(
         sin_g_long, cos_g_long = sincos(_DEG_TO_RAD * λ)
 
         k₁ =
-            p[65] * plg[2, 3] +
-            p[66] * plg[2, 5] +
-            p[67] * plg[2, 7] +
+            p[65] * plg[3, 2] +
+            p[66] * plg[5, 2] +
+            p[67] * plg[7, 2] +
             p[75] * plg[2, 2] +
-            p[76] * plg[2, 4] +
-            p[77] * plg[2, 6]
+            p[76] * plg[4, 2] +
+            p[77] * plg[6, 2]
         k₂ =
-            p[91] * plg[2, 3] +
-            p[92] * plg[2, 5] +
-            p[93] * plg[2, 7] +
+            p[91] * plg[3, 2] +
+            p[92] * plg[5, 2] +
+            p[93] * plg[7, 2] +
             p[78] * plg[2, 2] +
-            p[79] * plg[2, 4] +
-            p[80] * plg[2, 6]
+            p[79] * plg[4, 2] +
+            p[80] * plg[6, 2]
 
         t₁₁ =
             (k₁ * cos_g_long + k₂ * sin_g_long) * (
                 1 +
-                plg[1, 2] * (
+                plg[2, 1] * (
                     p[81] * cos(1 * _DAY_TO_RAD * (doy - p[82])) * flags.asym_annual +
                     p[86] * cos(2 * _DAY_TO_RAD * (doy - p[87])) * flags.asym_semiannual
                 ) +

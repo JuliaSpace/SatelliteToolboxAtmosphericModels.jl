@@ -23,6 +23,15 @@ Version 2.0.0
   `ArgumentError` otherwise. Previously, the classic model required an `Int` in `[2, 6]`,
   and the modified model accepted any value without validation. The exponent no longer
   participates in the output type promotion of the modified model.
+- ![Bugfix][badge-bugfix] The NRLMSISE-00 model threw an `InexactError` when all the inputs
+  were integers. The output element type is now the promotion of the input types converted
+  to a floating-point type, as in the other models.
+- ![Bugfix][badge-bugfix] The keyword `P` of `nrlmsise00` silently copied the pre-allocated
+  matrix (allocating on every call) when its type was not `Matrix{T}`, where `T` is the
+  promoted input type, and truncated the Legendre functions to the element type of `P`
+  when it was narrower. The keyword now accepts any `AbstractMatrix` without copying and
+  throws an `ArgumentError` if its element type differs from the promoted input type. The
+  dependency on LinearAlgebra.jl was removed.
 - ![Enhancement][badge-enhancement] The output structures of the models are now subtypes of
   the new abstract type `AbstractAtmosphericModelOutput`, and their `show` methods share a
   single implementation. The dependency on Crayons.jl was removed.

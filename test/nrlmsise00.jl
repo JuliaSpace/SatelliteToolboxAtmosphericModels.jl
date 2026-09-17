@@ -590,6 +590,14 @@ end
     end
 end
 
+@testset "Integer Inputs" begin
+    # All-integer inputs must promote to a floating-point output instead of throwing.
+    result   = AtmosphericModels.nrlmsise00(2460000, 500_000, 0, 0, 150, 150, 4)
+    expected = AtmosphericModels.nrlmsise00(2460000.0, 500e3, 0.0, 0.0, 150.0, 150.0, 4.0)
+    @test result isa AtmosphericModels.Nrlmsise00Output{Float64}
+    @test result == expected
+end
+
 @testset "Errors" begin
     # == Negative Altitude =================================================================
 
@@ -613,6 +621,13 @@ end
     )
 
     P = zeros(7, 3)
+    @test_throws ArgumentError AtmosphericModels.nrlmsise00(
+        now() |> datetime2julian, 100e3, 0, 0, 100, 100, 20; P = P
+    )
+
+    # == Wrong Element Type in Matrix `P` ==================================================
+
+    P = zeros(Float32, 8, 4)
     @test_throws ArgumentError AtmosphericModels.nrlmsise00(
         now() |> datetime2julian, 100e3, 0, 0, 100, 100, 20; P = P
     )

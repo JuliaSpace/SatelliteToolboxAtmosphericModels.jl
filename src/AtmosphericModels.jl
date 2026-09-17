@@ -7,7 +7,6 @@
 module AtmosphericModels
 
 using Dates
-using LinearAlgebra
 using Printf
 
 using Accessors

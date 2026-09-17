@@ -64,24 +64,50 @@ Base.@kwdef struct Nrlmsise00Flags
 end
 
 """
-    struct Nrlmsise00Structure{T<:Number, T_AP<:Union{Number, AbstractVector}}
+    struct Nrlmsise00Structure{T <: Number, T_AP <: Union{Number, AbstractVector}, T_P <: AbstractMatrix{T}}
 
 Structure with the configuration parameters for NRLMSISE-00 model. `T` is the
-floating-number type and `T_AP` is the type of the AP information, which can be a `Number`
-or `AbstractVector`.
+floating-number type, `T_AP` is the type of the AP information, which can be a `Number` or
+`AbstractVector`, and `T_P` is the type of the matrix with the Legendre associated
+functions.
+
+# Fields
+
+- `doy::T`: Day of the year [-].
+- `sec::T`: Seconds since the beginning of the day [s].
+- `h::T`: Altitude [km].
+- `ϕ_gd::T`: Geodetic latitude [°].
+- `λ::T`: Longitude [°].
+- `lst::T`: Local apparent solar time [h].
+- `ap::T_AP`: Magnetic index (daily value or vector with the 3-hour history).
+- `flags::Nrlmsise00Flags`: Flags to configure the model.
+- `r_lat::T`: Effective Earth radius at the latitude `ϕ_gd` [km].
+- `g_lat::T`: Gravity at the latitude `ϕ_gd` [cm / s²].
+- `df::T`: Difference between the daily and the 81-day averaged F10.7 flux [sfu].
+- `dfa::T`: Difference between the 81-day averaged F10.7 flux and 150 [sfu].
+- `plg::T_P`: Unnormalized associated Legendre functions up to degree 7 and order 3, where
+    the element `[n + 1, m + 1]` holds the function of degree `n` and order `m` [-].
+- `ctloc::T`, `stloc::T`, `c2tloc::T`, `s2tloc::T`, `c3tloc::T`, `s3tloc::T`: Cosine and
+    sine of the local solar time and its multiples [-].
+- `apt::T`, `apdf::T`: Auxiliary variables of the magnetic activity computed by
+    `_globe7` and used by `_glob7s` [-].
+- `dm28::T`: N₂ mixed density [1 / cm³] computed by `_gts7` and used by `_gtd7`.
+- `meso_tn1_5::T`, `meso_tgn1_2::T`: Temperature [K] and temperature gradient [K / km] at
+    the mesopause nodes shared by `_gts7` and `_gtd7`.
 """
-struct Nrlmsise00Structure{T <: Number, T_AP <: Union{Number, AbstractVector}}
+struct Nrlmsise00Structure{
+    T <: Number,
+    T_AP <: Union{Number, AbstractVector},
+    T_P <: AbstractMatrix{T},
+}
     # == Inputs ============================================================================
 
-    year::Int
     doy::T
     sec::T
     h::T
     ϕ_gd::T
     λ::T
     lst::T
-    F10ₐ::T
-    F10::T
     ap::T_AP
     flags::Nrlmsise00Flags
 
@@ -91,7 +117,7 @@ struct Nrlmsise00Structure{T <: Number, T_AP <: Union{Number, AbstractVector}}
     g_lat::T
     df::T
     dfa::T
-    plg::Adjoint{T, Matrix{T}}
+    plg::T_P
     ctloc::T
     stloc::T
     c2tloc::T
