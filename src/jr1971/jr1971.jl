@@ -24,19 +24,8 @@
 
 export jr1971
 
-# TODO: Remove the unused keyword `roots_container` from all `jr1971` methods in the next
-# breaking release. It is kept only for backward compatibility since the quartic
-# polynomial roots are now computed using a closed-form algorithm that does not require a
-# container.
-
 """
-    jr1971(
-        instant::DateTime,
-        ϕ_gd::Number,
-        λ::Number,
-        h::Number;
-        kwargs...
-    ) -> JR1971Output
+    jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number) -> JR1971Output
     jr1971(
         instant::DateTime,
         ϕ_gd::Number,
@@ -44,10 +33,9 @@ export jr1971
         h::Number,
         F10::Number,
         F10ₐ::Number,
-        Kp::Number;
-        kwargs...
+        Kp::Number,
     ) -> JR1971Output
-    jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number; kwargs...) -> JR1971Output
+    jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number) -> JR1971Output
     jr1971(
         jd::Number,
         ϕ_gd::Number,
@@ -55,8 +43,7 @@ export jr1971
         h::Number,
         F10::Number,
         F10ₐ::Number,
-        Kp::Number;
-        kwargs...
+        Kp::Number,
     ) -> JR1971Output
 
 Compute the atmospheric density using the Jacchia-Roberts 1971 model.
@@ -80,35 +67,16 @@ The function throws an `ArgumentError` if the altitude `h` is lower than 90 km.
     time [sfu].
 - `Kp::Number`: Kp geomagnetic index with a delay of 3 hours.
 
-# Keywords
-
-- `roots_container::Union{Nothing, AbstractVector}`: This keyword is not used anymore and
-    is kept only for backward compatibility. The quartic polynomial roots are now computed
-    using a closed-form algorithm that does not allocate.
-    (**Default**: `nothing`)
-
 # Returns
 
 - `JR1971Output`: Structure containing the results obtained from the model. Its element
     type is the promotion of the types of the numeric inputs.
 """
-function jr1971(
-    instant::DateTime,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number;
-    roots_container::Union{Nothing, AbstractVector} = nothing,
-)
+function jr1971(instant::DateTime, ϕ_gd::Number, λ::Number, h::Number)
     return jr1971(datetime2julian(instant), ϕ_gd, λ, h)
 end
 
-function jr1971(
-    jd::Number,
-    ϕ_gd::Number,
-    λ::Number,
-    h::Number;
-    roots_container::Union{Nothing, AbstractVector} = nothing,
-)
+function jr1971(jd::Number, ϕ_gd::Number, λ::Number, h::Number)
     # Get the data in the desired Julian Day. The Jacchia models were fitted with the
     # 10.7-cm flux adjusted to 1 AU, so we must not use the observed values here.
     F10  = space_index(Val(:F10adj), jd)
@@ -135,8 +103,7 @@ function jr1971(
     h::Number,
     F10::Number,
     F10ₐ::Number,
-    Kp::Number;
-    roots_container::Union{Nothing, AbstractVector} = nothing,
+    Kp::Number,
 )
     return jr1971(datetime2julian(instant), ϕ_gd, λ, h, F10, F10ₐ, Kp)
 end
@@ -148,8 +115,7 @@ function jr1971(
     h::HT,
     F10::FT,
     F10ₐ::FT2,
-    Kp::KT;
-    roots_container::Union{Nothing, AbstractVector} = nothing,
+    Kp::KT,
 ) where {
     JT <: Number,
     PT <: Number,

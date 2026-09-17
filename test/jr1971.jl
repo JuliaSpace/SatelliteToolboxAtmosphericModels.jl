@@ -304,24 +304,6 @@ end
     @test str == expected
 end
 
-@testset "Deprecated Keyword roots_container" begin
-    # The keyword `roots_container` is not used anymore, but it must still be accepted for
-    # backward compatibility.
-    instant = DateTime("2023-01-01T10:00:00")
-
-    expected = AtmosphericModels.jr1971(instant, 0.5, 0.3, 300e3, 100, 100, 3)
-    result   = AtmosphericModels.jr1971(instant, 0.5, 0.3, 300e3, 100, 100, 3; roots_container = zeros(5))
-
-    @test result.total_density == expected.total_density
-
-    SpaceIndices.init()
-
-    expected = AtmosphericModels.jr1971(instant, 0.5, 0.3, 300e3)
-    result   = AtmosphericModels.jr1971(instant, 0.5, 0.3, 300e3; roots_container = zeros(5))
-
-    @test result.total_density == expected.total_density
-end
-
 @testset "Helium Seasonal Correction at the Equinoxes" begin
     # The correction must be 0 (and not NaN) when the Sun declination is exactly zero. The
     # previous formulation contained the term δs / (2 abs(δs)), which is NaN in this case,
