@@ -29,13 +29,15 @@
         x -> AtmosphericModels.jb2008(
             x[1], x[2], x[3], x[4], 120, 118, 100, 99, 100, 99, 100, 99, 20
         ).total_density,
-        x ->
-            AtmosphericModels.jacchia1977(x[1], x[2], x[3], x[4], 120, 118, 3).total_density,
+        x -> AtmosphericModels.jacchia1977(
+            x[1], x[2], x[3], x[4], 120, 118, 3
+        ).total_density,
         x -> AtmosphericModels.jacchia1977(
             x[1], x[2], x[3], x[4], 120, 118, 3; variant = Val(:stela)
         ).total_density,
-        x ->
-            AtmosphericModels.nrlmsise00(x[1], x[4], x[2], x[3], 118, 120, 10).total_density,
+        x -> AtmosphericModels.nrlmsise00(
+            x[1], x[4], x[2], x[3], 118, 120, 10
+        ).total_density,
         x -> AtmosphericModels.harrispriester(x[1], x[2], x[3], x[4]),
         x -> AtmosphericModels.harrispriester_modified(x[1], x[2], x[3], x[4], 150),
     )
@@ -73,8 +75,9 @@ end
     # computed with `Dates` arithmetic, whose derivative is provided by the extension.
     models = (
         jd -> AtmosphericModels.jr1971(jd, ϕ_gd, λ, 300e3, 120.0, 118.0, 3.0).total_density,
-        jd ->
-            AtmosphericModels.nrlmsise00(jd, 300e3, ϕ_gd, λ, 118.0, 120.0, 10.0).total_density,
+        jd -> AtmosphericModels.nrlmsise00(
+            jd, 300e3, ϕ_gd, λ, 118.0, 120.0, 10.0
+        ).total_density,
     )
 
     for f in models
