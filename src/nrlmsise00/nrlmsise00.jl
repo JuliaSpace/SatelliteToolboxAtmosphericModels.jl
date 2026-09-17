@@ -397,6 +397,89 @@ end
 ############################################################################################
 
 """
+    _densm_layer(
+        h::Number,
+        density::Number,
+        xm::Number,
+        g_lat::Number,
+        r_lat::Number,
+        zn::NTuple{N, Number},
+        tn::NTuple{N, Number},
+        tgn::NTuple{2, Number}
+    ) where {N} -> Number, Number
+
+Compute the temperature [K] and the density [1 / cm³] at the altitude `h` [km] inside the
+layer whose nodes are the altitudes `zn` [km] (in descending order), given the density
+`density` [1 / cm³] at the top of the layer, the species molecular weight `xm` [ ], the
+gravity `g_lat` [cm / s²] and effective radius `r_lat` [km] at the latitude, the
+temperature `tn` [K] at the nodes, and the temperature gradients `tgn` at the end nodes.
+The inverse temperature is interpolated with a cubic spline between the nodes, and the
+density is obtained by integrating the spline.
+
+# Returns
+
+- `Number`: Temperature at `h` [K].
+- `Number`: Density at `h` [1 / cm³], or `density` if `xm` is 0.
+"""
+function _densm_layer(
+    h::Number,
+    density::Number,
+    xm::Number,
+    g_lat::Number,
+    r_lat::Number,
+    zn::NTuple{N, <:Number},
+    tn::NTuple{N, <:Number},
+    tgn::NTuple{2, <:Number},
+) where {N}
+    RT = promote_type(
+        typeof(h),
+        typeof(density),
+        typeof(xm),
+        typeof(g_lat),
+        typeof(r_lat),
+        eltype(zn),
+        eltype(tn),
+        eltype(tgn),
+    )
+
+    z     = max(h, zn[end])
+    z1    = RT(zn[begin])
+    z2    = RT(zn[end])
+    t1    = RT(tn[begin])
+    t2    = RT(tn[end])
+    zg    = RT(_ζ(r_lat, z, z1))
+    zgdif = RT(_ζ(r_lat, z2, z1))
+
+    # Set up the spline nodes.
+    xs = ntuple(k -> RT(_ζ(r_lat, zn[k], z1) / zgdif), Val(N))
+    ys = ntuple(k -> RT(1 / tn[k]), Val(N))
+
+    ∂²y₁ = -tgn[begin] / (t1 * t1) * zgdif
+    ∂²yₙ = -tgn[end] / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
+
+    # Calculate spline coefficients.
+    ∂²y = _spline_∂²(xs, ys, RT(∂²y₁), RT(∂²yₙ))
+
+    # Interpolate at desired point.
+    x = RT(zg / zgdif)
+    y = _spline(xs, ys, ∂²y, x)
+
+    # Temperature at altitude.
+    tz = 1 / y
+
+    (xm == 0) && return tz, RT(density)
+
+    # Compute the gravity at `z1`.
+    g_h = g_lat / (1 + z1 / r_lat)^2
+
+    # Calculate the density by integrating the temperature profile.
+    γ    = xm * g_h * zgdif / RT(_RGAS)
+    expl = min(γ * _spline_∫(xs, ys, ∂²y, x), RT(50))
+
+    return tz, RT(density * (t1 / tz) * exp(-expl))
+end
+
+"""
     _densm(
         h::Number,
         d₀::Number,
@@ -433,136 +516,42 @@ Compute the temperature and density profiles for the lower atmosphere.
     is the promotion of the types of the numeric inputs.
 """
 function _densm(
-    h::HT,
-    d₀::DT,
-    xm::XT,
-    g_lat::GT,
-    r_lat::RLT,
-    tn2::NTuple{4, TNT},
-    tgn2::NTuple{2, TGT},
-    tn3::NTuple{5, TNT2},
-    tgn3::NTuple{2, TGT2},
-) where {
-    HT <: Number,
-    DT <: Number,
-    XT <: Number,
-    GT <: Number,
-    RLT <: Number,
-    TNT <: Number,
-    TGT <: Number,
-    TNT2 <: Number,
-    TGT2 <: Number,
-}
-    RT = promote_type(HT, DT, XT, GT, RLT, TNT, TGT, TNT2, TGT2)
-
-    # == Initialization of Variables =======================================================
+    h::Number,
+    d₀::Number,
+    xm::Number,
+    g_lat::Number,
+    r_lat::Number,
+    tn2::NTuple{4, <:Number},
+    tgn2::NTuple{2, <:Number},
+    tn3::NTuple{5, <:Number},
+    tgn3::NTuple{2, <:Number},
+)
+    RT = promote_type(
+        typeof(h),
+        typeof(d₀),
+        typeof(xm),
+        typeof(g_lat),
+        typeof(r_lat),
+        eltype(tn2),
+        eltype(tgn2),
+        eltype(tn3),
+        eltype(tgn3),
+    )
 
     density = RT(d₀)
     (h > _ZN2[begin]) && return density
 
-    # == Stratosphere / Mesosphere Temperature =============================================
+    # == Stratosphere / Mesosphere =========================================================
 
-    z     = (h > _ZN2[end]) ? h : _ZN2[end]
-    z1    = RT(_ZN2[begin])
-    z2    = RT(_ZN2[end])
-    t1    = RT(tn2[begin])
-    t2    = RT(tn2[end])
-    zg    = RT(_ζ(r_lat, z, z1))
-    zgdif = RT(_ζ(r_lat, z2, z1))
+    tz, density = _densm_layer(h, density, xm, g_lat, r_lat, _ZN2, tn2, tgn2)
 
-    # Set up spline nodes. Notice that all values assigned with `@reset` must be converted
-    # to `RT` to keep the tuples homogeneous for heterogeneous inputs.
-    xs2 = ntuple(_ -> RT(0), Val(4))
-    ys2 = ntuple(_ -> RT(0), Val(4))
+    (h > _ZN3[begin]) && return (xm == 0) ? tz : density
 
-    @inbounds for k in 1:4
-        @reset xs2[k] = RT(_ζ(r_lat, _ZN2[k], z1) / zgdif)
-        @reset ys2[k] = RT(1 / tn2[k])
-    end
+    # == Troposphere / Stratosphere ========================================================
 
-    ∂²y₁ = -tgn2[begin] / (t1 * t1) * zgdif
-    ∂²yₙ = -tgn2[end] / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
+    tz, density = _densm_layer(h, density, xm, g_lat, r_lat, _ZN3, tn3, tgn3)
 
-    # Calculate spline coefficients.
-    ∂²y = _spline_∂²(xs2, ys2, RT(∂²y₁), RT(∂²yₙ))
-
-    # Interpolate at desired point.
-    x = RT(zg / zgdif)
-    y = _spline(xs2, ys2, ∂²y, x)
-
-    # Temperature at altitude.
-    tz = 1 / y
-
-    if xm != 0
-        # Compute the gravity at `z1`.
-        g_h = g_lat / (1 + z1 / r_lat)^2
-
-        # Calculate stratosphere / mesosphere density.
-        γ = xm * g_h * zgdif / RT(_RGAS)
-
-        # Integrate temperature profile.
-        expl = min(γ * _spline_∫(xs2, ys2, ∂²y, x), RT(50))
-
-        # Density at altitude.
-        density *= (t1 / tz) * exp(-expl)
-    end
-
-    if h > _ZN3[1]
-        if xm == 0
-            return tz
-        else
-            return density
-        end
-    end
-
-    # == Troposphere / Stratosphere Temperature ============================================
-
-    z     = h
-    z1    = RT(_ZN3[begin])
-    z2    = RT(_ZN3[end])
-    t1    = RT(tn3[begin])
-    t2    = RT(tn3[end])
-    zg    = RT(_ζ(r_lat, z, z1))
-    zgdif = RT(_ζ(r_lat, z2, z1))
-
-    # Set up spline nodes. Notice that all values assigned with `@reset` must be converted
-    # to `RT` to keep the tuples homogeneous for heterogeneous inputs.
-    xs3 = ntuple(_ -> RT(0), Val(5))
-    ys3 = ntuple(_ -> RT(0), Val(5))
-
-    @inbounds for k in 1:5
-        @reset xs3[k] = RT(_ζ(r_lat, _ZN3[k], z1) / zgdif)
-        @reset ys3[k] = RT(1 / tn3[k])
-    end
-
-    ∂²y₁ = -tgn3[begin] / (t1 * t1) * zgdif
-    ∂²yₙ = -tgn3[end] / (t2 * t2) * zgdif * ((r_lat + z2) / (r_lat + z1))^2
-
-    # Calculate spline coefficients.
-    ∂²y = _spline_∂²(xs3, ys3, RT(∂²y₁), RT(∂²yₙ))
-    x   = RT(zg / zgdif)
-    y   = _spline(xs3, ys3, ∂²y, x)
-
-    # Temperature at altitude.
-    tz = 1 / y
-
-    if xm != 0
-        # Compute the gravity at `z1`.
-        g_h = g_lat / (1 + z1 / r_lat)^2
-
-        # Calculate tropospheric / stratosphere density.
-        γ = xm * g_h * zgdif / RT(_RGAS)
-
-        # Integrate temperature profile.
-        expl = min(γ * _spline_∫(xs3, ys3, ∂²y, x), RT(50))
-
-        # Density at altitude.
-        density *= (t1 / tz) * exp(-expl)
-
-        return density
-    else
-        return tz
-    end
+    return (xm == 0) ? tz : density
 end
 
 """
@@ -882,7 +871,6 @@ function _globe7(
     t₇  = zt
     t₈  = zt
     t₉  = zt
-    t₁₀ = zt
     t₁₁ = zt
     t₁₂ = zt
     t₁₃ = zt
@@ -1111,7 +1099,6 @@ function _globe7(
         flags.diurnal * t₇ +
         flags.semidiurnal * t₈ +
         flags.daily_ap * t₉ +
-        flags.all_ut_long_effects * t₁₀ +
         flags.longitudinal * t₁₁ +
         flags.ut_mixed_ut_long * t₁₂ +
         flags.mixed_ap_ut_long * t₁₃ +
@@ -1164,10 +1151,7 @@ function _glob7s(
     t₇  = zt
     t₈  = zt
     t₉  = zt
-    t₁₀ = zt
     t₁₁ = zt
-    t₁₂ = zt
-    t₁₃ = zt
     t₁₄ = zt
 
     # Confirm parameter set. The source-code replaces a zero `p[100]` with 2 in place. We
@@ -1286,10 +1270,7 @@ function _glob7s(
         flags.diurnal * t₇ +
         flags.semidiurnal * t₈ +
         flags.daily_ap * t₉ +
-        flags.all_ut_long_effects * t₁₀ +
         flags.longitudinal * t₁₁ +
-        flags.ut_mixed_ut_long * t₁₂ +
-        flags.mixed_ap_ut_long * t₁₃ +
         flags.terdiurnal * t₁₄
 
     return tinf
@@ -1516,6 +1497,91 @@ function _gtd7d(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 end
 
 """
+    _gts7_species_density(
+        nrlmsise00d::Nrlmsise00Structure{T},
+        pd::NTuple{N, Float64},
+        pdm::NTuple{M, Float64},
+        xm::Number,
+        α::Number,
+        mix::Bool,
+        h::Number,
+        tinf::Number,
+        tlb::Number,
+        zlb::Number,
+        s::Number,
+        xmm::Number,
+        zhm::Number,
+        g_lat::Number,
+        r_lat::Number,
+        lower::NamedTuple
+    ) where {N, M, T <: Number} -> Nrlmsise00Structure{T}, T, T
+
+Compute the number density [1 / cm³] of a species with molecular weight `xm` and thermal
+diffusion coefficient `α` at the altitude `h` [km], given the species coefficients `pd`
+and `pdm`, the exospheric temperature `tinf` [K], the temperature `tlb` [K] at the lower
+boundary altitude `zlb` [km], the slope `s`, the mean molecular weight `xmm` of the fully
+mixed atmosphere, the turbopause transition scale length `zhm` [km], the gravity `g_lat`
+[cm / s²] and effective radius `r_lat` [km] at the latitude, and the lower thermosphere
+profile `lower` (see [`_densu_lower_profile`](@ref)). If `mix` is `true`, the diffusive
+density is combined with the fully mixed density at the turbopause using [`_dnet`](@ref).
+
+# Returns
+
+- `Nrlmsise00Structure{T}`: Modified structure `nrlmsise00d`.
+- `T`: Number density of the species at `h` [1 / cm³].
+- `T`: Mixed density of the species at the turbopause [1 / cm³], used by the mixing ratio
+    corrections. It is 0 if `mix` is `false`.
+"""
+# NOTE: The function is inlined to avoid copying the structure `nrlmsise00d` for each
+# species, which costs about 3 % of the total evaluation time.
+@inline function _gts7_species_density(
+    nrlmsise00d::Nrlmsise00Structure{T},
+    pd::NTuple{N, Float64},
+    pdm::NTuple{M, Float64},
+    xm::Number,
+    α::Number,
+    mix::Bool,
+    h::Number,
+    tinf::Number,
+    tlb::Number,
+    zlb::Number,
+    s::Number,
+    xmm::Number,
+    zhm::Number,
+    g_lat::Number,
+    r_lat::Number,
+    lower::NamedTuple,
+) where {N, M, T <: Number}
+    flags = nrlmsise00d.flags
+
+    # Density variation factor at Zlb.
+    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd)
+    g = flags.all_nlb_var * G_L
+
+    # Diffusive density at Zlb.
+    db = pdm[1] * exp(g) * pd[1]
+
+    # Diffusive density at desired altitude.
+    density = T(_densu(h, db, tinf, tlb, xm, α, zlb, s, g_lat, r_lat, lower))
+
+    mix || return nrlmsise00d, density, zero(T)
+
+    # Turbopause.
+    zh = pdm[3]
+
+    # Mixed density at Zlb.
+    b = _densu(zh, db, tinf, tlb, xm - xmm, α - 1, zlb, s, g_lat, r_lat, lower)
+
+    # Mixed density at desired altitude.
+    dm = _densu(h, b, tinf, tlb, xmm, T(0), zlb, s, g_lat, r_lat, lower)
+
+    # Net density at desired altitude.
+    density = T(_dnet(density, dm, zhm, xmm, xm))
+
+    return nrlmsise00d, density, T(b)
+end
+
+"""
     _gts7(
         nrlmsise00d::Nrlmsise00Structure{T}
     ) where T<:Number -> Nrlmsise00Structure{T}, Nrlmsise00Output{T}
@@ -1676,35 +1742,15 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == He Density ========================================================================
 
-    # Density variation factor at Zlb.
-    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_He)
-    g4 = flags.all_nlb_var * G_L
+    # Diffusive density at the desired altitude with the turbopause mixing.
+    mix04 = flags.departures_from_eq && (h < altl[1])
 
-    # Diffusive density at Zlb.
-    db04 = pdm_1[1] * exp(g4) * pd_He[1]
-
-    # Diffusive density at desired altitude.
-    He_number_density = _densu(
-        h, db04, tinf, tlb, T(4), α[1], ptm[6], s, g_lat, r_lat, lower
+    nrlmsise00d, He_number_density, b04 = _gts7_species_density(
+        nrlmsise00d, pd_He, pdm_1, T(4), α[1], mix04, h, tinf, tlb, ptm[6], s, xmm, zhm28,
+        g_lat, r_lat, lower
     )
 
-    if flags.departures_from_eq && (h < altl[1])
-        # Turbopause.
-        zh04 = pdm_1[3]
-
-        # Mixed density at Zlb.
-        b04 = _densu(
-            zh04, db04, tinf, tlb, 4 - xmm, α[1] - 1, ptm[6], s, g_lat, r_lat, lower
-        )
-
-        # Mixed density at desired altitude.
-        dm04 = _densu(h, b04, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, lower)
-
-        zhm04 = zhm28
-
-        # Net density at desired altitude.
-        He_number_density = _dnet(He_number_density, dm04, zhm04, xmm, T(4))
-
+    if mix04
         # Correction to specified mixing ratio at ground.
         rl   = log(b28 * pdm_1[2] / b04)
         zc04 = pdm_1[5] * pdl_2[1]
@@ -1716,34 +1762,15 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == O Density =========================================================================
 
-    # Density variation factor at Zlb.
-    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_O)
-    g16 = flags.all_nlb_var * G_L
+    # Diffusive density at the desired altitude with the turbopause mixing.
+    mix16 = flags.departures_from_eq && (h <= altl[2])
 
-    #  Diffusive density at Zlb.
-    db16 = pdm_2[1] * exp(g16) * pd_O[1]
-
-    # Diffusive density at desired altitude.
-    O_number_density = _densu(
-        h, db16, tinf, tlb, T(16), α[2], ptm[6], s, g_lat, r_lat, lower
+    nrlmsise00d, O_number_density, b16 = _gts7_species_density(
+        nrlmsise00d, pd_O, pdm_2, T(16), α[2], mix16, h, tinf, tlb, ptm[6], s, xmm, zhm28,
+        g_lat, r_lat, lower
     )
 
-    if flags.departures_from_eq && (h <= altl[2])
-        # Turbopause.
-        zh16 = pdm_2[3]
-
-        # Mixed density at Zlb.
-        b16 = _densu(
-            zh16, db16, tinf, tlb, 16 - xmm, α[2] - 1, ptm[6], s, g_lat, r_lat, lower
-        )
-
-        # Mixed density at desired altitude.
-        dm16 = _densu(h, b16, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, lower)
-
-        zhm16 = zhm28
-
-        # Net density at desired altitude.
-        O_number_density = _dnet(O_number_density, dm16, zhm16, xmm, T(16))
+    if mix16
         rl = pdm_2[2] * pdl_2[17] * (1 + flags.F10_Mean * pdl_1[24] * dfa)
         hc16 = pdm_2[6] * pdl_2[4]
         zc16 = pdm_2[5] * pdl_2[3]
@@ -1761,36 +1788,16 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == O₂ Density ========================================================================
 
-    # Density variation factor at Zlb.
-    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_O2)
-    g32 = flags.all_nlb_var * G_L
+    # Diffusive density at the desired altitude with the turbopause mixing.
+    mix32 = flags.departures_from_eq && (h <= altl[4])
 
-    # Diffusive density at Zlb.
-    db32 = pdm_4[1] * exp(g32) * pd_O2[1]
-
-    # Diffusive density at desired altitude.
-    O2_number_density = _densu(
-        h, db32, tinf, tlb, T(32), α[4], ptm[6], s, g_lat, r_lat, lower
+    nrlmsise00d, O2_number_density, b32 = _gts7_species_density(
+        nrlmsise00d, pd_O2, pdm_4, T(32), α[4], mix32, h, tinf, tlb, ptm[6], s, xmm, zhm28,
+        g_lat, r_lat, lower
     )
 
     if flags.departures_from_eq
-        if h <= altl[4]
-            # Turbopause.
-            zh32 = pdm_4[3]
-
-            # Mixed density at Zlb.
-            b32 = _densu(
-                zh32, db32, tinf, tlb, 32 - xmm, α[4] - 1, ptm[6], s, g_lat, r_lat, lower
-            )
-
-            # Mixed density at desired altitude.
-            dm32 = _densu(h, b32, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, lower)
-
-            zhm32 = zhm28
-
-            # Net density at desired altitude.
-            O2_number_density = _dnet(O2_number_density, dm32, zhm32, xmm, T(32))
-
+        if mix32
             # Correction to specified mixing ratio at ground.
             rl = log(b28 * pdm_4[2] / b32)
             hc32 = pdm_4[6] * pdl_2[8]
@@ -1810,35 +1817,15 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == Ar Density ========================================================================
 
-    # Density variation factor at Zlb.
-    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_Ar)
-    g40 = flags.all_nlb_var * G_L
+    # Diffusive density at the desired altitude with the turbopause mixing.
+    mix40 = flags.departures_from_eq && (h <= altl[5])
 
-    # Diffusive density at Zlb.
-    db40 = pdm_5[1] * exp(g40) * pd_Ar[1]
-
-    # Diffusive density at desired altitude.
-    Ar_number_density = _densu(
-        h, db40, tinf, tlb, T(40), α[5], ptm[6], s, g_lat, r_lat, lower
+    nrlmsise00d, Ar_number_density, b40 = _gts7_species_density(
+        nrlmsise00d, pd_Ar, pdm_5, T(40), α[5], mix40, h, tinf, tlb, ptm[6], s, xmm, zhm28,
+        g_lat, r_lat, lower
     )
 
-    if flags.departures_from_eq && (h <= altl[5])
-        # Turbopause.
-        zh40 = pdm_5[3]
-
-        # Mixed density at Zlb.
-        b40 = _densu(
-            zh40, db40, tinf, tlb, 40 - xmm, α[5] - 1, ptm[6], s, g_lat, r_lat, lower
-        )
-
-        # Mixed density at desired altitude.
-        dm40 = _densu(h, b40, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, lower)
-
-        zhm40 = zhm28
-
-        # Net density at desired altitude.
-        Ar_number_density = _dnet(Ar_number_density, dm40, zhm40, xmm, T(40))
-
+    if mix40
         # Correction to specified mixing ratio at ground.
         rl   = log(b28 * pdm_5[2] / b40)
         hc40 = pdm_5[6] * pdl_2[10]
@@ -1850,35 +1837,15 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == H Density =========================================================================
 
-    # Density variation factor at Zlb.
-    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_H)
-    g1 = flags.all_nlb_var * G_L
+    # Diffusive density at the desired altitude with the turbopause mixing.
+    mix01 = flags.departures_from_eq && (h <= altl[7])
 
-    # Diffusive density at Zlb.
-    db01 = pdm_6[1] * exp(g1) * pd_H[1]
-
-    # Diffusive density at desired altitude.
-    H_number_density = _densu(
-        h, db01, tinf, tlb, T(1), α[7], ptm[6], s, g_lat, r_lat, lower
+    nrlmsise00d, H_number_density, b01 = _gts7_species_density(
+        nrlmsise00d, pd_H, pdm_6, T(1), α[7], mix01, h, tinf, tlb, ptm[6], s, xmm, zhm28,
+        g_lat, r_lat, lower
     )
 
-    if flags.departures_from_eq && (h <= altl[7])
-        # Turbopause.
-        zh01 = pdm_6[3]
-
-        # Mixed density at Zlb.
-        b01 = _densu(
-            zh01, db01, tinf, tlb, 1 - xmm, α[7] - 1, ptm[6], s, g_lat, r_lat, lower
-        )
-
-        # Mixed density at desired altitude.
-        dm01 = _densu(h, b01, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, lower)
-
-        zhm01 = zhm28
-
-        # Net density at desired altitude.
-        H_number_density = _dnet(H_number_density, dm01, zhm01, xmm, T(1))
-
+    if mix01
         # Correction to specified mixing ratio at ground.
         rl = log(b28 * pdm_6[2] * abs(pdl_2[18]) / b01)
         hc01 = pdm_6[6] * pdl_2[12]
@@ -1896,35 +1863,15 @@ function _gts7(nrlmsise00d::Nrlmsise00Structure{T}) where {T <: Number}
 
     # == N Density =========================================================================
 
-    # Density variation factor at Zlb.
-    nrlmsise00d, G_L = _globe7(nrlmsise00d, pd_N)
-    g14 = flags.all_nlb_var * G_L
+    # Diffusive density at the desired altitude with the turbopause mixing.
+    mix14 = flags.departures_from_eq && (h <= altl[8])
 
-    # Diffusive density at Zlb.
-    db14 = pdm_7[1] * exp(g14) * pd_N[1]
-
-    # Diffusive density at desired altitude.
-    N_number_density = _densu(
-        h, db14, tinf, tlb, T(14), α[8], ptm[6], s, g_lat, r_lat, lower
+    nrlmsise00d, N_number_density, b14 = _gts7_species_density(
+        nrlmsise00d, pd_N, pdm_7, T(14), α[8], mix14, h, tinf, tlb, ptm[6], s, xmm, zhm28,
+        g_lat, r_lat, lower
     )
 
-    if flags.departures_from_eq && (h <= altl[8])
-        # Turbopause.
-        zh14 = pdm_7[3]
-
-        # Mixed density at Zlb.
-        b14 = _densu(
-            zh14, db14, tinf, tlb, 14 - xmm, α[8] - 1, ptm[6], s, g_lat, r_lat, lower
-        )
-
-        #  Mixed density at desired altitude.
-        dm14 = _densu(h, b14, tinf, tlb, xmm, T(0), ptm[6], s, g_lat, r_lat, lower)
-
-        zhm14 = zhm28
-
-        # Net density at desired altitude.
-        N_number_density = _dnet(N_number_density, dm14, zhm14, xmm, T(14))
-
+    if mix14
         # Correction to specified mixing ratio at ground.
         rl = log(b28 * pdm_7[2] * abs(pdl_1[3]) / b14)
         hc14 = pdm_7[6] * pdl_1[2]
