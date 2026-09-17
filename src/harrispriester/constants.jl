@@ -1,20 +1,19 @@
 ## Description #############################################################################
 #
-# Haris-Priester atmospheric density model constants.
+# Harris-Priester atmospheric density model constants.
 #
 ############################################################################################
 
-# Minimal value for calculating power of cosine.
-const _HARRIS_PRIESTER_MIN_COS = 1e-12
-
-# Lag angle sine and cosine.
+# Lag angle of the diurnal bulge apex with respect to the Sun [rad].
 const _HARRIS_PRIESTER_LAG_ANGLE = deg2rad(30.0)
 
 """
-Harris-Priester min-max density (kg/m³) vs. altitude (m) table.
-These data are valid for a mean solar activity.
+    const _HARRIS_PRIESTER_ALT_RHO
+
+Harris-Priester density profile [1] for a mean solar activity, where the columns are the
+altitude [m], the minimum density [kg / m³], and the maximum density [kg / m³].
 """
-const _HARRIS_PRIESTER_ALT_RHO = [
+const _HARRIS_PRIESTER_ALT_RHO = SMatrix{50, 3, Float64, 150}(Tuple([
     100000.0 4.974e-07 4.974e-07
     120000.0 2.490e-08 2.490e-08
     130000.0 8.377e-09 8.710e-09
@@ -65,14 +64,14 @@ const _HARRIS_PRIESTER_ALT_RHO = [
     920000.0 2.210e-15 3.130e-14
     960000.0 1.560e-15 2.360e-14
     1000000.0 1.150e-15 1.810e-14
-]
+]))
 
 # Modified Harris-Priester constants
 
 const _HARRIS_PRIESTER_MOD_COS_ψ_BY_2_TOL = 1.0e-3
 const _HARRIS_PRIESTER_MOD_α = 0.5
 
-const _HARRIS_PRIESTER_MOD_HVEC = [
+const _HARRIS_PRIESTER_MOD_HVEC = SVector{50, Float64}(
     100.0,
     120.0,
     130.0,
@@ -123,13 +122,16 @@ const _HARRIS_PRIESTER_MOD_HVEC = [
     920.0,
     960.0,
     1000.0,
-]
+)
 
 # Altitude bounds of the modified Harris-Priester model [m].
 const _HARRIS_PRIESTER_MOD_H_MIN = 1000 * first(_HARRIS_PRIESTER_MOD_HVEC)
 const _HARRIS_PRIESTER_MOD_H_MAX = 1000 * last(_HARRIS_PRIESTER_MOD_HVEC)
 
-const _HARRIS_PRIESTER_MOD_COEFS = [
+# Coefficients of the cubic polynomials in the 81-day averaged F10.7 flux that give the
+# maximum (columns 1 to 4) and minimum (columns 5 to 8) densities [g / km³] at each altitude
+# of `_HARRIS_PRIESTER_MOD_HVEC` [1].
+const _HARRIS_PRIESTER_MOD_COEFS = SMatrix{50, 8, Float64, 400}(Tuple([
     687106.6098658189 -241.0377219880128 0.1486562739870937 -9.924023252663081e-5 439463.0624495309 -156.2606427080542 0.09360308920783865 -6.527111566792589e-5
     22651.20824497528 9.803270503713808 0.006683282018076352 -1.509596050086901e-5 15829.48731253604 6.545013973704011 0.003177592754286279 -1.026730477215192e-5
     7325.743063562774 1.728529188754437 0.01415564340420996 -2.275384945967092e-5 5946.545914948569 1.008816649313707 0.010636971951359 -1.646066024590573e-5
@@ -180,4 +182,4 @@ const _HARRIS_PRIESTER_MOD_COEFS = [
     -0.003080740270135174 0.0001839410295482665 -2.16522623781425e-6 1.066225654394606e-8 0.001056625547282237 -6.703647975465915e-6 7.197589977941795e-8 6.577273540786254e-10
     -0.004023089162118886 0.0001864216284721162 -1.944489256458498e-6 8.430820631254608e-9 0.0005625813859930651 2.621595816838185e-6 1.074000472961157e-8 5.471987507139111e-10
     -0.004197776454527065 0.0001727738448439477 -1.659599784887669e-6 6.574078584322574e-9 0.0002854272164399446 6.837173247934354e-6 -1.498152944358914e-8 4.373457809591543e-10
-]
+]))

@@ -15,7 +15,7 @@ export exponential
     exponential(h::Number) -> Number
 
 Compute the atmospheric density [kg / m³] at the altitude `h` [m] above the ellipsoid using
-the exponential atmospheric model:
+the exponential atmospheric model, returning a value with the floating-point type of `h`:
 
                     ┌            ┐
                     │    h - h₀  │
@@ -31,18 +31,19 @@ parameters of the last layer of the table are used.
 function exponential(h::Number)
     _check_altitude(h, 0, Inf)
 
+    RT = float(typeof(h))
+
     # Transform `h` to km.
-    h /= 1000
+    h_km = RT(h / 1000)
 
     # Get the values for the exponential model. Since the altitude table is sorted, we can
-    # use a binary search to find the layer related to the altitude `h`.
-    id = clamp(searchsortedlast(_EXPONENTIAL_ATMOSPHERE_H₀, h), 1, length(_EXPONENTIAL_ATMOSPHERE_H₀))
-    h₀ = _EXPONENTIAL_ATMOSPHERE_H₀[id]
-    ρ₀ = _EXPONENTIAL_ATMOSPHERE_ρ₀[id]
-    H  = _EXPONENTIAL_ATMOSPHERE_H[id]
+    # use a binary search to find the layer related to the altitude `h`. Notice that the
+    # index is always valid since `h_km >= 0` and the first altitude of the table is 0.
+    id = searchsortedlast(_EXPONENTIAL_ATMOSPHERE_H₀, h_km)
+    h₀ = RT(_EXPONENTIAL_ATMOSPHERE_H₀[id])
+    ρ₀ = RT(_EXPONENTIAL_ATMOSPHERE_ρ₀[id])
+    H  = RT(_EXPONENTIAL_ATMOSPHERE_H[id])
 
     # Compute the density.
-    density = ρ₀ * exp(-(h - h₀) / H)
-
-    return density
+    return ρ₀ * exp(-(h_km - h₀) / H)
 end

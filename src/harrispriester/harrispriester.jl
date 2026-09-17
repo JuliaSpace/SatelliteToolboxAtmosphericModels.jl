@@ -1,6 +1,6 @@
 ## Description #############################################################################
 #
-# Haris-Priester atmospheric density model.
+# Harris-Priester atmospheric density model.
 #
 ############################################################################################
 
@@ -73,13 +73,11 @@ function harrispriester(
         ArgumentError("The density profile must have at least 2 rows and 3 columns.")
     )
 
-    alt_col = @view alt_ρ[:, 1]
-
-    issorted(alt_col) || throw(
+    _harris_priester_is_sorted(alt_ρ) || throw(
         ArgumentError("The altitudes in the density profile must be in ascending order.")
     )
 
-    _check_altitude(h, first(alt_col), last(alt_col))
+    _check_altitude(h, alt_ρ[begin, 1], alt_ρ[end, 1])
 
     RT = float(promote_type(JT, PT, LT, HT, DT))
 
@@ -105,14 +103,14 @@ function harrispriester(
     cos_ψ = sin_ϕ * sin_δs + cos_ϕ * cos_δs * cos(Ωp - Ωs - _HARRIS_PRIESTER_LAG_ANGLE)
 
     # The `max` protects the square root against negative arguments caused by rounding
-    # errors when `cos_ψ` is close to -1.
+    # errors when `cos_ψ` is close to -1. The power is skipped on the night side, where it
+    # underflows to 0.
     c2ψ2 = max((1 + cos_ψ) / 2, zero(cos_ψ))
-    cψ2 = √(c2ψ2)
-    cos_pow = cψ2 > _HARRIS_PRIESTER_MIN_COS ? RT(cψ2^n) : RT(0)
+    cψ2 = RT(√(c2ψ2))
+    cos_pow = (cψ2 > eps(RT)) ? cψ2^n : zero(RT)
 
     # Search for the altitude index in the density table.
-    ia = searchsortedlast(alt_col, h)
-    ia = max(1, min(ia, size(alt_ρ, 1) - 1))
+    ia = _harris_priester_layer(alt_ρ, h)
 
     # Fractional satellite height.
     h₁ = alt_ρ[ia, 1]
@@ -124,11 +122,54 @@ function harrispriester(
     ρ_min₂ = alt_ρ[ia + 1, 2]
     ρ_min = ρ_min₁ * (ρ_min₂ / ρ_min₁)^dh
 
-    abs(cos_pow) < eps(RT) && return RT(ρ_min)
+    iszero(cos_pow) && return RT(ρ_min)
 
     # Maximum exponential density interpolation.
     ρ_max₁ = alt_ρ[ia, 3]
     ρ_max₂ = alt_ρ[ia + 1, 3]
     ρ_max = ρ_max₁ * (ρ_max₂ / ρ_max₁)^dh
     return RT(ρ_min + (ρ_max - ρ_min) * cos_pow)
+end
+
+############################################################################################
+#                                    Private Functions                                     #
+############################################################################################
+
+"""
+    _harris_priester_is_sorted(alt_ρ::AbstractMatrix) -> Bool
+
+Return `true` if the altitudes in the first column of the density profile `alt_ρ` are in
+ascending order, or `false` otherwise.
+"""
+function _harris_priester_is_sorted(alt_ρ::AbstractMatrix)
+    for k in (firstindex(alt_ρ, 1) + 1):lastindex(alt_ρ, 1)
+        (alt_ρ[k, 1] < alt_ρ[k - 1, 1]) && return false
+    end
+
+    return true
+end
+
+"""
+    _harris_priester_layer(alt_ρ::AbstractMatrix, h::Number) -> Int
+
+Return the row index `ia` of the density profile `alt_ρ` such that the altitude `h` [m] is
+inside the layer between the rows `ia` and `ia + 1`, using a binary search over the first
+column. The altitude must be inside the range of the profile.
+"""
+function _harris_priester_layer(alt_ρ::AbstractMatrix, h::Number)
+    lo = firstindex(alt_ρ, 1)
+    hi = lastindex(alt_ρ, 1)
+
+    # Binary search for the last row whose altitude is not higher than `h`.
+    while hi - lo > 1
+        mid = (lo + hi) >> 1
+
+        if alt_ρ[mid, 1] <= h
+            lo = mid
+        else
+            hi = mid
+        end
+    end
+
+    return lo
 end

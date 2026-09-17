@@ -26,6 +26,12 @@ Version 2.0.0
   `ArgumentError` otherwise. Previously, the classic model required an `Int` in `[2, 6]`,
   and the modified model accepted any value without validation. The exponent no longer
   participates in the output type promotion of the modified model.
+- ![Enhancement][badge-enhancement] The tables of the exponential and Harris-Priester models
+  are now static arrays instead of mutable global vectors and matrices, and the density
+  profile of the classic Harris-Priester model is searched with a row-indexed binary search
+  that works for any matrix type without allocating.
+- ![Bugfix][badge-bugfix] The exponential model returned a `Float64` for `Float32` inputs.
+  It now returns the floating-point type of the input.
 - ![Bugfix][badge-bugfix] The JR1971 model returned wrong densities between 90 km and
   100 km. The closed-form solution of the barometric equation presented in the reference
   (and also implemented in GMAT) led to an almost constant density in this region and to a
