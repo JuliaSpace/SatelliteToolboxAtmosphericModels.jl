@@ -1,6 +1,12 @@
 SatelliteToolboxAtmosphericModels.jl Changelog
 ==============================================
 
+Version 2.0.1
+-------------
+
+- ![Bugfix][badge-bugfix] Bump SatelliteToolboxBase.jl to v2.
+
+
 Version 2.0.0
 -------------
 
